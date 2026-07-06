@@ -16,3 +16,4 @@ con una sola responsabilidad y un único contrato de respuesta.
 from .vista_crear_examen import VistaCrearExamen
 from .vista_detalle_examen import VistaDetalleExamen
 from .vista_examenes_curso import VistaExamenesCurso
+from .vista_admin_examenes import VistaAdminExamenes

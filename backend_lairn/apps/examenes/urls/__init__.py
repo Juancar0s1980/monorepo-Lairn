@@ -20,4 +20,7 @@ urlpatterns = [
 
     # Rutas accedidas por el rol Estudiante (inscripción y consulta de cursos/exámenes).
     path('', include('apps.examenes.urls.estudiante')),
+
+    # Rutas accedidas por el rol Administrador (supervisión global de exámenes).
+    path('', include('apps.examenes.urls.administrador')),
 ]

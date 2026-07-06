@@ -6,3 +6,5 @@ from .vista_resumen_curso import VistaResumenCurso
 from .vista_mis_resultados_examen import VistaMisResultadosExamen
 from .vista_mi_avance_curso import VistaMiAvanceCurso
 from .vista_mi_conocimiento import VistaMiConocimiento
+from .vista_resumen_global import VistaResumenGlobal
+from .vista_cursos_admin import VistaCursosAdmin

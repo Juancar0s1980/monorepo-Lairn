@@ -9,6 +9,8 @@ from apps.analitica.views import (
     VistaMisResultadosExamen,
     VistaMiAvanceCurso,
     VistaMiConocimiento,
+    VistaResumenGlobal,
+    VistaCursosAdmin,
 )
 
 urlpatterns = [
@@ -26,4 +28,8 @@ urlpatterns = [
     # Docente — por estudiante
     path('curso/<int:curso_id>/estudiante/<int:estudiante_id>/', VistaAvanceEstudiante.as_view(), name='avance_estudiante'),
     path('curso/<int:curso_id>/estudiante/<int:estudiante_id>/conocimiento/', VistaModeloConocimientoEstudiante.as_view(), name='modelo_conocimiento'),
+
+    # Administrador — métricas globales del sistema
+    path('administracion/resumen/', VistaResumenGlobal.as_view(), name='admin_resumen_global'),
+    path('administracion/cursos/', VistaCursosAdmin.as_view(), name='admin_cursos'),
 ]

@@ -17,9 +17,21 @@
 //     intentosUsados={1}
 //   />
 
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import api from '@/services/api'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import { toast } from 'sonner'
 import {
   Clock,
   HelpCircle,
@@ -29,6 +41,8 @@ import {
   Ban,
   CheckCircle2,
   XCircle,
+  Flag,
+  Loader2,
   SignalLow,
   SignalMedium,
   SignalHigh,
@@ -96,6 +110,25 @@ export function CardExamen({
   intentosUsados = 0,
 }: CardExamenProps) {
   const navigate = useNavigate()
+  const [reporteAbierto, setReporteAbierto] = useState(false)
+  const [motivo, setMotivo] = useState('')
+  const [enviandoReporte, setEnviandoReporte] = useState(false)
+
+  // Envía el reporte del examen al panel de moderación del administrador.
+  const enviarReporte = async () => {
+    if (!motivo.trim()) return
+    setEnviandoReporte(true)
+    try {
+      await api.post('/moderacion/reportes/crear/', { examen: id, motivo })
+      toast.success('Reporte enviado. El administrador lo revisará.')
+      setMotivo('')
+      setReporteAbierto(false)
+    } catch {
+      toast.error('No se pudo enviar el reporte')
+    } finally {
+      setEnviandoReporte(false)
+    }
+  }
 
   const dif = dificultadConfig[dificultad] || dificultadConfig[1]
   const IconoDificultad = dif.icono
@@ -202,11 +235,71 @@ export function CardExamen({
           )}
         </div>
 
-        {/* Botón contextual — siempre al fondo */}
-        <div className="mt-auto">
-          {renderBoton()}
+        {/* Botón contextual + reportar — siempre al fondo */}
+        <div className="mt-auto flex items-center gap-2">
+          <div className="flex-1">{renderBoton()}</div>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="shrink-0 text-muted-foreground hover:text-destructive"
+            title="Reportar examen"
+            onClick={() => setReporteAbierto(true)}
+          >
+            <Flag className="h-4 w-4" />
+          </Button>
         </div>
       </CardContent>
+
+      {/* Diálogo para reportar el examen al administrador */}
+      <Dialog
+        open={reporteAbierto}
+        onOpenChange={(open) => {
+          if (!enviandoReporte) {
+            setReporteAbierto(open)
+            if (!open) setMotivo('')
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Reportar Examen</DialogTitle>
+            <DialogDescription>
+              Cuéntale al administrador qué problema encontraste en{' '}
+              <span className="font-medium text-foreground">{titulo}</span>.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            placeholder="Ej: la pregunta 3 tiene la respuesta correcta mal marcada"
+            value={motivo}
+            onChange={(e) => setMotivo(e.target.value)}
+            maxLength={500}
+            rows={4}
+          />
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setReporteAbierto(false)}
+              disabled={enviandoReporte}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={enviarReporte}
+              disabled={enviandoReporte || !motivo.trim()}
+            >
+              {enviandoReporte ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Enviando...
+                </div>
+              ) : (
+                'Enviar Reporte'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }

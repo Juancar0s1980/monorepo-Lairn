@@ -137,3 +137,35 @@ export interface ResumenCursoDocente {
   tasa_aprobacion?: string
   estudiantes: EstudianteResumen[]
 }
+
+// --- Tipos para endpoints de administración (Administrador) ---
+
+// GET /analitica/administracion/resumen/
+export interface ResumenGlobalAdmin {
+  usuarios_por_rol: {
+    administrador: number
+    docente: number
+    estudiante: number
+  }
+  total_cursos: number
+  total_examenes: number
+  sesiones_en_progreso: number
+  sesiones_completadas: number
+  nota_promedio_global: number
+  tasa_aprobados_global: number
+  cursos_recientes: Array<{ id: number; nombre: string; docente: string; creado_en: string }>
+  examenes_recientes: Array<{ id: number; titulo: string; curso: string; creado_en: string }>
+  resultados_recientes: Array<{ estudiante: string; examen: string; nota: number; completado_en: string }>
+}
+
+// GET /analitica/administracion/cursos/
+export interface CursoRendimientoAdmin {
+  id: number
+  nombre: string
+  codigo: string
+  docente: string
+  total_inscritos: number
+  total_examenes: number
+  nota_promedio: number
+  tasa_aprobados: number
+}
