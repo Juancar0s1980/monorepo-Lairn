@@ -417,8 +417,8 @@ if __name__ == "__main__":
     # Importamos generador desde la raiz del proyecto
     import sys
     from pathlib import Path
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-    from data.generador_datos import generar_dataset
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+    from ml.datos.generador_datos import generar_dataset
 
     # Generamos dataset y entrenamos para validar que funciona end-to-end
     df = generar_dataset()

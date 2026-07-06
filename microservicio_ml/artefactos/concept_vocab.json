@@ -1,0 +1,11 @@
+{
+  "descripcion": "Mapa de conceptos en lenguaje natural (los que genera GPT en el backend) hacia los skills fijos con los que se entreno el modelo BKT sintetico.",
+  "skills": ["derivada_seno", "derivada_coseno", "regla_cadena"],
+  "orden_evaluacion": ["regla_cadena", "derivada_coseno", "derivada_seno"],
+  "mapa": {
+    "regla_cadena": ["regla de la cadena", "regla cadena", "cadena", "funcion compuesta", "funciones compuestas", "compuesta", "composicion de funciones"],
+    "derivada_coseno": ["derivada del coseno", "derivada de coseno", "coseno", "cos"],
+    "derivada_seno": ["derivada del seno", "derivada de seno", "seno", "sen", "sin"]
+  },
+  "por_defecto": null
+}

@@ -1,0 +1,20 @@
+# La imagen del servicio solo necesita: app/, ml/modelos (para deserializar el
+# pkl), artefactos/ y requirements/. Todo lo de investigacion se excluye.
+__pycache__
+*.pyc
+*.pyo
+.git
+.gitignore
+.pytest_cache
+
+# Investigacion / entrenamiento (no va en la imagen del servicio)
+ml/notebooks
+ml/datos
+docs
+tests
+scripts
+requirements/train.txt
+
+# Artefactos DKT (el servicio sirve BKT; ahorran ~350 KB)
+artefactos/dkt_real
+artefactos/dkt_sintetico

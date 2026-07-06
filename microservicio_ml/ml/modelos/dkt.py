@@ -402,8 +402,8 @@ class DKTModel:
 if __name__ == '__main__':
     import sys
     from pathlib import Path
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-    from data.generador_datos import generar_dataset
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+    from ml.datos.generador_datos import generar_dataset
 
     df = generar_dataset(n_estudiantes=200, seed=42)
     print('Dataset generado:', len(df), 'filas')

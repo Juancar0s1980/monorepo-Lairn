@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
+.pytest_cache/
 
 # Entornos virtuales
 .venv/
@@ -14,20 +15,12 @@ ENV/
 .ipynb_checkpoints/
 *.ipynb_checkpoints
 
-# Proteccion: VS Code a veces crea notebooks/data/ por bug de path relativo.
-# El path correcto siempre apunta a la raiz data/ via descargar_assistments.py
-notebooks/data/
+# Datos generados (se regeneran con ml/datos/generador_datos.py)
+ml/datos/*.csv
+ml/datos/*.parquet
 
-# Modelos entrenados (pesados, se regeneran)
-modelos/**/*.pkl
-modelos/**/*.h5
-modelos/**/*.pt
-modelos/**/*.pth
-
-# Datos generados (se regeneran con generador_datos.py)
-data/*.csv
-data/*.parquet
-datos/*.csv
+# NOTA: los modelos entrenados en artefactos/ SI se versionan (son pequenos y
+# el servicio los necesita para arrancar sin reentrenar). Por eso NO se ignoran.
 
 # IDEs
 .vscode/
