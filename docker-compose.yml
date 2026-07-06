@@ -1,0 +1,50 @@
+# docker-compose raíz: orquesta base de datos + backend Django + frontend React.
+# Se ejecuta desde la carpeta "Laboratorio Redes Neuronales/" con:
+#   docker compose up --build
+services:
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_NAME:-lairn_db}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-2101}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: ./backend_lairn
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./backend_lairn:/app
+    env_file:
+      - ./backend_lairn/.env
+    environment:
+      # Estas dos SOBREESCRIBEN lo que venga del .env (host/puerto internos de la red docker)
+      - DB_HOST=db
+      - DB_PORT=5432
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./Lairn_Frontend
+      args:
+        VITE_API_URL: /api
+    ports:
+      - "5173:80"
+    depends_on:
+      - web
+
+volumes:
+  postgres_data:
