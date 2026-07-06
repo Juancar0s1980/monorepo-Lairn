@@ -8,7 +8,8 @@ from drf_spectacular.openapi import OpenApiTypes
 from core.permissions.permisos_rol import EsEstudiante
 from apps.motor_adaptativo.models import SesionExamen, ModeloConocimiento
 from apps.motor_adaptativo.serializers import SerializadorResponder
-from apps.motor_adaptativo.services.agente_ia import generar_pregunta, actualizar_modelo_conocimiento
+from apps.motor_adaptativo.services.agente_ia import generar_pregunta
+from apps.motor_adaptativo.services.cliente_ml import actualizar_modelo_conocimiento_ml
 from apps.analitica.models import Resultado, RespuestaEstudiante
 
 
@@ -178,7 +179,7 @@ class VistaResponder(APIView):
             defaults={'conceptos': {}}
         )
         if concepto:
-            modelo.conceptos = actualizar_modelo_conocimiento(modelo.conceptos, concepto, es_correcta)
+            modelo.conceptos = actualizar_modelo_conocimiento_ml(modelo.conceptos, concepto, es_correcta)
             modelo.save()
 
         retroalimentacion = None

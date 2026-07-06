@@ -27,6 +27,10 @@ DEBUG = config("DEBUG", default=False, cast=bool)
 ALLOWED_HOSTS = [config("ALLOWED_HOSTS")]
 OPENAI_API_KEY = config("OPENAI_API_KEY")
 
+# URL del microservicio ML (Knowledge Tracing). Vacio = desactivado (usa heuristico).
+# En docker-compose se inyecta como http://ml:8001
+ML_SERVICE_URL = config("ML_SERVICE_URL", default="")
+
 
 # Application definition
 
