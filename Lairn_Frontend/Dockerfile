@@ -2,9 +2,11 @@
 FROM node:22-alpine AS build
 WORKDIR /app
 
-# Instala dependencias con cache eficiente (solo copia manifests primero)
+# Instala dependencias con cache eficiente (solo copia manifests primero).
+# Usamos "npm install" (no "npm ci") porque el package-lock.json del repo
+# esta desincronizado con package.json; npm ci fallaria con EUSAGE.
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm install
 
 # Copia el resto del código y compila
 COPY . .
