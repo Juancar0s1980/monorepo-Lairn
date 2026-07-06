@@ -1,0 +1,10 @@
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+*.sqlite3
+.git/
+.gitignore
+bash.exe.stackdump

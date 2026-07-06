@@ -1,0 +1,37 @@
+// TypeScript config para el código de la aplicación (src/).
+// - target ES2023: soporte moderno de JS.
+// - moduleResolution bundler: resolución de módulos al estilo Vite/Webpack.
+// - verbatimModuleSyntax: obliga a usar "import type" para imports de solo tipos.
+// - erasableSyntaxOnly: prohíbe enum/namespace de TS (no se borran en runtime).
+// - noEmit: TypeScript solo type-checkea, Vite se encarga del bundling.
+
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023", "DOM"],
+    "module": "esnext",
+    "types": ["vite/client"],
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Path alias */
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+
+    /* Linting */
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src"]
+}

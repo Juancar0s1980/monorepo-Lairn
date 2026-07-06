@@ -1,0 +1,237 @@
+// Card de curso para la vista del docente.
+//
+// Muestra header con gradiente, avatar con inicial, código del curso
+// con icono para copiar al portapapeles, y stats del curso:
+// inscritos, total exámenes, nota promedio y tasa de aprobados.
+//
+// Uso:
+//   <CardCursoDocente
+//     id={1}
+//     nombre="Programación I"
+//     descripcion="Curso de intro"
+//     codigo="ABC123"
+//     totalInscritos={25}
+//     totalExamenes={5}
+//     notaPromedio={3.8}
+//     tasaAprobados={72}
+//   />
+
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import {
+  ArrowRight,
+  CheckCircle,
+  ClipboardCheck,
+  Copy,
+  TrendingUp,
+  Users,
+} from 'lucide-react'
+
+// Props del componente.
+export interface CardCursoDocenteProps {
+  id: number
+  nombre: string
+  descripcion: string
+  codigo: string
+  totalInscritos: number
+  totalExamenes: number
+  notaPromedio?: number
+  tasaAprobados?: number
+  /** Ruta base para el link. Por defecto '/mis-cursos/{id}/examenes' */
+  rutaBase?: string
+}
+
+// Paleta de gradientes para los headers.
+const gradientes = [
+  'from-[#2d1b69] to-[#1a1145]',
+  'from-[#1b3a69] to-[#0f2240]',
+  'from-[#1b694a] to-[#0a3d28]',
+  'from-[#69441b] to-[#3d2a0f]',
+  'from-[#691b4a] to-[#3d0f2a]',
+  'from-[#1b5669] to-[#0f3440]',
+]
+
+// Genera un gradiente consistente basado en el nombre del curso.
+function obtenerGradiente(nombre: string): string {
+  let hash = 0
+  for (let i = 0; i < nombre.length; i++) {
+    hash = nombre.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  return gradientes[Math.abs(hash) % gradientes.length]
+}
+
+// Devuelve la inicial del nombre del curso.
+function obtenerInicial(nombre: string): string {
+  return nombre.charAt(0).toUpperCase()
+}
+
+// Devuelve el color de la nota según su valor.
+function colorNota(nota: number): string {
+  if (nota >= 4.0) return 'text-emerald-600 dark:text-emerald-400'
+  if (nota >= 3.0) return 'text-amber-600 dark:text-amber-400'
+  return 'text-red-600 dark:text-red-400'
+}
+
+// Devuelve el color de la barra de progreso.
+function colorBarra(porcentaje: number): string {
+  if (porcentaje >= 80) return 'bg-emerald-500'
+  if (porcentaje >= 60) return 'bg-amber-500'
+  return 'bg-red-500'
+}
+
+export function CardCursoDocente({
+  id,
+  nombre,
+  descripcion,
+  codigo,
+  totalInscritos,
+  totalExamenes,
+  notaPromedio,
+  tasaAprobados,
+  rutaBase,
+}: CardCursoDocenteProps) {
+  const [copiado, setCopiado] = useState(false)
+  const destino = rutaBase ? `${rutaBase}/${id}` : `/mis-cursos/${id}/examenes`
+
+  // Copia el código al portapapeles y muestra feedback visual.
+  const copiarCodigo = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    try {
+      await navigator.clipboard.writeText(codigo)
+      setCopiado(true)
+      setTimeout(() => setCopiado(false), 2000)
+    } catch {
+      // Fallback silencioso si el clipboard no está disponible.
+    }
+  }
+
+  return (
+    <Link to={destino}>
+      <Card className="h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:border-primary/30 hover:-translate-y-0.5 cursor-pointer group p-0">
+        {/* Header con gradiente y avatar */}
+        <div
+          className={`relative h-28 bg-gradient-to-br ${obtenerGradiente(nombre)} p-5 flex items-end`}
+        >
+          {/* Patrón de puntos decorativo */}
+          <div
+            className="absolute inset-0 opacity-10"
+            style={{
+              backgroundImage:
+                'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)',
+              backgroundSize: '20px 20px',
+            }}
+          />
+
+          {/* Avatar con inicial */}
+          <div className="absolute top-4 left-5 flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 text-white text-lg font-bold shadow-lg">
+            {obtenerInicial(nombre)}
+          </div>
+
+          {/* Badge con código + botón copiar */}
+          <div className="absolute top-4 right-5 flex items-center gap-1.5">
+            <Badge
+              variant="secondary"
+              className="text-[11px] font-mono bg-white/10 text-white/80 border-white/20 backdrop-blur-sm"
+            >
+              {codigo}
+            </Badge>
+            <button
+              onClick={copiarCodigo}
+              className="flex h-6 w-6 items-center justify-center rounded bg-white/10 border border-white/20 backdrop-blur-sm text-white/70 hover:text-white hover:bg-white/20 transition-colors"
+              title={copiado ? '¡Copiado!' : 'Copiar código'}
+            >
+              {copiado ? (
+                <CheckCircle className="h-3.5 w-3.5" />
+              ) : (
+                <Copy className="h-3.5 w-3.5" />
+              )}
+            </button>
+          </div>
+
+          {/* Flecha indicadora */}
+          <ArrowRight className="absolute bottom-4 right-5 h-5 w-5 text-white/40 group-hover:text-white/80 group-hover:translate-x-0.5 transition-all duration-300" />
+        </div>
+
+        {/* Contenido */}
+        <CardContent className="p-5 space-y-4">
+          {/* Nombre y descripción */}
+          <div className="space-y-1">
+            <h3 className="font-semibold text-base line-clamp-1 group-hover:text-primary transition-colors">
+              {nombre}
+            </h3>
+            <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+              {descripcion || 'Sin descripción'}
+            </p>
+          </div>
+
+          {/* Stats row */}
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <Users className="h-3.5 w-3.5" />
+              <span>
+                {totalInscritos}{' '}
+                {totalInscritos === 1 ? 'inscrito' : 'inscritos'}
+              </span>
+            </div>
+            <div className="h-3 w-px bg-border" />
+            <div className="flex items-center gap-1.5">
+              <ClipboardCheck className="h-3.5 w-3.5" />
+              <span>
+                {totalExamenes}{' '}
+                {totalExamenes === 1 ? 'examen' : 'exámenes'}
+              </span>
+            </div>
+          </div>
+
+          {/* Segunda fila de stats: promedio y aprobados */}
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            {notaPromedio !== undefined && (
+              <div className="flex items-center gap-1.5">
+                <TrendingUp className="h-3.5 w-3.5" />
+                <span>
+                  Promedio:{' '}
+                  <span className={`font-semibold ${colorNota(notaPromedio)}`}>
+                    {notaPromedio.toFixed(1)}
+                  </span>
+                </span>
+              </div>
+            )}
+            {tasaAprobados !== undefined && (
+              <>
+                {notaPromedio !== undefined && (
+                  <div className="h-3 w-px bg-border" />
+                )}
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle className="h-3.5 w-3.5" />
+                  <span>
+                    Aprobados:{' '}
+                    <span className="font-semibold">{tasaAprobados}%</span>
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Barra de tasa de aprobados */}
+          {tasaAprobados !== undefined && (
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Tasa de aprobados</span>
+                <span className="font-medium">{tasaAprobados}%</span>
+              </div>
+              <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-700 ${colorBarra(tasaAprobados)}`}
+                  style={{ width: `${tasaAprobados}%` }}
+                />
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </Link>
+  )
+}

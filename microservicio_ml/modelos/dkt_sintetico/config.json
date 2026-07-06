@@ -1,0 +1,44 @@
+{
+  "modelo": "DKT (LSTM con PyTorch)",
+  "baseline": false,
+  "seed": 42,
+  "dataset": {
+    "fuente": "sintetico",
+    "total_filas": 32561,
+    "estudiantes_unicos": 1000,
+    "conceptos": [
+      "derivada_seno",
+      "derivada_coseno",
+      "regla_cadena"
+    ],
+    "n_estudiantes_solicitados": 1000,
+    "generador": "sintetico++ (7 fuentes de variabilidad)"
+  },
+  "split": {
+    "test_size": 0.3,
+    "estudiantes_train": 700,
+    "estudiantes_test": 300,
+    "estrategia": "por_estudiante"
+  },
+  "arquitectura": {
+    "tipo": "LSTM",
+    "hidden_dim": 64,
+    "num_layers": 1,
+    "dropout": 0.2,
+    "max_len": 200,
+    "total_params": 18627
+  },
+  "entrenamiento": {
+    "optimizer": "Adam",
+    "lr": 0.001,
+    "n_epochs": 30,
+    "batch_size": 32,
+    "loss_final": 0.5296600976188542
+  },
+  "metricas": {
+    "auc": 0.8019890167217636,
+    "accuracy": 0.7190931989924433,
+    "f1": 0.7188382412263009,
+    "rmse": 0.423209121329622
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "modelo": "BKT (NumPy puro - Baum-Welch)",
+  "baseline": true,
+  "seed": 42,
+  "dataset": {
+    "fuente": "sintetico",
+    "total_filas": 29994,
+    "estudiantes_unicos": 1000,
+    "conceptos": [
+      "derivada_seno",
+      "derivada_coseno",
+      "regla_cadena"
+    ],
+    "n_estudiantes_solicitados": 1000,
+    "min_interacciones": 5,
+    "max_interacciones": 15,
+    "generador": "sintetico++ (7 fuentes de variabilidad)"
+  },
+  "split": {
+    "test_size": 0.3,
+    "estudiantes_train": 700,
+    "estudiantes_test": 300,
+    "estrategia": "por_estudiante"
+  },
+  "entrenamiento": {
+    "algoritmo": "Expectation-Maximization (Baum-Welch)",
+    "max_iter": 200,
+    "tolerancia": 0.0001,
+    "num_fits": 5
+  },
+  "umbral_dominio": 0.8,
+  "metricas": {
+    "auc": 0.7087214807598637,
+    "accuracy": 0.6467164506918516,
+    "f1": 0.6825224513964275,
+    "rmse": 0.46596734586015975
+  },
+  "parametros_por_concepto": {
+    "derivada_seno": {
+      "p_init": 0.001,
+      "p_learn": 0.19833257368291582,
+      "p_guess": 0.2926430547241084,
+      "p_slip": 0.23907279589810923
+    },
+    "derivada_coseno": {
+      "p_init": 0.001,
+      "p_learn": 0.17992556211467342,
+      "p_guess": 0.29214175637337036,
+      "p_slip": 0.25361709063277754
+    },
+    "regla_cadena": {
+      "p_init": 0.001,
+      "p_learn": 0.18623267059837,
+      "p_guess": 0.294580247116137,
+      "p_slip": 0.23987920846255142
+    }
+  }
+}

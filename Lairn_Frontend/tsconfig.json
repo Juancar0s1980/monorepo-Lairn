@@ -1,0 +1,17 @@
+// Configuración raíz de TypeScript.
+// Usa "references" para separar la compilación del código de la app (tsconfig.app.json)
+// y la configuración de Node/Vite (tsconfig.node.json).
+// El path alias @/* se define aquí para que VS Code lo resuelva.
+
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ],
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}

@@ -1,0 +1,49 @@
+# Bytecode y caches de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Entornos virtuales
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Proteccion: VS Code a veces crea notebooks/data/ por bug de path relativo.
+# El path correcto siempre apunta a la raiz data/ via descargar_assistments.py
+notebooks/data/
+
+# Modelos entrenados (pesados, se regeneran)
+modelos/**/*.pkl
+modelos/**/*.h5
+modelos/**/*.pt
+modelos/**/*.pth
+
+# Datos generados (se regeneran con generador_datos.py)
+data/*.csv
+data/*.parquet
+datos/*.csv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Distribucion / build
+build/
+dist/
+*.egg-info/
