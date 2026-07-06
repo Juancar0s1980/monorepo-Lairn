@@ -11,6 +11,8 @@ from apps.analitica.views import (
     VistaMiConocimiento,
     VistaResumenGlobal,
     VistaCursosAdmin,
+    VistaRedesModelos,
+    VistaRedesResultados,
 )
 
 urlpatterns = [
@@ -32,4 +34,8 @@ urlpatterns = [
     # Administrador — métricas globales del sistema
     path('administracion/resumen/', VistaResumenGlobal.as_view(), name='admin_resumen_global'),
     path('administracion/cursos/', VistaCursosAdmin.as_view(), name='admin_cursos'),
+
+    # Administrador — panel de Redes Neuronales
+    path('administracion/redes/modelos/', VistaRedesModelos.as_view(), name='admin_redes_modelos'),
+    path('administracion/redes/resultados/', VistaRedesResultados.as_view(), name='admin_redes_resultados'),
 ]

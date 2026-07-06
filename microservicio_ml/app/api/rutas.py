@@ -9,9 +9,11 @@ from app.config import ajustes
 from app.schemas import (
     PeticionPredict,
     RespuestaHealth,
+    RespuestaModelos,
     RespuestaPredict,
     ResultadoConcepto,
 )
+from app.servicios.catalogo import listar_modelos
 from app.servicios.predictor import PredictorBKT
 from app.servicios.preprocesamiento import cargar_vocab, mapear_concepto
 
@@ -30,6 +32,15 @@ def health():
         modelo=ajustes.NOMBRE_MODELO,
         skills=_predictor.skills,
         version=ajustes.VERSION,
+    )
+
+
+@router.get("/modelos", response_model=RespuestaModelos, tags=["Catalogo"])
+def modelos():
+    """Lista todos los modelos entrenados con sus metricas (estado de las redes)."""
+    return RespuestaModelos(
+        modelo_activo=ajustes.NOMBRE_MODELO,
+        modelos=listar_modelos(ajustes.DIR_ARTEFACTOS, ajustes.NOMBRE_MODELO),
     )
 
 

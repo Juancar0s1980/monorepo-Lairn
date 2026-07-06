@@ -23,6 +23,7 @@ const rutasPorRol: Record<string, { label: string; ruta: string }[]> = {
     { label: 'Usuarios', ruta: '/usuarios' },
     { label: 'Exámenes', ruta: '/examenes' },
     { label: 'Analítica', ruta: '/analitica' },
+    { label: 'Redes', ruta: '/redes' },
     { label: 'Moderación', ruta: '/moderacion' },
   ],
   Docente: [

@@ -40,6 +40,7 @@ const PaginaCursosEstudiante = lazy(() => import('@/pages/cursos/pagina-cursos-e
 const PaginaExamenesAdmin = lazy(() => import('@/pages/examenes/pagina-examenes-admin'))
 const PaginaAnaliticaAdmin = lazy(() => import('@/pages/analitica/pagina-analitica-admin'))
 const PaginaModeracionAdmin = lazy(() => import('@/pages/moderacion/pagina-moderacion-admin'))
+const PaginaRedesAdmin = lazy(() => import('@/pages/redes/pagina-redes-admin'))
 
 // Fallback de carga mostrado mientras se descarga el chunk de una página.
 function CargandoPagina() {
@@ -131,6 +132,14 @@ function RutasPrivadas() {
             element={
               <RutaProtegida rolesPermitidos={[ROLES.ADMIN]}>
                 <PaginaModeracionAdmin />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/redes"
+            element={
+              <RutaProtegida rolesPermitidos={[ROLES.ADMIN]}>
+                <PaginaRedesAdmin />
               </RutaProtegida>
             }
           />

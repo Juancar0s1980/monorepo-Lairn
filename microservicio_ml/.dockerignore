@@ -15,6 +15,5 @@ tests
 scripts
 requirements/train.txt
 
-# Artefactos DKT (el servicio sirve BKT; ahorran ~350 KB)
-artefactos/dkt_real
-artefactos/dkt_sintetico
+# NOTA: se incluyen TODOS los artefactos (incluidos los DKT) porque el endpoint
+# /modelos lista sus metricas para el panel de admin. Son pequenos (~175 KB).

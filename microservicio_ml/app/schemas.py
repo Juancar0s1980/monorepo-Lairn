@@ -46,3 +46,30 @@ class RespuestaHealth(BaseModel):
     modelo: str
     skills: list[str]
     version: str
+
+
+# --------------------------- Catalogo de modelos ------------------------------
+
+class MetricasModelo(BaseModel):
+    """Metricas de evaluacion de un modelo entrenado."""
+    auc: float | None = None
+    accuracy: float | None = None
+    f1: float | None = None
+    rmse: float | None = None
+
+
+class ModeloInfo(BaseModel):
+    """Ficha de un modelo entrenado."""
+    nombre: str
+    tipo: str
+    fuente: str
+    n_estudiantes: int | None = None
+    n_skills: int | None = None
+    metricas: MetricasModelo
+    activo: bool = Field(..., description="True si es el modelo que sirve la API.")
+
+
+class RespuestaModelos(BaseModel):
+    """Respuesta del GET /modelos."""
+    modelo_activo: str
+    modelos: list[ModeloInfo]
