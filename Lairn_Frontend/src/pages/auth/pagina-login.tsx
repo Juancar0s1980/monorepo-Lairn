@@ -155,20 +155,20 @@ export default function PaginaLogin() {
   const esLogin = modo === "login";
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="flex h-screen w-screen items-center justify-center overflow-hidden bg-background p-[clamp(0.5rem,2vh,1rem)]">
       {/* Toggle tema - posición fija en esquina superior derecha */}
       <div className="fixed top-4 right-4 z-10">
         <ModeToggle />
       </div>
 
-      {/* Contenedor principal: dos paneles lado a lado en desktop */}
-      <div className="flex w-full max-w-7xl h-180 rounded-2xl overflow-hidden border bg-card shadow-2xl shadow-primary/8">
+      {/* Contenedor principal: dos paneles lado a lado en desktop. Alto fluido: llena el viewport sin exceder 46rem ni provocar scroll. */}
+      <div className="flex w-full max-w-7xl h-full max-h-[46rem] rounded-2xl overflow-hidden border bg-card shadow-2xl shadow-primary/8">
         {/* ═══════════════════════════════════════════════════════════
             PANEL IZQUIERDO - Branding universitario (oculto en móvil)
             ═══════════════════════════════════════════════════════════ */}
         <div className="relative hidden lg:flex lg:w-[55%] flex-col justify-between overflow-hidden">
-          {/* Fondo con gradiente índigo profundo */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#1a1145] via-[#1e1550] to-[#0f0a2e]" />
+          {/* Fondo con gradiente azul profundo, tono universitario */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#16233A] via-[#1F3A5C] to-[#0B1220]" />
 
           {/* Formas decorativas geométricas */}
           {/* Anillo grande semitransparente - esquina superior derecha */}
@@ -191,63 +191,58 @@ export default function PaginaLogin() {
           <CanvasParticulas />
 
           {/* Contenido del branding */}
-          <div className="relative z-10 flex flex-col h-full p-10">
+          <div className="relative z-10 flex flex-col h-full p-[clamp(1.25rem,4vh,2.5rem)] overflow-hidden">
             {/* Logo con badge ámbar */}
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 backdrop-blur-sm border border-white/10">
                 <BrainCircuit className="h-5 w-5 text-white" />
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-bold text-white tracking-tight">
-                  PseudoTutor
-                </span>
-                <span className="rounded-full bg-accent/90 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-accent-foreground">
-                  IA
-                </span>
-              </div>
+              <span className="rounded-full bg-accent/90 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-accent-foreground">
+                IA
+              </span>
             </div>
 
             {/* Título y descripción */}
-            <div className="mt-auto space-y-4">
+            <div className="mt-auto space-y-[clamp(0.5rem,2vh,1rem)]">
               <div className="flex items-center gap-2 text-accent/80">
-                <GraduationCap className="h-4 w-4" />
+                <GraduationCap className="h-4 w-4 shrink-0" />
                 <span className="text-xs font-semibold uppercase tracking-widest">
                   Corporación Universitaria Autónoma del Cauca
                 </span>
               </div>
 
-              <h2 className="text-3xl xl:text-4xl font-bold leading-[1.15] text-white tracking-tight">
+              <h2 className="font-heading text-[clamp(1.5rem,4.5vh,2.5rem)] leading-[1.15] text-white tracking-tight text-balance">
                 Transforma tu
                 <br />
                 experiencia
                 <br />
-                <span className="bg-gradient-to-r from-accent to-amber-300 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-accent to-[#FFE29A] bg-clip-text text-transparent">
                   universitaria
                 </span>
               </h2>
 
-              <p className="text-sm text-white/50 max-w-sm leading-relaxed">
+              <p className="font-accent text-[clamp(0.8125rem,1.8vh,1rem)] text-white/60 max-w-sm leading-relaxed">
                 Plataforma de aprendizaje adaptativo potenciada por inteligencia
                 artificial, diseñada para tu éxito académico.
               </p>
             </div>
 
             {/* Tarjetas de features */}
-            <div className="mt-8 grid gap-2.5">
+            <div className="mt-[clamp(0.75rem,3vh,2rem)] grid gap-[clamp(0.375rem,1vh,0.625rem)]">
               {features.map((feature, index) => (
                 <div
                   key={feature.titulo}
-                  className="group flex items-start gap-3.5 rounded-xl bg-white/[0.04] p-3.5 backdrop-blur-sm border border-white/[0.06] transition-all duration-300 hover:bg-white/[0.08] hover:border-white/[0.12] hover:translate-x-1"
+                  className="group flex items-start gap-3.5 rounded-xl bg-white/[0.04] p-[clamp(0.5rem,1.4vh,0.875rem)] backdrop-blur-sm border border-white/[0.06] transition-all duration-300 hover:bg-white/[0.08] hover:border-white/[0.12] hover:translate-x-1"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/15 border border-accent/20">
                     <feature.icon className="h-4 w-4 text-accent" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <h3 className="text-sm font-semibold text-white/90">
                       {feature.titulo}
                     </h3>
-                    <p className="text-xs text-white/40 leading-relaxed mt-0.5">
+                    <p className="text-xs text-white/40 leading-relaxed mt-0.5 [@media(max-height:700px)]:hidden">
                       {feature.descripcion}
                     </p>
                   </div>
@@ -256,7 +251,7 @@ export default function PaginaLogin() {
             </div>
 
             {/* Stats en la parte inferior */}
-            <div className="mt-8 flex items-center gap-5 text-xs text-white/30">
+            <div className="mt-[clamp(0.75rem,3vh,1.75rem)] flex items-center gap-5 text-xs text-white/30 [@media(max-height:640px)]:hidden">
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
@@ -275,21 +270,17 @@ export default function PaginaLogin() {
         {/* ═══════════════════════════════════════════════════════════
             PANEL DERECHO - Formulario de login/registro
             ═══════════════════════════════════════════════════════════ */}
-        <div className="relative flex w-full items-center justify-center p-6 sm:p-8 lg:w-[45%]">
+        <div className="relative flex h-full w-full items-center justify-center overflow-hidden px-6 py-[clamp(0.75rem,3vh,2rem)] sm:px-8 lg:w-[45%]">
           {/* Fondo sutil con gradiente en móvil */}
           <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.02] to-transparent lg:from-transparent" />
 
-          <div className="relative w-full max-w-sm space-y-6">
+          <div className="relative w-full max-w-sm space-y-[clamp(0.75rem,2.5vh,1.5rem)]">
             {/* Logo visible solo en móvil */}
-            <div className="text-center space-y-3 lg:hidden">
+            <div className="text-center space-y-[clamp(0.375rem,1.2vh,0.75rem)] lg:hidden">
               <div className="inline-flex items-center justify-center gap-2.5">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 shadow-lg shadow-primary/10">
                   <BrainCircuit className="h-6 w-6 text-primary" />
                 </div>
-                <h1 className="text-2xl font-bold tracking-tight">
-                  <span className="text-foreground">Pseudo</span>
-                  <span className="text-primary">Tutor</span>
-                </h1>
               </div>
               <p className="text-xs text-muted-foreground">
                 Aprendizaje adaptativo con inteligencia artificial
@@ -298,7 +289,7 @@ export default function PaginaLogin() {
 
             {/* Título dinámico según modo */}
             <div className="space-y-1.5">
-              <h2 className="text-2xl font-bold text-foreground tracking-tight">
+              <h2 className="font-heading text-[clamp(1.25rem,3.5vh,1.5rem)] text-foreground tracking-tight">
                 {esLogin ? "Bienvenido de vuelta" : "Crea tu cuenta"}
               </h2>
               <p className="text-sm text-muted-foreground">
@@ -312,7 +303,7 @@ export default function PaginaLogin() {
             <form
               key={modo}
               onSubmit={manejarSubmit}
-              className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-300"
+              className="space-y-[clamp(0.625rem,1.8vh,1rem)] animate-in fade-in slide-in-from-bottom-3 duration-300"
             >
               {/* Campos de nombre y apellido (solo en modo registro) */}
               {!esLogin && (

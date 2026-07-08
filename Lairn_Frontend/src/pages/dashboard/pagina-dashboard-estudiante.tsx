@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CardCursoEstudiante } from "@/components/card-curso-estudiante";
 import { CardStat } from "@/components/card-stat";
+import { EncabezadoPagina } from "@/components/encabezado-pagina";
 import {
   Carousel,
   CarouselContent,
@@ -182,26 +183,27 @@ export default function PaginaDashboardEstudiante() {
       {/* ═══════════════════════════════════════════════════════════
           SECCIÓN 1 — Header personalizado
           ═══════════════════════════════════════════════════════════ */}
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">
-            {saludo}, {nombre}
-          </h2>
-          <p className="flex items-center gap-1.5 text-sm text-muted-foreground capitalize">
+      <EncabezadoPagina
+        eyebrow="Panel del estudiante"
+        titulo={`${saludo}, ${nombre}`}
+        subtitulo={
+          <span className="flex items-center gap-1.5 capitalize">
             <Calendar className="h-3.5 w-3.5" />
             {fecha}
-          </p>
-        </div>
-        {stats.totalExamenes > 0 && (
-          <p className="text-xs text-muted-foreground italic">
-            {stats.notaPromedio >= 4.0
-              ? "¡Excelente rendimiento, sigue así!"
-              : stats.notaPromedio >= 3.0
-                ? "Buen progreso, puedes mejorar aún más."
-                : "Cada intento es una oportunidad de aprender."}
-          </p>
-        )}
-      </div>
+          </span>
+        }
+        accion={
+          stats.totalExamenes > 0 && (
+            <p className="font-accent text-base text-primary">
+              {stats.notaPromedio >= 4.0
+                ? "¡Excelente rendimiento, sigue así!"
+                : stats.notaPromedio >= 3.0
+                  ? "Buen progreso, puedes mejorar aún más."
+                  : "Cada intento es una oportunidad de aprender."}
+            </p>
+          )
+        }
+      />
 
       {/* ═══════════════════════════════════════════════════════════
           SECCIÓN 2 — Stats rápidas (4 cards)
@@ -247,7 +249,7 @@ export default function PaginaDashboardEstudiante() {
           ═══════════════════════════════════════════════════════════ */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Mis Cursos</h3>
+          <h3 className="font-heading text-lg">Mis Cursos</h3>
           {cursos.length > 0 && (
             <Link to="/mis-cursos">
               <Button variant="ghost" size="sm" className="gap-1 text-xs">

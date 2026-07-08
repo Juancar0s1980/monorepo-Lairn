@@ -7,6 +7,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import api from '@/services/api'
 import { useAuth } from '@/context/contexto-auth/use-auth'
+import { EncabezadoPagina } from '@/components/encabezado-pagina'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -165,14 +166,12 @@ export default function PaginaUsuarios() {
 
   return (
     <div className="space-y-6">
-      {/* Encabezado */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Usuarios</h2>
-          <p className="text-muted-foreground">
-            Gestión de usuarios del sistema
-          </p>
-        </div>
+      <EncabezadoPagina
+        eyebrow="Panel del administrador"
+        titulo="Usuarios"
+        subtitulo="Gestión de usuarios del sistema"
+      />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
         <div className="relative w-full sm:w-64">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input

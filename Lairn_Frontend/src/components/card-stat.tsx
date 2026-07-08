@@ -3,7 +3,7 @@
 // Usado en dashboard, analítica y tabs de resumen.
 
 import type { LucideIcon } from 'lucide-react'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Card, CardHeader, CardContent } from '@/components/ui/card'
 
 interface CardStatProps {
   titulo: string
@@ -26,15 +26,15 @@ export function CardStat({ titulo, valor, icono: Icono, subtitulo, variante = 'a
   return (
     <Card className="relative overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
+        <p className="text-[11px] font-semibold tracking-[0.08em] uppercase text-muted-foreground">
           {titulo}
-        </CardTitle>
-        <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${variantes[variante]}`}>
+        </p>
+        <div className={`flex h-8 w-8 items-center justify-center rounded-full ${variantes[variante]}`}>
           <Icono className="h-4 w-4" />
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-xl font-bold">{valor}</div>
+        <div className="text-2xl font-bold tabular-nums">{valor}</div>
         {subtitulo && (
           <p className="text-xs text-muted-foreground mt-1">
             {subtitulo}

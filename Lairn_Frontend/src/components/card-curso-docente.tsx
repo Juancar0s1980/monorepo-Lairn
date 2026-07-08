@@ -43,14 +43,12 @@ export interface CardCursoDocenteProps {
   rutaBase?: string
 }
 
-// Paleta de gradientes para los headers.
+// Paleta de gradientes pasteles para los headers (azul y amarillo, tono universidad).
 const gradientes = [
-  'from-[#2d1b69] to-[#1a1145]',
-  'from-[#1b3a69] to-[#0f2240]',
-  'from-[#1b694a] to-[#0a3d28]',
-  'from-[#69441b] to-[#3d2a0f]',
-  'from-[#691b4a] to-[#3d0f2a]',
-  'from-[#1b5669] to-[#0f3440]',
+  'from-secondary to-muted',
+  'from-accent/25 to-secondary',
+  'from-primary/15 to-secondary',
+  'from-muted to-secondary',
 ]
 
 // Genera un gradiente consistente basado en el nombre del curso.
@@ -115,18 +113,8 @@ export function CardCursoDocente({
         <div
           className={`relative h-28 bg-gradient-to-br ${obtenerGradiente(nombre)} p-5 flex items-end`}
         >
-          {/* Patrón de puntos decorativo */}
-          <div
-            className="absolute inset-0 opacity-10"
-            style={{
-              backgroundImage:
-                'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)',
-              backgroundSize: '20px 20px',
-            }}
-          />
-
           {/* Avatar con inicial */}
-          <div className="absolute top-4 left-5 flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 text-white text-lg font-bold shadow-lg">
+          <div className="absolute top-4 left-5 flex h-11 w-11 items-center justify-center rounded-full bg-card border border-border font-heading text-lg text-primary shadow-sm">
             {obtenerInicial(nombre)}
           </div>
 
@@ -134,13 +122,13 @@ export function CardCursoDocente({
           <div className="absolute top-4 right-5 flex items-center gap-1.5">
             <Badge
               variant="secondary"
-              className="text-[11px] font-mono bg-white/10 text-white/80 border-white/20 backdrop-blur-sm"
+              className="text-[11px] font-mono bg-card text-primary border-border shadow-sm"
             >
               {codigo}
             </Badge>
             <button
               onClick={copiarCodigo}
-              className="flex h-6 w-6 items-center justify-center rounded bg-white/10 border border-white/20 backdrop-blur-sm text-white/70 hover:text-white hover:bg-white/20 transition-colors"
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-card border border-border text-muted-foreground hover:text-primary shadow-sm transition-colors"
               title={copiado ? '¡Copiado!' : 'Copiar código'}
             >
               {copiado ? (
@@ -152,17 +140,17 @@ export function CardCursoDocente({
           </div>
 
           {/* Flecha indicadora */}
-          <ArrowRight className="absolute bottom-4 right-5 h-5 w-5 text-white/40 group-hover:text-white/80 group-hover:translate-x-0.5 transition-all duration-300" />
+          <ArrowRight className="absolute bottom-4 right-5 h-5 w-5 text-primary/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-300" />
         </div>
 
         {/* Contenido */}
         <CardContent className="p-5 space-y-4">
           {/* Nombre y descripción */}
           <div className="space-y-1">
-            <h3 className="font-semibold text-base line-clamp-1 group-hover:text-primary transition-colors">
+            <h3 className="font-heading text-lg line-clamp-1 group-hover:text-primary transition-colors">
               {nombre}
             </h3>
-            <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+            <p className="font-accent text-base text-primary/80 line-clamp-2 leading-relaxed">
               {descripcion || 'Sin descripción'}
             </p>
           </div>

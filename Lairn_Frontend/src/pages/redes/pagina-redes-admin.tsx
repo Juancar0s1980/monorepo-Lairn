@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react'
 import api from '@/services/api'
 import { Card, CardContent } from '@/components/ui/card'
 import { CardStat } from '@/components/card-stat'
+import { EncabezadoPagina } from '@/components/encabezado-pagina'
 import { Badge } from '@/components/ui/badge'
 import {
   Table,
@@ -165,12 +166,11 @@ export default function PaginaRedesAdmin() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">Redes Neuronales</h2>
-        <p className="text-muted-foreground">
-          Estado de los modelos de Knowledge Tracing y resultados de dominio del sistema
-        </p>
-      </div>
+      <EncabezadoPagina
+        eyebrow="Panel del administrador"
+        titulo="Redes Neuronales"
+        subtitulo="Estado de los modelos de Knowledge Tracing y resultados de dominio del sistema"
+      />
 
       {/* Stats generales */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

@@ -6,6 +6,7 @@
 
 import { useEffect, useState } from 'react'
 import api from '@/services/api'
+import { EncabezadoPagina } from '@/components/encabezado-pagina'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -92,14 +93,12 @@ export default function PaginaModeracionAdmin() {
 
   return (
     <div className="space-y-6">
-      {/* Encabezado */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Moderación</h2>
-          <p className="text-muted-foreground">
-            Reportes de cursos y exámenes enviados por docentes y estudiantes
-          </p>
-        </div>
+      <EncabezadoPagina
+        eyebrow="Panel del administrador"
+        titulo="Moderación"
+        subtitulo="Reportes de cursos y exámenes enviados por docentes y estudiantes"
+      />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
         <Select value={filtro} onValueChange={(v) => v && setFiltro(v)}>
           <SelectTrigger className="w-40">
             <SelectValue />

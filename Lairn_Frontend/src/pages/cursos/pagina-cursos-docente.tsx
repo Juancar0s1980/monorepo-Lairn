@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { BookOpen, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { CardCursoDocente } from '@/components/card-curso-docente'
+import { EncabezadoPagina } from '@/components/encabezado-pagina'
 import { ModalCrearCurso } from './componentes/modal-crear-curso'
 import type { ResumenCursoDocente } from '@/types/analitica'
 
@@ -121,19 +122,17 @@ export default function PaginaCursosDocente() {
 
   return (
     <div className="space-y-6">
-      {/* Encabezado de la página */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Mis Cursos</h2>
-          <p className="text-muted-foreground">
-            Cursos asignados a tu perfil docente
-          </p>
-        </div>
-        <Button onClick={() => setModalAbierta(true)}>
-          <Plus className="h-4 w-4" />
-          Crear Curso
-        </Button>
-      </div>
+      <EncabezadoPagina
+        eyebrow="Panel del docente"
+        titulo="Mis Cursos"
+        subtitulo="Cursos asignados a tu perfil docente"
+        accion={
+          <Button onClick={() => setModalAbierta(true)}>
+            <Plus className="h-4 w-4" />
+            Crear Curso
+          </Button>
+        }
+      />
 
       {/* Estado vacío */}
       {cursos.length === 0 && (

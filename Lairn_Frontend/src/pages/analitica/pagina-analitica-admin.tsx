@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react'
 import api from '@/services/api'
 import { Card, CardContent } from '@/components/ui/card'
 import { CardStat } from '@/components/card-stat'
+import { EncabezadoPagina } from '@/components/encabezado-pagina'
 import { Badge } from '@/components/ui/badge'
 import {
   Table,
@@ -104,12 +105,11 @@ export default function PaginaAnaliticaAdmin() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">Analítica</h2>
-        <p className="text-muted-foreground">
-          Métricas globales y rendimiento por curso de todo el sistema
-        </p>
-      </div>
+      <EncabezadoPagina
+        eyebrow="Panel del administrador"
+        titulo="Analítica"
+        subtitulo="Métricas globales y rendimiento por curso de todo el sistema"
+      />
 
       {/* Stats globales */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -143,7 +143,7 @@ export default function PaginaAnaliticaAdmin() {
 
       {/* Rendimiento por curso */}
       <div className="space-y-3">
-        <h3 className="text-lg font-semibold">Rendimiento por curso</h3>
+        <h3 className="font-heading text-lg">Rendimiento por curso</h3>
 
         {cursos.length === 0 && (
           <div className="flex flex-col items-center justify-center rounded-xl border border-dashed p-12 text-center">

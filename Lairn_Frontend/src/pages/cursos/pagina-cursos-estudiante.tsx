@@ -10,6 +10,7 @@ import { BookOpen, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { ModalInscribirCurso } from './componentes/modal-inscribir-curso'
 import { CardCursoEstudiante } from '@/components/card-curso-estudiante'
+import { EncabezadoPagina } from '@/components/encabezado-pagina'
 import type { AvanceCurso } from '@/types/analitica'
 import type { Examen } from '@/types/examen'
 
@@ -139,19 +140,17 @@ export default function PaginaCursosEstudiante() {
 
   return (
     <div className="space-y-6">
-      {/* Encabezado de la página con botón de inscripción */}
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-bold tracking-tight">Mis Cursos</h2>
-          <p className="text-muted-foreground">
-            Accede a los exámenes y revisa tu progreso
-          </p>
-        </div>
-        <Button onClick={() => setModalInscribir(true)}>
-          <Plus className="h-4 w-4" />
-          Inscribirme a un Curso
-        </Button>
-      </div>
+      <EncabezadoPagina
+        eyebrow="Panel del estudiante"
+        titulo="Mis Cursos"
+        subtitulo="Accede a los exámenes y revisa tu progreso"
+        accion={
+          <Button onClick={() => setModalInscribir(true)}>
+            <Plus className="h-4 w-4" />
+            Inscribirme a un Curso
+          </Button>
+        }
+      />
 
       {/* Estado vacío */}
       {cursos.length === 0 && (

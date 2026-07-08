@@ -12,6 +12,9 @@
   "dependencies": {
     "@base-ui/react": "^1.4.1",
     "@fontsource-variable/geist": "^5.2.8",
+    "@fontsource-variable/inter": "^5.2.8",
+    "@fontsource/gfs-neohellenic": "^5.2.7",
+    "@fontsource/ysabeau-infant": "^5.2.7",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-visually-hidden": "^1.2.4",
     "@tailwindcss/vite": "^4.2.4",

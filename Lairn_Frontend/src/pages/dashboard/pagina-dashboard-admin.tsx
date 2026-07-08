@@ -10,6 +10,7 @@ import api from '@/services/api'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { CardStat } from '@/components/card-stat'
+import { EncabezadoPagina } from '@/components/encabezado-pagina'
 import {
   AlertCircle,
   ArrowRight,
@@ -105,16 +106,16 @@ export default function PaginaDashboardAdmin() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Dashboard - Administrador</h2>
-          <p className="flex items-center gap-1.5 text-sm text-muted-foreground capitalize">
+      <EncabezadoPagina
+        eyebrow="Panel del administrador"
+        titulo="Dashboard"
+        subtitulo={
+          <span className="flex items-center gap-1.5 capitalize">
             <Calendar className="h-3.5 w-3.5" />
             {formatearFecha()}
-          </p>
-        </div>
-      </div>
+          </span>
+        }
+      />
 
       {/* Stats rápidas */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
