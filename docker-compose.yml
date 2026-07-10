@@ -19,6 +19,7 @@ services:
 
   web:
     build: ./backend_lairn
+    restart: always
     command: >
       sh -c "python manage.py migrate &&
              python manage.py runserver 0.0.0.0:8000"
@@ -40,6 +41,7 @@ services:
 
   ml:
     build: ./microservicio_ml
+    restart: always
     ports:
       # Host 8002 -> contenedor 8001 (8001 del host lo usa otro proyecto).
       # El backend le habla por la red interna con http://ml:8001, no se afecta.
@@ -55,6 +57,7 @@ services:
       context: ./Lairn_Frontend
       args:
         VITE_API_URL: /api
+    restart: always
     ports:
       - "5173:80"
     depends_on:
