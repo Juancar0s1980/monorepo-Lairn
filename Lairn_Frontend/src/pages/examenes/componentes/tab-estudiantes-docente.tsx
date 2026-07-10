@@ -80,7 +80,7 @@ export function TabEstudiantesDocente({
             <p className="mt-3 text-sm font-medium text-muted-foreground">
               No hay estudiantes en este curso
             </p>
-            <p className="text-xs text-muted-foreground/70">
+            <p className="text-xs text-muted-foreground">
               Los estudiantes aparecerán aquí cuando se inscriban
             </p>
           </div>

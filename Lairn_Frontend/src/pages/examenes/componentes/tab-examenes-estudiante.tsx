@@ -28,7 +28,7 @@ export function TabExamenesEstudiante({
           <p className="mt-3 text-sm font-medium text-muted-foreground">
             No hay exámenes disponibles
           </p>
-          <p className="text-xs text-muted-foreground/70">
+          <p className="text-xs text-muted-foreground">
             Tu docente aún no ha publicado exámenes en este curso
           </p>
         </div>

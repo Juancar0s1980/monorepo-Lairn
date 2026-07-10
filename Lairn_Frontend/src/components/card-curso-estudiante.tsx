@@ -119,7 +119,7 @@ export function CardCursoEstudiante({
             <h3 className="font-heading text-lg line-clamp-1 group-hover:text-primary transition-colors">
               {nombre}
             </h3>
-            <p className="font-accent text-base text-primary/80 line-clamp-2 leading-relaxed">
+            <p className="font-accent text-base text-[#325986] dark:text-primary/80 line-clamp-2 leading-relaxed">
               {descripcion || 'Sin descripción'}
             </p>
           </div>

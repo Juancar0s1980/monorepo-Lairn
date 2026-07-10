@@ -279,7 +279,7 @@ export function TabExamenesDocente({
           <p className="mt-3 text-sm font-medium text-muted-foreground">
             No hay exámenes en este curso
           </p>
-          <p className="text-xs text-muted-foreground/70">
+          <p className="text-xs text-muted-foreground">
             Crea un examen para comenzar
           </p>
         </div>

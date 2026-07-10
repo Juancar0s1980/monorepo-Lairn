@@ -159,7 +159,7 @@ export default function PaginaCursosEstudiante() {
           <p className="mt-3 text-sm font-medium text-muted-foreground">
             No estás inscrito en ningún curso
           </p>
-          <p className="text-xs text-muted-foreground/70">
+          <p className="text-xs text-muted-foreground">
             Usa el botón "Inscribirme a un Curso" con el código de tu docente
           </p>
         </div>

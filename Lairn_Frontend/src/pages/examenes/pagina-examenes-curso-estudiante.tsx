@@ -175,7 +175,7 @@ export default function PaginaExamenesCursoEstudiante() {
               <p className="mt-3 text-sm font-medium text-muted-foreground">
                 Aún no has rendido exámenes
               </p>
-              <p className="text-xs text-muted-foreground/70">
+              <p className="text-xs text-muted-foreground">
                 Los resultados aparecerán cuando rindas tu primer examen
               </p>
             </div>

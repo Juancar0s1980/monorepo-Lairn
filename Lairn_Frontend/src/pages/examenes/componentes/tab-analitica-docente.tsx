@@ -161,7 +161,7 @@ export function TabAnaliticaDocente({
             <p className="mt-3 text-sm font-medium text-muted-foreground">
               Aún no hay datos de rendimiento
             </p>
-            <p className="text-xs text-muted-foreground/70">
+            <p className="text-xs text-muted-foreground">
               Los datos aparecerán cuando los estudiantes rindan exámenes
             </p>
           </div>

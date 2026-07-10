@@ -167,7 +167,7 @@ export default function PaginaDashboardEstudiante() {
         <p className="mt-3 text-sm font-medium text-muted-foreground">
           {error}
         </p>
-        <p className="text-xs text-muted-foreground/70">
+        <p className="text-xs text-muted-foreground">
           Intenta recargar la página
         </p>
       </div>

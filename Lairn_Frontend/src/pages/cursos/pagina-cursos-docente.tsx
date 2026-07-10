@@ -141,7 +141,7 @@ export default function PaginaCursosDocente() {
           <p className="mt-3 text-sm font-medium text-muted-foreground">
             No tienes cursos asignados
           </p>
-          <p className="text-xs text-muted-foreground/70">
+          <p className="text-xs text-muted-foreground">
             Crea un curso con el botón de arriba para comenzar
           </p>
         </div>

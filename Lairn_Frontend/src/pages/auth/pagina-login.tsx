@@ -242,7 +242,7 @@ export default function PaginaLogin() {
                     <h3 className="text-sm font-semibold text-white/90">
                       {feature.titulo}
                     </h3>
-                    <p className="text-xs text-white/40 leading-relaxed mt-0.5 [@media(max-height:700px)]:hidden">
+                    <p className="text-xs text-white/75 leading-relaxed mt-0.5 [@media(max-height:700px)]:hidden">
                       {feature.descripcion}
                     </p>
                   </div>
@@ -251,7 +251,7 @@ export default function PaginaLogin() {
             </div>
 
             {/* Stats en la parte inferior */}
-            <div className="mt-[clamp(0.75rem,3vh,1.75rem)] flex items-center gap-5 text-xs text-white/30 [@media(max-height:640px)]:hidden">
+            <div className="mt-[clamp(0.75rem,3vh,1.75rem)] flex items-center gap-5 text-xs text-white/60 [@media(max-height:640px)]:hidden">
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
@@ -517,7 +517,7 @@ export default function PaginaLogin() {
               <button
                 type="button"
                 onClick={alternarModo}
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary/80 transition-colors group/link"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-[#325986] dark:hover:text-primary/80 transition-colors group/link"
               >
                 {esLogin ? "Crear una cuenta" : "Iniciar sesión"}
                 <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover/link:translate-x-0.5" />
