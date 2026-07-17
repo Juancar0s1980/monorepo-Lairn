@@ -4,7 +4,7 @@
 //   retroalimentacion, es_guiado, dificultad_inicial, modo, max_intentos, max_preguntas.
 // Envía POST a /examenes/examenes/ y notifica al componente padre tras crear.
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm, Controller, useWatch } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -33,9 +33,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { Loader2, FileText, Info } from 'lucide-react'
+import { Check, Loader2, FileText, Info, Target } from 'lucide-react'
 import { toast } from 'sonner'
-import type { Examen } from '@/types/examen'
+import type { Examen, ObjetivoCurso } from '@/types/examen'
 
 // Tooltip de ayuda para cada campo.
 function Ayuda({ texto }: { texto: string }) {
@@ -58,6 +58,7 @@ const esquemaCrearExamen = z.object({
   tiempo: z.string().min(1, 'El tiempo es obligatorio'),
   num_preguntas: z.string().min(1, 'El número de preguntas es obligatorio'),
   max_intentos: z.string().optional(),
+  fecha_limite: z.string().optional(),
   max_preguntas: z.string().optional(),
   dificultad_inicial: z.enum(['1', '2', '3']),
   modo: z.enum(['fijo', 'maestria']),
@@ -105,6 +106,38 @@ export function ModalCrearExamen({
 }: ModalCrearExamenProps) {
   const [enviando, setEnviando] = useState(false)
 
+  // Objetivos del curso disponibles para anclar el examen (selección opcional).
+  const [objetivosCurso, setObjetivosCurso] = useState<ObjetivoCurso[]>([])
+  const [objetivosSeleccionados, setObjetivosSeleccionados] = useState<Set<number>>(new Set())
+
+  // Carga los objetivos del curso al abrir la modal (para poblar el selector).
+  useEffect(() => {
+    if (!abierta) return
+    const controlador = new AbortController()
+    const cargar = async () => {
+      try {
+        const { data } = await api.get<ObjetivoCurso[]>(
+          `/examenes/cursos/${cursoId}/objetivos/`,
+          { signal: controlador.signal }
+        )
+        setObjetivosCurso(data)
+      } catch {
+        // Sin objetivos disponibles: el selector simplemente no se muestra.
+      }
+    }
+    cargar()
+    return () => controlador.abort()
+  }, [abierta, cursoId])
+
+  const alternarObjetivo = (id: number) => {
+    setObjetivosSeleccionados((prev) => {
+      const nuevo = new Set(prev)
+      if (nuevo.has(id)) nuevo.delete(id)
+      else nuevo.add(id)
+      return nuevo
+    })
+  }
+
   const {
     register,
     handleSubmit,
@@ -119,6 +152,7 @@ export function ModalCrearExamen({
       tiempo: '',
       num_preguntas: '',
       max_intentos: '',
+      fecha_limite: '',
       max_preguntas: '',
       dificultad_inicial: '1',
       modo: 'fijo',
@@ -145,14 +179,17 @@ export function ModalCrearExamen({
         dificultad_inicial: Number(datos.dificultad_inicial),
         modo: datos.modo,
         max_intentos: datos.max_intentos ? Number(datos.max_intentos) : 1,
+        fecha_limite: datos.fecha_limite ? new Date(datos.fecha_limite).toISOString() : null,
         max_preguntas:
           datos.modo === 'maestria' && datos.max_preguntas
             ? Number(datos.max_preguntas)
             : 0,
+        objetivos: Array.from(objetivosSeleccionados),
       })
       toast.success('Examen creado exitosamente')
       onExamenCreado(data)
       reset()
+      setObjetivosSeleccionados(new Set())
       onCerrar()
     } catch {
       toast.error('No se pudo crear el examen')
@@ -164,6 +201,7 @@ export function ModalCrearExamen({
   // Resetea el formulario al cerrar.
   const manejarCerrar = () => {
     reset()
+    setObjetivosSeleccionados(new Set())
     onCerrar()
   }
 
@@ -171,7 +209,7 @@ export function ModalCrearExamen({
 
   return (
     <Dialog open={abierta} onOpenChange={(open) => !open && manejarCerrar()}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         {/* Header con icono y fondo diferenciado */}
         <DialogHeader className="-mx-4 -mt-4 rounded-t-xl border-b bg-primary/5 p-4">
           <div className="flex items-center gap-3">
@@ -223,6 +261,47 @@ export function ModalCrearExamen({
               </p>
             )}
           </div>
+
+          {/* Selector de objetivos del curso (solo si el curso tiene objetivos) */}
+          {objetivosCurso.length > 0 && (
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-1.5">
+                <Label>Objetivos a evaluar</Label>
+                <Ayuda texto="La IA generará cada pregunta evaluando exactamente uno de los objetivos marcados. Si no marcas ninguno, usará solo el tema." />
+              </div>
+              <div className="max-h-36 space-y-1.5 overflow-y-auto rounded-lg border p-2">
+                {objetivosCurso.map((objetivo) => (
+                  <button
+                    key={objetivo.id}
+                    type="button"
+                    onClick={() => alternarObjetivo(objetivo.id)}
+                    className={`flex w-full items-start gap-2 rounded-md p-2 text-left text-xs transition-colors ${
+                      objetivosSeleccionados.has(objetivo.id)
+                        ? 'bg-primary/5 text-foreground'
+                        : 'text-muted-foreground hover:bg-muted/50'
+                    }`}
+                  >
+                    <span
+                      className={`mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border ${
+                        objetivosSeleccionados.has(objetivo.id)
+                          ? 'border-primary bg-primary text-primary-foreground'
+                          : 'border-input'
+                      }`}
+                    >
+                      {objetivosSeleccionados.has(objetivo.id) && <Check className="h-2.5 w-2.5" />}
+                    </span>
+                    {objetivo.descripcion}
+                  </button>
+                ))}
+              </div>
+              {objetivosSeleccionados.size > 0 && (
+                <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Target className="h-3 w-3" />
+                  {objetivosSeleccionados.size} objetivo(s) anclado(s) a este examen
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Fila: tiempo y número de preguntas */}
           <div className="grid grid-cols-2 gap-4">
@@ -341,6 +420,19 @@ export function ModalCrearExamen({
                 {errors.max_intentos.message}
               </p>
             )}
+          </div>
+
+          {/* Campo: fecha_limite */}
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5">
+              <Label htmlFor="fecha_limite">Fecha límite</Label>
+              <Ayuda texto="Después de esta fecha ya no se pueden empezar intentos nuevos. Vacío = sin límite. Un examen ya en curso no se ve afectado." />
+            </div>
+            <Input
+              id="fecha_limite"
+              type="datetime-local"
+              {...register('fecha_limite')}
+            />
           </div>
 
           {/* Campo: max_preguntas (solo en modo maestria) */}

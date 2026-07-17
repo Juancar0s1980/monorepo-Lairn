@@ -45,6 +45,7 @@ import {
   Pencil,
   Trash2,
   Loader2,
+  CalendarClock,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { ModalCrearExamen } from './modal-crear-examen'
@@ -60,6 +61,7 @@ const esquemaEditarExamen = z
     tiempo: z.string().min(1, 'El tiempo es obligatorio'),
     num_preguntas: z.string().min(1, 'El número de preguntas es obligatorio'),
     max_intentos: z.string().optional(),
+    fecha_limite: z.string().optional(),
     max_preguntas: z.string().optional(),
     dificultad_inicial: z.enum(['1', '2', '3']),
     modo: z.enum(['fijo', 'maestria']),
@@ -98,6 +100,14 @@ const esquemaEditarExamen = z
   )
 
 type DatosEditarExamen = z.infer<typeof esquemaEditarExamen>
+
+// Convierte un ISO (respuesta del backend) al formato que espera <input type="datetime-local">.
+function isoAFechaLocal(iso: string | null | undefined): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
 
 interface TabExamenesDocenteProps {
   examenes: Examen[]
@@ -140,6 +150,7 @@ export function TabExamenesDocente({
       tiempo: '',
       num_preguntas: '',
       max_intentos: '',
+      fecha_limite: '',
       max_preguntas: '',
       dificultad_inicial: '1',
       modo: 'fijo',
@@ -164,6 +175,7 @@ export function TabExamenesDocente({
         tiempo: String(data.tiempo ?? ''),
         num_preguntas: String(data.num_preguntas ?? ''),
         max_intentos: String(data.max_intentos ?? ''),
+        fecha_limite: isoAFechaLocal(data.fecha_limite),
         max_preguntas: String(data.max_preguntas ?? ''),
         dificultad_inicial: String(data.dificultad_inicial ?? 1) as '1' | '2' | '3',
         modo: (data.modo ?? 'fijo') as 'fijo' | 'maestria',
@@ -198,6 +210,7 @@ export function TabExamenesDocente({
           datos.max_intentos && datos.max_intentos !== ''
             ? Number(datos.max_intentos)
             : 0,
+        fecha_limite: datos.fecha_limite ? new Date(datos.fecha_limite).toISOString() : null,
         max_preguntas:
           datos.modo === 'maestria' && datos.max_preguntas
             ? Number(datos.max_preguntas)
@@ -371,6 +384,15 @@ export function TabExamenesDocente({
                           : `${examen.max_intentos} intentos`}
                       </span>
                     </div>
+                    {examen.fecha_limite && (
+                      <>
+                        <div className="h-3 w-px bg-border" />
+                        <div className="flex items-center gap-1">
+                          <CalendarClock className="h-3.5 w-3.5" />
+                          <span>{new Date(examen.fecha_limite).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Espacio para alinear con el footer */}
@@ -400,7 +422,7 @@ export function TabExamenesDocente({
           }
         }}
       >
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Examen</DialogTitle>
             <DialogDescription>
@@ -527,6 +549,18 @@ export function TabExamenesDocente({
                     {errors.max_intentos.message}
                   </p>
                 )}
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Label htmlFor="fecha_limite">Fecha límite</Label>
+                  <p className="text-xs text-muted-foreground">vacío = sin límite</p>
+                </div>
+                <Input
+                  id="fecha_limite"
+                  type="datetime-local"
+                  {...register('fecha_limite')}
+                />
               </div>
 
               {modoSeleccionado === 'maestria' && (

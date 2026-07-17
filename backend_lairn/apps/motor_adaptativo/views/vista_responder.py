@@ -233,7 +233,8 @@ class VistaResponder(APIView):
             sesion.dificultad_actual,
             historial,
             guiado=sesion.examen.es_guiado,
-            modelo_conocimiento=modelo.conceptos
+            modelo_conocimiento=modelo.conceptos,
+            objetivos=list(sesion.examen.objetivos.values_list('descripcion', flat=True))
         )
         sesion.pregunta_actual = siguiente
         sesion.save()

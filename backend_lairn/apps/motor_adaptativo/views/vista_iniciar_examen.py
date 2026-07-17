@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import serializers as drf_serializers
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -39,6 +40,7 @@ from apps.motor_adaptativo.services.agente_ia import generar_pregunta
                 'intento_actual': drf_serializers.IntegerField(),
                 'intentos_completados': drf_serializers.IntegerField(),
                 'max_intentos': drf_serializers.IntegerField(help_text='0 = ilimitado'),
+                'fecha_limite': drf_serializers.DateTimeField(allow_null=True),
                 'tiempo_total_minutos': drf_serializers.IntegerField(),
                 'dificultad_actual': drf_serializers.IntegerField(help_text='1=Fácil 2=Medio 3=Difícil'),
                 'pregunta_numero': drf_serializers.IntegerField(),
@@ -89,6 +91,15 @@ class VistaIniciarExamen(APIView):
         ).first()
 
         if not sesion:
+            # La fecha límite solo bloquea EMPEZAR un intento nuevo; uno ya en
+            # progreso (el `if not sesion` de arriba) se puede seguir respondiendo
+            # aunque la fecha ya haya pasado — no tiene sentido dejar a un
+            # estudiante a mitad de examen cuando el reloj del servidor cruza la hora.
+            if examen.fecha_limite and timezone.now() > examen.fecha_limite:
+                return Response(
+                    {'detalle': 'La fecha límite para presentar este examen ya pasó.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             sesion = SesionExamen.objects.create(
                 estudiante=request.user,
                 examen=examen,
@@ -107,7 +118,8 @@ class VistaIniciarExamen(APIView):
                 sesion.dificultad_actual,
                 [],
                 guiado=examen.es_guiado,
-                modelo_conocimiento=modelo_conceptos
+                modelo_conocimiento=modelo_conceptos,
+                objetivos=list(examen.objetivos.values_list('descripcion', flat=True))
             )
             sesion.pregunta_actual = pregunta
             sesion.save()
@@ -118,6 +130,7 @@ class VistaIniciarExamen(APIView):
             'intento_actual': sesion.intento,
             'intentos_completados': intentos_completados,
             'max_intentos': examen.max_intentos,
+            'fecha_limite': examen.fecha_limite,
             'tiempo_total_minutos': examen.tiempo,
             'dificultad_actual': sesion.dificultad_actual,
             'pregunta_numero': sesion.preguntas_respondidas + 1,

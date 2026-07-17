@@ -18,11 +18,13 @@ import { EncabezadoGradiente } from '@/components/encabezado-gradiente'
 import { TabExamenesEstudiante } from './componentes/tab-examenes-estudiante'
 import { TabResumenEstudiante } from './componentes/tab-resumen-estudiante'
 import { TabIntentoEstudiante } from './componentes/tab-intento-estudiante'
+import { TabLaboratoriosEstudiante } from './componentes/tab-laboratorios-estudiante'
 import {
   FileText,
   Loader2,
   BarChart3,
   Hash,
+  Code2,
 } from 'lucide-react'
 import type { MiConocimiento } from '@/types/analitica'
 
@@ -136,6 +138,10 @@ export default function PaginaExamenesCursoEstudiante() {
             <Hash className="h-4 w-4" />
             Por examen
           </TabsTrigger>
+          <TabsTrigger value="laboratorios">
+            <Code2 className="h-4 w-4" />
+            Laboratorios
+          </TabsTrigger>
         </TabsList>
 
         {/* Tab de Exámenes */}
@@ -180,6 +186,11 @@ export default function PaginaExamenesCursoEstudiante() {
               </p>
             </div>
           )}
+        </TabsContent>
+
+        {/* Tab de Laboratorios */}
+        <TabsContent value="laboratorios">
+          <TabLaboratoriosEstudiante cursoId={id} />
         </TabsContent>
       </Tabs>
     </div>

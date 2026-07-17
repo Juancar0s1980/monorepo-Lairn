@@ -16,3 +16,4 @@ from .serializador_curso import SerializadorCrearCurso, SerializadorCurso, Seria
 from .serializador_inscripcion import SerializadorInscribirse, SerializadorInscripcion
 from .serializador_examen import SerializadorCrearExamen, SerializadorExamen
 from .serializador_estudiante import SerializadorEstudianteCurso
+from .serializador_objetivo import SerializadorObjetivo

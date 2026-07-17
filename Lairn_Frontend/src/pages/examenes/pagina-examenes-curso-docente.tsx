@@ -26,8 +26,10 @@ import {
   Loader2,
   MoreVertical,
   Pencil,
+  Target,
   Trash2,
   BookOpen,
+  Code2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { EncabezadoGradiente } from '@/components/encabezado-gradiente'
@@ -53,6 +55,8 @@ import {
 import { TabExamenesDocente } from './componentes/tab-examenes-docente'
 import { TabEstudiantesDocente } from './componentes/tab-estudiantes-docente'
 import { TabAnaliticaDocente } from './componentes/tab-analitica-docente'
+import { TabObjetivosDocente } from './componentes/tab-objetivos-docente'
+import { TabLaboratoriosDocente } from './componentes/tab-laboratorios-docente'
 import type { Examen } from '@/types/examen'
 import type { ResumenCursoDocente, PatronesCurso } from '@/types/analitica'
 
@@ -458,6 +462,14 @@ export default function PaginaExamenesCursoDocente() {
             <FileText className="h-4 w-4" />
             Exámenes
           </TabsTrigger>
+          <TabsTrigger value="objetivos">
+            <Target className="h-4 w-4" />
+            Objetivos
+          </TabsTrigger>
+          <TabsTrigger value="laboratorios">
+            <Code2 className="h-4 w-4" />
+            Laboratorios
+          </TabsTrigger>
           <TabsTrigger value="analitica">
             <BarChart3 className="h-4 w-4" />
             Analítica
@@ -480,6 +492,16 @@ export default function PaginaExamenesCursoDocente() {
           />
         </TabsContent>
 
+        {/* Tab de Objetivos */}
+        <TabsContent value="objetivos">
+          <TabObjetivosDocente cursoId={id!} />
+        </TabsContent>
+
+        {/* Tab de Laboratorios */}
+        <TabsContent value="laboratorios">
+          <TabLaboratoriosDocente cursoId={id!} />
+        </TabsContent>
+
         {/* Tab de Estudiantes */}
         <TabsContent value="estudiantes">
           <TabEstudiantesDocente
@@ -497,6 +519,7 @@ export default function PaginaExamenesCursoDocente() {
             patrones={patrones}
             cargandoPatrones={cargandoPatrones}
             cargandoResumen={cargandoResumen}
+            cursoId={id!}
           />
         </TabsContent>
       </Tabs>

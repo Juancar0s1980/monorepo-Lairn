@@ -41,6 +41,8 @@ const PaginaExamenesAdmin = lazy(() => import('@/pages/examenes/pagina-examenes-
 const PaginaAnaliticaAdmin = lazy(() => import('@/pages/analitica/pagina-analitica-admin'))
 const PaginaModeracionAdmin = lazy(() => import('@/pages/moderacion/pagina-moderacion-admin'))
 const PaginaRedesAdmin = lazy(() => import('@/pages/redes/pagina-redes-admin'))
+const PaginaEditorLaboratorioDocente = lazy(() => import('@/pages/laboratorios/pagina-editor-laboratorio-docente'))
+const PaginaResolverLaboratorioEstudiante = lazy(() => import('@/pages/laboratorios/pagina-resolver-laboratorio-estudiante'))
 
 // Fallback de carga mostrado mientras se descarga el chunk de una página.
 function CargandoPagina() {
@@ -76,6 +78,15 @@ function PaginaExamenesCursoPorRol() {
 
   if (rol === ROLES.DOCENTE) return <PaginaExamenesCursoDocente />
   if (rol === ROLES.ESTUDIANTE) return <PaginaExamenesCursoEstudiante />
+  return <Navigate to="/" replace />
+}
+
+// Selector por rol para un Laboratorio: Docente edita preguntas, Estudiante las resuelve.
+function PaginaLaboratorioPorRol() {
+  const { rol } = useAuth()
+
+  if (rol === ROLES.DOCENTE) return <PaginaEditorLaboratorioDocente />
+  if (rol === ROLES.ESTUDIANTE) return <PaginaResolverLaboratorioEstudiante />
   return <Navigate to="/" replace />
 }
 
@@ -164,6 +175,14 @@ function RutasPrivadas() {
             element={
               <RutaProtegida rolesPermitidos={[ROLES.DOCENTE, ROLES.ESTUDIANTE]}>
                 <PaginaExamenesCursoPorRol />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/mis-cursos/:cursoId/laboratorios/:laboratorioId"
+            element={
+              <RutaProtegida rolesPermitidos={[ROLES.DOCENTE, ROLES.ESTUDIANTE]}>
+                <PaginaLaboratorioPorRol />
               </RutaProtegida>
             }
           />

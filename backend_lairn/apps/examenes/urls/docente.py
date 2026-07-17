@@ -18,6 +18,9 @@ from apps.examenes.views import (
     VistaCrearExamen,
     VistaDetalleExamen,
     VistaEstudiantesCurso,
+    VistaObjetivosCurso,
+    VistaDetalleObjetivo,
+    VistaSugerirObjetivos,
 )
 
 urlpatterns = [
@@ -39,4 +42,13 @@ urlpatterns = [
 
     # Eliminación de la inscripción de un estudiante específico en un curso del docente.
     path('cursos/<int:curso_id>/estudiantes/<int:estudiante_id>/', VistaEstudiantesCurso.as_view(), name='eliminar_estudiante'),
+
+    # Objetivos de aprendizaje del curso: listado (GET) y creación (POST).
+    path('cursos/<int:curso_id>/objetivos/', VistaObjetivosCurso.as_view(), name='objetivos_curso'),
+
+    # Sugerencias de objetivos con IA (no guarda; el docente curata y crea con el POST normal).
+    path('cursos/<int:curso_id>/objetivos/sugerir/', VistaSugerirObjetivos.as_view(), name='sugerir_objetivos'),
+
+    # Detalle de un objetivo: edición (PATCH) y eliminación (DELETE).
+    path('cursos/<int:curso_id>/objetivos/<int:objetivo_id>/', VistaDetalleObjetivo.as_view(), name='detalle_objetivo'),
 ]

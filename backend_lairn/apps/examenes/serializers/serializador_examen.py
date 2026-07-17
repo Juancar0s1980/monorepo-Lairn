@@ -13,18 +13,24 @@ Define dos contratos distintos según el consumidor:
 """
 
 from rest_framework import serializers
-from apps.examenes.models import Examen
+from apps.examenes.models import Examen, ObjetivoCurso
 from apps.motor_adaptativo.models import SesionExamen
 
 
 # Contrato usado por el docente para crear, listar y editar exámenes; incluye validaciones de coherencia.
 class SerializadorCrearExamen(serializers.ModelSerializer):
+    objetivos = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=ObjetivoCurso.objects.all(),
+        required=False,
+    )
+
     class Meta:
         model = Examen
         fields = [
             'id', 'curso', 'titulo', 'tema', 'tiempo', 'num_preguntas',
-            'retroalimentacion', 'dificultad_inicial', 'max_intentos', 'es_guiado',
-            'modo', 'max_preguntas', 'creado_en'
+            'retroalimentacion', 'dificultad_inicial', 'max_intentos', 'fecha_limite', 'es_guiado',
+            'modo', 'max_preguntas', 'objetivos', 'creado_en'
         ]
         read_only_fields = ['creado_en']
 
@@ -34,7 +40,7 @@ class SerializadorCrearExamen(serializers.ModelSerializer):
             raise serializers.ValidationError('max_intentos debe ser entre 0 (ilimitado) y 10.')
         return value
 
-    # Aplica las reglas de negocio que dependen del conjunto completo de campos: coherencia maestría/num_preguntas y bloqueo de mutaciones cuando hay sesiones activas.
+    # Aplica las reglas de negocio que dependen del conjunto completo de campos: coherencia maestría/num_preguntas, objetivos del mismo curso y bloqueo de mutaciones cuando hay sesiones activas.
     def validate(self, data):
         if data.get('modo') == 'maestria':
             num = data.get('num_preguntas', 1)
@@ -42,6 +48,17 @@ class SerializadorCrearExamen(serializers.ModelSerializer):
             if max_p < num:
                 raise serializers.ValidationError(
                     'max_preguntas debe ser mayor o igual a num_preguntas en modo maestría.'
+                )
+
+        # Los objetivos anclados deben pertenecer al mismo curso del examen; si no,
+        # el prompt del generador recibiría objetivos de otro temario.
+        objetivos = data.get('objetivos')
+        if objetivos:
+            curso = data.get('curso') or (self.instance.curso if self.instance else None)
+            ajenos = [o for o in objetivos if o.curso_id != curso.id]
+            if ajenos:
+                raise serializers.ValidationError(
+                    'Todos los objetivos deben pertenecer al curso del examen.'
                 )
 
         # En operaciones de update (self.instance != None) se bloquea cualquier cambio si hay
@@ -62,6 +79,6 @@ class SerializadorExamen(serializers.ModelSerializer):
         model = Examen
         fields = [
             'id', 'titulo', 'tema', 'tiempo', 'num_preguntas',
-            'retroalimentacion', 'dificultad_inicial', 'max_intentos', 'es_guiado',
+            'retroalimentacion', 'dificultad_inicial', 'max_intentos', 'fecha_limite', 'es_guiado',
             'modo', 'max_preguntas', 'creado_en'
         ]

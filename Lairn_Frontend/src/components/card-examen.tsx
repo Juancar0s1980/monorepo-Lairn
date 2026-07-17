@@ -46,6 +46,7 @@ import {
   SignalLow,
   SignalMedium,
   SignalHigh,
+  CalendarClock,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -59,6 +60,8 @@ export interface CardExamenProps {
   numPreguntas: number
   tiempo: number
   maxIntentos: number
+  /** Fecha límite para INICIAR un intento nuevo (uno ya en curso no se ve afectado). */
+  fechaLimite?: string | null
   /** Última nota obtenida por el estudiante en este examen. */
   ultimaNota?: number
   /** Número de intentos que ya usó el estudiante. */
@@ -106,6 +109,7 @@ export function CardExamen({
   numPreguntas,
   tiempo,
   maxIntentos,
+  fechaLimite,
   ultimaNota,
   intentosUsados = 0,
 }: CardExamenProps) {
@@ -137,6 +141,7 @@ export function CardExamen({
     ? true
     : intentosUsados < maxIntentos
   const aprobado = ultimaNota !== undefined && ultimaNota >= 3.0
+  const fechaLimiteSuperada = !!fechaLimite && new Date(fechaLimite) < new Date()
 
   // Determina el estado del botón.
   const renderBoton = () => {
@@ -216,6 +221,15 @@ export function CardExamen({
                 : `${maxIntentos - intentosUsados}/${maxIntentos}`}
             </span>
           </div>
+          {fechaLimite && (
+            <>
+              <div className="h-3 w-px bg-border" />
+              <div className={`flex items-center gap-1 ${fechaLimiteSuperada ? 'text-destructive' : ''}`}>
+                <CalendarClock className="h-3.5 w-3.5" />
+                <span>{new Date(fechaLimite).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })}</span>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Estado de intentos previos — altura fija para alinear botones */}

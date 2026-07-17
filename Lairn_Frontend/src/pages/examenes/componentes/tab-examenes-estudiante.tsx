@@ -50,6 +50,7 @@ export function TabExamenesEstudiante({
                 numPreguntas={examen.num_preguntas}
                 tiempo={examen.tiempo}
                 maxIntentos={examen.max_intentos}
+                fechaLimite={examen.fecha_limite}
                 ultimaNota={estado?.ultimaNota}
                 intentosUsados={estado?.intentosUsados}
               />

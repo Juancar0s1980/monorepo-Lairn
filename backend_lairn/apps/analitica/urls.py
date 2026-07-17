@@ -13,6 +13,9 @@ from apps.analitica.views import (
     VistaCursosAdmin,
     VistaRedesModelos,
     VistaRedesResultados,
+    VistaCumplimientoObjetivos,
+    VistaEvolucionCurso,
+    VistaMejoraIntentos,
 )
 
 urlpatterns = [
@@ -26,6 +29,9 @@ urlpatterns = [
     path('curso/<int:curso_id>/resumen/', VistaResumenCurso.as_view(), name='resumen_curso'),
     path('curso/<int:curso_id>/patrones/', VistaPatronesCurso.as_view(), name='patrones_curso'),
     path('curso/<int:curso_id>/resultados/', VistaResultadosCurso.as_view(), name='resultados_curso'),
+    path('curso/<int:curso_id>/objetivos/', VistaCumplimientoObjetivos.as_view(), name='cumplimiento_objetivos'),
+    path('curso/<int:curso_id>/evolucion/', VistaEvolucionCurso.as_view(), name='evolucion_curso'),
+    path('curso/<int:curso_id>/mejora-intentos/', VistaMejoraIntentos.as_view(), name='mejora_intentos'),
 
     # Docente — por estudiante
     path('curso/<int:curso_id>/estudiante/<int:estudiante_id>/', VistaAvanceEstudiante.as_view(), name='avance_estudiante'),

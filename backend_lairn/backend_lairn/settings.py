@@ -31,6 +31,10 @@ OPENAI_API_KEY = config("OPENAI_API_KEY")
 # En docker-compose se inyecta como http://ml:8001
 ML_SERVICE_URL = config("ML_SERVICE_URL", default="")
 
+# URL del microservicio ejecutor (sandbox de codigo para preguntas de laboratorio).
+# En docker-compose se inyecta como http://ejecutor:8003
+EJECUTOR_SERVICE_URL = config("EJECUTOR_SERVICE_URL", default="")
+
 
 # Application definition
 
@@ -46,6 +50,7 @@ INSTALLED_APPS = [
     'apps.motor_adaptativo.apps.MotorAdaptativoConfig',
     'apps.examenes.apps.ExamenesConfig',
     'apps.moderacion.apps.ModeracionConfig',
+    'apps.laboratorios.apps.LaboratoriosConfig',
 ]
 
 MIDDLEWARE = [

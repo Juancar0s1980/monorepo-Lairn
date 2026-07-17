@@ -138,6 +138,48 @@ export interface ResumenCursoDocente {
   estudiantes: EstudianteResumen[]
 }
 
+// --- Tipos para endpoint de evolución del curso ---
+
+export interface PuntoEvolucion {
+  periodo: string
+  nota_promedio: number
+  total_resultados: number
+}
+
+// GET /analitica/curso/{curso_id}/evolucion/
+export interface EvolucionCurso {
+  curso: string
+  puntos: PuntoEvolucion[]
+  tendencia: 'mejorando' | 'empeorando' | 'estable' | null
+  mensaje?: string
+}
+
+// --- Tipos para endpoint de mejora entre intentos ---
+
+export interface IntentoStats {
+  intento: number
+  total_resultados: number
+  nota_promedio: number
+  porcentaje_aprobados: number
+}
+
+export interface ExamenMejoraIntentos {
+  examen_id: number
+  titulo: string
+  max_intentos: number
+  intentos: IntentoStats[]
+  estudiantes_con_reintento: number
+  estudiantes_mejoraron: number
+  estudiantes_empeoraron: number
+  mejora_promedio: number | null
+}
+
+// GET /analitica/curso/{curso_id}/mejora-intentos/
+export interface MejoraIntentosCurso {
+  curso: string
+  examenes: ExamenMejoraIntentos[]
+}
+
 // --- Tipos para endpoints de administración (Administrador) ---
 
 // GET /analitica/administracion/resumen/

@@ -23,6 +23,7 @@ urlpatterns = [
     path('api/motor-adaptativo/', include('apps.motor_adaptativo.urls')),
     path('api/examenes/', include('apps.examenes.urls')),
     path('api/moderacion/', include('apps.moderacion.urls')),
+    path('api/laboratorios/', include('apps.laboratorios.urls')),
 
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),

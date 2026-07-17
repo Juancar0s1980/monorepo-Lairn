@@ -43,9 +43,19 @@ class Examen(models.Model):
     retroalimentacion = models.BooleanField(default=False)
     dificultad_inicial = models.IntegerField(choices=DIFICULTAD_CHOICES, default=2)
     max_intentos = models.IntegerField(default=1, help_text='Número de intentos permitidos. 0 = ilimitado')
+    fecha_limite = models.DateTimeField(
+        null=True, blank=True,
+        help_text='Fecha límite para INICIAR un intento nuevo. Vacío = sin límite. No afecta un intento ya en progreso.'
+    )
     es_guiado = models.BooleanField(default=False, help_text='Si True, el agente genera una explicación antes de cada pregunta')
     modo = models.CharField(max_length=10, choices=MODO_CHOICES, default='fijo', help_text='Fijo: termina en num_preguntas. Maestría: termina cuando el estudiante domina los conceptos')
     max_preguntas = models.IntegerField(default=20, help_text='Solo en modo maestría. Tope máximo para evitar examen infinito')
+    objetivos = models.ManyToManyField(
+        'ObjetivoCurso',
+        blank=True,
+        related_name='examenes',
+        help_text='Objetivos del curso que este examen evalúa. Si hay, la IA ancla cada pregunta a uno de ellos'
+    )
     creado_en = models.DateTimeField(auto_now_add=True)
 
     class Meta:

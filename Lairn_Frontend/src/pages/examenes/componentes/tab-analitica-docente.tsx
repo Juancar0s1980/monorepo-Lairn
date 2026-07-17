@@ -32,6 +32,9 @@ import {
   Zap,
 } from "lucide-react";
 import { colorNota, colorAprobados, coloresIntentos } from "../utilidades";
+import { CumplimientoObjetivosDocente } from "./cumplimiento-objetivos-docente";
+import { EvolucionCursoDocente } from "./evolucion-curso-docente";
+import { MejoraIntentosDocente } from "./mejora-intentos-docente";
 import {
   ChartContainer,
   ChartTooltip,
@@ -63,6 +66,7 @@ interface TabAnaliticaDocenteProps {
   patrones: PatronesCurso | null;
   cargandoPatrones: boolean;
   cargandoResumen: boolean;
+  cursoId: string;
 }
 
 export function TabAnaliticaDocente({
@@ -70,6 +74,7 @@ export function TabAnaliticaDocente({
   patrones,
   cargandoPatrones,
   cargandoResumen,
+  cursoId,
 }: TabAnaliticaDocenteProps) {
   const [estudianteDetalle, setEstudianteDetalle] =
     useState<EstudianteResumen | null>(null);
@@ -114,6 +119,12 @@ export function TabAnaliticaDocente({
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       )}
+
+      {/* Cumplimiento de objetivos por examen (se auto-oculta si no hay exámenes anclados) */}
+      {!cargandoResumen && <CumplimientoObjetivosDocente cursoId={cursoId} />}
+
+      {/* Evolución de la nota en el tiempo (se auto-oculta con menos de 2 semanas de datos) */}
+      {!cargandoResumen && <EvolucionCursoDocente cursoId={cursoId} />}
 
       {/* Resumen del curso */}
       {!cargandoResumen && resumen && (
@@ -385,6 +396,9 @@ export function TabAnaliticaDocente({
                 </Card>
               </div>
             </div>
+
+            {/* Mejora entre intentos (se auto-oculta si ningún examen tuvo reintentos reales) */}
+            <MejoraIntentosDocente cursoId={cursoId} />
 
             {/* Sección 1: Rendimiento por Estudiante */}
             {!cargandoResumen && resumen && resumen.estudiantes.length > 0 && (

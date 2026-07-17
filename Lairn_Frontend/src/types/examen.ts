@@ -1,5 +1,13 @@
 // Tipos compartidos para exámenes, sesiones y preguntas del motor adaptativo.
 
+// Objetivo de aprendizaje de un curso (los exámenes pueden anclarse a un subconjunto).
+export interface ObjetivoCurso {
+  id: number
+  descripcion: string
+  orden: number
+  creado_en: string
+}
+
 // Modelo de examen tal como lo devuelve el backend.
 export interface Examen {
   id: number
@@ -11,9 +19,12 @@ export interface Examen {
   retroalimentacion: boolean
   dificultad_inicial: number
   max_intentos: number
+  fecha_limite: string | null
   es_guiado: boolean
   modo: string
   max_preguntas: number
+  // IDs de los objetivos del curso que este examen evalúa (puede venir vacío).
+  objetivos?: number[]
   creado_en: string
 }
 
@@ -25,6 +36,7 @@ export interface SesionExamen {
   intento_actual: number
   intentos_completados: number
   max_intentos: number
+  fecha_limite?: string | null
   dificultad_actual: number
   pregunta: string
   pregunta_numero: number

@@ -33,6 +33,8 @@ services:
       - DB_PORT=5432
       # URL interna del microservicio ML dentro de la red de docker
       - ML_SERVICE_URL=http://ml:8001
+      # URL interna del microservicio ejecutor (sandbox de codigo)
+      - EJECUTOR_SERVICE_URL=http://ejecutor:8003
     ports:
       - "8000:8000"
     depends_on:
@@ -51,6 +53,22 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # Ejecuta codigo de estudiantes (Python/SQL) en contenedores efimeros
+  # aislados. Es el UNICO servicio con acceso al socket de Docker del host;
+  # no se publica ningun puerto al host a proposito (solo se le habla desde
+  # la red interna de docker compose, igual que a "ml").
+  ejecutor:
+    build: ./microservicio_ejecutor
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8003/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   frontend:
     build:
