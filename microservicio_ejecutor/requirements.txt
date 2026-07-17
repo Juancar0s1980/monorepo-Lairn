@@ -1,0 +1,5 @@
+# Dependencias del microservicio ejecutor (sandbox de codigo).
+fastapi>=0.115
+uvicorn>=0.30
+pydantic>=2.0
+docker>=7.1
