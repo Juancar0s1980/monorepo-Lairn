@@ -22,8 +22,8 @@ salida esperada. Si la IA se equivoca en la lógica, la ejecución lo revela
 """
 
 import json
-import openai
-from django.conf import settings
+
+from backend_lairn.ia_client import obtener_cliente_ia
 
 MAX_INTENTOS = 2
 
@@ -74,7 +74,7 @@ def generar_borrador_pregunta(objetivo_texto: str, tema_curso: str) -> dict:
     La IA elige el lenguaje más apropiado para ese objetivo. Devuelve el
     borrador SIN VERIFICAR (ver `verificador_casos.verificar_casos`).
     """
-    client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+    client, modelo, kwarg_max_tokens = obtener_cliente_ia()
     mensaje = f"""Eres un diseñador de ejercicios de programación para un curso universitario.
 Genera UN ejercicio de código que evalúe exactamente el siguiente objetivo de aprendizaje.
 Tu única salida debe ser un objeto JSON válido, sin texto adicional.
@@ -108,12 +108,12 @@ Formato de salida (únicamente estas claves):
     ultimo_error = None
     for _ in range(MAX_INTENTOS):
         respuesta = client.chat.completions.create(
-            model='gpt-5.5',
+            model=modelo,
             # Margen amplio: los tokens de razonamiento de gpt-5.5 consumen este
             # presupuesto y un tope corto devuelve contenido vacío.
-            max_completion_tokens=3000,
             response_format={'type': 'json_object'},
             messages=[{'role': 'user', 'content': mensaje}],
+            **{kwarg_max_tokens: 3000},
         )
         try:
             datos = json.loads(respuesta.choices[0].message.content)
@@ -136,7 +136,7 @@ def generar_laboratorio_libre(enunciado_docente: str, lenguaje: str, cantidad_pr
         raise ValueError(f'Lenguaje no soportado: {lenguaje}')
 
     cantidad_preguntas = max(1, min(cantidad_preguntas, 8))
-    client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+    client, modelo, kwarg_max_tokens = obtener_cliente_ia()
 
     mensaje = f"""Eres un diseñador de laboratorios de programación para un curso universitario.
 El docente describió qué laboratorio quiere. Genera el laboratorio COMPLETO: un título, unas
@@ -175,11 +175,11 @@ Formato de salida (únicamente estas claves):
     ultimo_error = None
     for _ in range(MAX_INTENTOS):
         respuesta = client.chat.completions.create(
-            model='gpt-5.5',
+            model=modelo,
             # Varias preguntas completas en una sola respuesta: presupuesto generoso.
-            max_completion_tokens=3000 + 1500 * cantidad_preguntas,
             response_format={'type': 'json_object'},
             messages=[{'role': 'user', 'content': mensaje}],
+            **{kwarg_max_tokens: 3000 + 1500 * cantidad_preguntas},
         )
         try:
             datos = json.loads(respuesta.choices[0].message.content)

@@ -1,6 +1,6 @@
 import json
-import openai
-from django.conf import settings
+
+from backend_lairn.ia_client import obtener_cliente_ia
 
 
 DIFICULTAD_TEXTO = {
@@ -60,7 +60,7 @@ def generar_pregunta(
     modelo_conocimiento: dict = None,
     objetivos: list = None
 ) -> dict:
-    client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+    client, modelo, kwarg_max_tokens = obtener_cliente_ia()
 
     historial_texto = ''
     if historial:
@@ -119,10 +119,10 @@ Responde SOLO con este JSON (sin texto adicional):
     ultimo_error = None
     for _ in range(2):
         respuesta = client.chat.completions.create(
-            model='gpt-5.5',
-            max_completion_tokens=max_tokens,
+            model=modelo,
             response_format={'type': 'json_object'},
-            messages=[{'role': 'user', 'content': mensaje}]
+            messages=[{'role': 'user', 'content': mensaje}],
+            **{kwarg_max_tokens: max_tokens},
         )
         try:
             datos = json.loads(respuesta.choices[0].message.content)
@@ -180,7 +180,7 @@ def sugerir_objetivos(
     (estructura, tipos y longitud) y se reintenta una vez si viene mal; si
     falla de nuevo se lanza ValueError con mensaje claro para los logs.
     """
-    client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+    client, modelo, kwarg_max_tokens = obtener_cliente_ia()
 
     existentes = existentes or []
     bloque_existentes = ''
@@ -212,12 +212,12 @@ Formato de salida (únicamente esta clave):
     ultimo_error = None
     for _ in range(2):
         respuesta = client.chat.completions.create(
-            model='gpt-5.5',
+            model=modelo,
             # Margen amplio: los tokens de razonamiento de gpt-5.5 consumen este
             # presupuesto y un tope corto devuelve contenido vacío (ver generar_pregunta).
-            max_completion_tokens=2000,
             response_format={'type': 'json_object'},
-            messages=[{'role': 'user', 'content': mensaje}]
+            messages=[{'role': 'user', 'content': mensaje}],
+            **{kwarg_max_tokens: 2000},
         )
         try:
             datos = json.loads(respuesta.choices[0].message.content)

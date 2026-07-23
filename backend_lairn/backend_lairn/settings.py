@@ -25,7 +25,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
 ALLOWED_HOSTS = [config("ALLOWED_HOSTS")]
-OPENAI_API_KEY = config("OPENAI_API_KEY")
+OPENAI_API_KEY = config("OPENAI_API_KEY", default="")
+XAI_API_KEY = config("XAI_API_KEY", default="")
+GROQ_API_KEY = config("GROQ_API_KEY", default="")
+
+# Proveedor de IA generativa usado por los servicios de agente_ia/agente_codigo.
+# "openai", "grok" o "groq" (default "openai"). Cambiar de proveedor no
+# requiere tocar codigo.
+AI_PROVIDER = config("AI_PROVIDER", default="openai")
 
 # URL del microservicio ML (Knowledge Tracing). Vacio = desactivado (usa heuristico).
 # En docker-compose se inyecta como http://ml:8001
