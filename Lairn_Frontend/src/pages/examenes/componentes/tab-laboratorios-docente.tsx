@@ -38,8 +38,8 @@ import { OPCIONES_LENGUAJE } from '@/types/laboratorio'
 import type {
   Laboratorio,
   LenguajeCodigo,
-  PreguntaCodigoDocente,
-  PreguntaCodigoPayload,
+  PreguntaDocente,
+  PreguntaPayload,
   PreguntaLibreSugerida,
   RespuestaSugerirLaboratorioLibre,
 } from '@/types/laboratorio'
@@ -181,17 +181,18 @@ export function TabLaboratoriosDocente({ cursoId }: TabLaboratoriosDocenteProps)
       )
 
       for (const pregunta of elegidas as PreguntaLibreSugerida[]) {
-        const payload: PreguntaCodigoPayload = {
+        const payload: PreguntaPayload = {
+          tipo: 'codigo',
           enunciado: pregunta.enunciado,
-          lenguaje: pregunta.lenguaje,
-          codigo_inicial: pregunta.codigo_inicial,
-          setup_sql: pregunta.setup_sql,
+          lenguaje: pregunta.lenguaje ?? 'python',
+          codigo_inicial: pregunta.codigo_inicial ?? '',
+          setup_sql: pregunta.setup_sql ?? '',
           criterios_ia: pregunta.criterios_ia,
           puntos: pregunta.puntos,
           orden: pregunta.orden,
           casos_test: pregunta.casos_test,
         }
-        await api.post<PreguntaCodigoDocente>(
+        await api.post<PreguntaDocente>(
           `/laboratorios/laboratorios/${laboratorioCreado.id}/preguntas/`,
           payload
         )

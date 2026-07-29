@@ -11,6 +11,8 @@ export interface TemaEstudio {
   estado: EstadoTemaEstudio
   creado_en: string
   aprobado_en: string | null
+  // Id del Laboratorio de práctica vinculado a este tema, o null si aún no se generó uno.
+  laboratorio_practica_id: number | null
 }
 
 export type RolMensajeTemaEstudio = 'estudiante' | 'ia'

@@ -1,11 +1,16 @@
-// Resolución de un laboratorio de código, para el rol Estudiante.
+// Resolución de un laboratorio, para el rol Estudiante.
 //
-// Layout tipo "juez en línea" (LeetCode): enunciado + ejemplos a la
-// izquierda, editor de código + resultado de ejecución a la derecha.
-// El botón "Ejecutar" corre el código contra los casos de test PÚBLICOS en
-// el sandbox del microservicio ejecutor — no guarda nada (ver
-// vista_ejecutar_codigo.py). El envío calificado con tests ocultos + IA
-// es la Fase 4, todavía no implementada.
+// Dos modos según `pregunta.tipo`:
+// - "codigo": layout tipo "juez en línea" (LeetCode) — enunciado + ejemplos
+//   a la izquierda, editor de código + resultado de ejecución a la derecha.
+//   "Ejecutar" corre el código contra los casos de test PÚBLICOS en el
+//   sandbox del microservicio ejecutor — no guarda nada (ver
+//   vista_ejecutar_codigo.py). "Enviar" corre contra todos los casos y
+//   guarda un intento.
+// - "respuesta_libre": sin "Ejecutar" (no aplica a un ensayo) ni casos de
+//   test — un textarea libre y "Enviar" califica con IA contra la rúbrica
+//   del docente, devolviendo puntaje + retroalimentación (ver
+//   agente_evaluador.evaluar_respuesta_libre en backend).
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
@@ -14,8 +19,9 @@ import { EncabezadoGradiente } from '@/components/encabezado-gradiente'
 import { EditorCodigo } from '@/components/editor-codigo'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
-import { CheckCircle2, Clock, Code2, Loader2, Play, Send, XCircle } from 'lucide-react'
+import { CheckCircle2, Clock, Code2, Loader2, NotebookPen, Play, Send, XCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import type { LaboratorioDetalleEstudiante, MisEntregas, ResultadoEjecucion, ResultadoEnvio } from '@/types/laboratorio'
 
@@ -31,8 +37,8 @@ export default function PaginaResolverLaboratorioEstudiante() {
   const [cargando, setCargando] = useState(true)
   const [indiceActivo, setIndiceActivo] = useState(0)
 
-  // Código por pregunta (id -> código actual), para no perder progreso al cambiar de pregunta.
-  const [codigos, setCodigos] = useState<Record<number, string>>({})
+  // Respuesta por pregunta (id -> texto actual: código o ensayo), para no perder progreso al cambiar de pregunta.
+  const [respuestas, setRespuestas] = useState<Record<number, string>>({})
   const [ejecutando, setEjecutando] = useState(false)
   const [resultado, setResultado] = useState<ResultadoEjecucion | null>(null)
 
@@ -52,7 +58,7 @@ export default function PaginaResolverLaboratorioEstudiante() {
         setLaboratorio(data)
         const inicial: Record<number, string> = {}
         for (const p of data.preguntas) inicial[p.id] = p.codigo_inicial
-        setCodigos(inicial)
+        setRespuestas(inicial)
       } catch {
         if (!controlador.signal.aborted) toast.error('No se pudo cargar el laboratorio')
       } finally {
@@ -98,6 +104,7 @@ export default function PaginaResolverLaboratorioEstudiante() {
   }
 
   const pregunta = laboratorio.preguntas[indiceActivo]
+  const esCodigo = pregunta.tipo === 'codigo'
 
   const ejecutar = async () => {
     setEjecutando(true)
@@ -106,7 +113,7 @@ export default function PaginaResolverLaboratorioEstudiante() {
     try {
       const { data } = await api.post<ResultadoEjecucion>(
         `/laboratorios/preguntas/${pregunta.id}/ejecutar/`,
-        { codigo: codigos[pregunta.id] ?? '' }
+        { codigo: respuestas[pregunta.id] ?? '' }
       )
       setResultado(data)
     } catch (err: unknown) {
@@ -124,7 +131,7 @@ export default function PaginaResolverLaboratorioEstudiante() {
     try {
       const { data } = await api.post<ResultadoEnvio>(
         `/laboratorios/preguntas/${pregunta.id}/enviar/`,
-        { codigo: codigos[pregunta.id] ?? '' }
+        { respuesta: respuestas[pregunta.id] ?? '' }
       )
       setResultadoEnvio(data)
       setMisEntregas((prev) =>
@@ -135,15 +142,20 @@ export default function PaginaResolverLaboratorioEstudiante() {
               intentos_restantes: data.intentos_restantes,
               entregas: [...prev.entregas, {
                 id: data.id, intento: data.intento, casos_pasados: data.casos_pasados,
-                casos_totales: data.casos_totales, puntaje: data.puntaje, enviado_en: data.enviado_en,
+                casos_totales: data.casos_totales, puntaje: data.puntaje,
+                retroalimentacion: data.retroalimentacion, enviado_en: data.enviado_en,
               }],
             }
           : prev
       )
-      toast.success(`Enviado: ${data.puntaje}% (${data.casos_pasados}/${data.casos_totales} casos)`)
+      toast.success(
+        esCodigo
+          ? `Enviado: ${data.puntaje}% (${data.casos_pasados}/${data.casos_totales} casos)`
+          : `Enviado: ${data.puntaje}%`
+      )
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { detalle?: string } } }
-      toast.error(axiosErr.response?.data?.detalle ?? 'No se pudo enviar el código')
+      toast.error(axiosErr.response?.data?.detalle ?? 'No se pudo enviar la respuesta')
     } finally {
       setEnviando(false)
     }
@@ -162,7 +174,7 @@ export default function PaginaResolverLaboratorioEstudiante() {
     <div className="space-y-4">
       <EncabezadoGradiente
         titulo={laboratorio.titulo}
-        subtitulo={laboratorio.instrucciones || 'Resuelve las preguntas de código'}
+        subtitulo={laboratorio.instrucciones || 'Resuelve las preguntas del laboratorio'}
         volverA={`/mis-cursos/${cursoId}/examenes`}
         volverTexto="Volver al curso"
       />
@@ -188,52 +200,56 @@ export default function PaginaResolverLaboratorioEstudiante() {
       )}
 
       <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
-        {/* Panel izquierdo: enunciado + ejemplos */}
+        {/* Panel izquierdo: enunciado + ejemplos (solo código) */}
         <Card>
           <CardContent className="space-y-4 pt-5">
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="uppercase">{pregunta.lenguaje}</Badge>
+              <Badge variant="outline" className="uppercase">
+                {esCodigo ? pregunta.lenguaje : 'Respuesta abierta'}
+              </Badge>
               <Badge variant="secondary">{pregunta.puntos} pts</Badge>
             </div>
             <p className="whitespace-pre-wrap text-sm">{pregunta.enunciado}</p>
 
-            {pregunta.lenguaje === 'sql' && pregunta.setup_sql && (
+            {esCodigo && pregunta.lenguaje === 'sql' && pregunta.setup_sql && (
               <div className="space-y-1.5">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Esquema</p>
                 <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-xs">{pregunta.setup_sql}</pre>
               </div>
             )}
 
-            <div className="space-y-2">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ejemplos</p>
-              {pregunta.casos_test.length === 0 ? (
-                <p className="text-xs text-muted-foreground">Esta pregunta no tiene ejemplos públicos.</p>
-              ) : (
-                pregunta.casos_test.map((caso, i) => (
-                  <div key={caso.id} className="space-y-1 rounded-lg border p-3 text-xs">
-                    <p className="font-semibold text-muted-foreground">Ejemplo {i + 1}</p>
-                    {caso.entrada && (
+            {esCodigo && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ejemplos</p>
+                {pregunta.casos_test.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Esta pregunta no tiene ejemplos públicos.</p>
+                ) : (
+                  pregunta.casos_test.map((caso, i) => (
+                    <div key={caso.id} className="space-y-1 rounded-lg border p-3 text-xs">
+                      <p className="font-semibold text-muted-foreground">Ejemplo {i + 1}</p>
+                      {caso.entrada && (
+                        <p>
+                          <span className="text-muted-foreground">Entrada: </span>
+                          <code className="rounded bg-muted px-1 py-0.5">{caso.entrada}</code>
+                        </p>
+                      )}
                       <p>
-                        <span className="text-muted-foreground">Entrada: </span>
-                        <code className="rounded bg-muted px-1 py-0.5">{caso.entrada}</code>
+                        <span className="text-muted-foreground">Salida esperada: </span>
+                        <code className="rounded bg-muted px-1 py-0.5">{caso.salida_esperada}</code>
                       </p>
-                    )}
-                    <p>
-                      <span className="text-muted-foreground">Salida esperada: </span>
-                      <code className="rounded bg-muted px-1 py-0.5">{caso.salida_esperada}</code>
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Panel derecho: editor + ejecutar + resultado */}
+        {/* Panel derecho: editor/textarea + ejecutar (solo código) + resultado */}
         <Card>
           <CardContent className="space-y-3 pt-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tu solución</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tu respuesta</p>
               <div className="flex items-center gap-2">
                 {misEntregas && (
                   <Badge variant="outline" className="text-xs">
@@ -242,10 +258,12 @@ export default function PaginaResolverLaboratorioEstudiante() {
                       : `${misEntregas.intentos_usados} intento(s)`}
                   </Badge>
                 )}
-                <Button size="sm" variant="outline" onClick={ejecutar} disabled={ejecutando}>
-                  {ejecutando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
-                  Ejecutar
-                </Button>
+                {esCodigo && (
+                  <Button size="sm" variant="outline" onClick={ejecutar} disabled={ejecutando}>
+                    {ejecutando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
+                    Ejecutar
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   onClick={enviar}
@@ -272,15 +290,24 @@ export default function PaginaResolverLaboratorioEstudiante() {
               </p>
             )}
 
-            <EditorCodigo
-              lenguaje={pregunta.lenguaje}
-              valor={codigos[pregunta.id] ?? ''}
-              onChange={(valor) => setCodigos((prev) => ({ ...prev, [pregunta.id]: valor }))}
-              altura="280px"
-            />
+            {esCodigo ? (
+              <EditorCodigo
+                lenguaje={pregunta.lenguaje}
+                valor={respuestas[pregunta.id] ?? ''}
+                onChange={(valor) => setRespuestas((prev) => ({ ...prev, [pregunta.id]: valor }))}
+                altura="280px"
+              />
+            ) : (
+              <Textarea
+                rows={12}
+                placeholder="Escribe tu respuesta aquí..."
+                value={respuestas[pregunta.id] ?? ''}
+                onChange={(e) => setRespuestas((prev) => ({ ...prev, [pregunta.id]: e.target.value }))}
+              />
+            )}
 
-            {/* Resultado de la ejecución */}
-            {resultado && (
+            {/* Resultado de la ejecución (solo código) */}
+            {esCodigo && resultado && (
               <div className="space-y-2 border-t pt-3">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -320,10 +347,19 @@ export default function PaginaResolverLaboratorioEstudiante() {
                     Resultado del envío (intento {resultadoEnvio.intento})
                   </p>
                   <Badge variant={resultadoEnvio.puntaje === 100 ? 'default' : 'destructive'}>
-                    {resultadoEnvio.puntaje}% · {resultadoEnvio.casos_pasados}/{resultadoEnvio.casos_totales} casos
+                    {resultadoEnvio.puntaje}%
+                    {esCodigo && ` · ${resultadoEnvio.casos_pasados}/${resultadoEnvio.casos_totales} casos`}
                   </Badge>
                 </div>
-                {resultadoEnvio.resultados.map((r, i) => (
+
+                {!esCodigo && resultadoEnvio.retroalimentacion && (
+                  <div className="flex items-start gap-2 rounded-lg border p-3 text-xs">
+                    <NotebookPen className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                    <p className="text-muted-foreground">{resultadoEnvio.retroalimentacion}</p>
+                  </div>
+                )}
+
+                {esCodigo && resultadoEnvio.resultados.map((r, i) => (
                   <div key={r.caso_test_id} className="space-y-1 rounded-lg border p-3 text-xs">
                     <div className="flex items-center gap-1.5 font-medium">
                       {r.paso ? (

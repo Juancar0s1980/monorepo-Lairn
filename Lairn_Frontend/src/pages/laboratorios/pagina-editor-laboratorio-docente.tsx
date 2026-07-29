@@ -1,9 +1,11 @@
-// Editor de un laboratorio de código, para el rol Docente.
+// Editor de un laboratorio, para el rol Docente.
 //
 // Layout tipo "juez en línea": lista de preguntas a la izquierda, formulario
-// de edición (enunciado, código inicial/setup SQL, casos de test) a la
-// derecha. Cada pregunta se guarda completa (incluidos sus casos de test)
-// con un único POST/PATCH — ver serializador_pregunta_codigo.py en backend.
+// de edición a la derecha. Cada pregunta puede ser de tipo "código" (con
+// lenguaje, código inicial/setup SQL y casos de test — igual que siempre) o
+// "respuesta abierta" (ensayo/texto libre para cualquier carrera, calificado
+// por IA contra una rúbrica obligatoria) — ver serializador_pregunta.py en
+// backend. Cada pregunta se guarda completa con un único POST/PATCH.
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
@@ -33,17 +35,18 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { BarChart3, Check, Code2, ListChecks, Loader2, Plus, Settings, Sparkles, Trash2, Users } from 'lucide-react'
+import { BarChart3, Check, Code2, ListChecks, Loader2, NotebookPen, Plus, Settings, Sparkles, Trash2, Users } from 'lucide-react'
 import { toast } from 'sonner'
-import { OPCIONES_LENGUAJE } from '@/types/laboratorio'
+import { OPCIONES_LENGUAJE, OPCIONES_TIPO_PREGUNTA } from '@/types/laboratorio'
 import type {
   LaboratorioDetalleDocente,
-  PreguntaCodigoDocente,
-  PreguntaCodigoPayload,
-  PreguntaCodigoSugerida,
-  RespuestaSugerirPreguntasCodigo,
+  PreguntaDocente,
+  PreguntaPayload,
+  PreguntaSugerida,
+  RespuestaSugerirPreguntas,
   AnaliticaLaboratorio,
   LenguajeCodigo,
+  TipoPregunta,
 } from '@/types/laboratorio'
 
 // Caso de test en edición local: `clave` es solo para el key de React y el
@@ -60,7 +63,7 @@ interface CasoEdicion {
 let contadorClaves = 0
 const nuevaClave = () => ++contadorClaves
 
-function casosDesdeApi(pregunta: PreguntaCodigoDocente): CasoEdicion[] {
+function casosDesdeApi(pregunta: PreguntaDocente): CasoEdicion[] {
   return pregunta.casos_test.map((c) => ({ ...c, clave: nuevaClave() }))
 }
 
@@ -78,6 +81,7 @@ function fechaLocalAIso(local: string): string | null {
 }
 
 const FORM_VACIO = {
+  tipo: 'codigo' as TipoPregunta,
   enunciado: '',
   lenguaje: 'python' as LenguajeCodigo,
   codigo_inicial: '',
@@ -98,10 +102,12 @@ export default function PaginaEditorLaboratorioDocente() {
   const [casos, setCasos] = useState<CasoEdicion[]>([])
   const [guardando, setGuardando] = useState(false)
 
-  // Sugerencias de IA (una por objetivo del curso, con casos de test ya verificados en el sandbox).
+  // Sugerencias de IA (una por objetivo del curso). Si tipoSugerencia='codigo', los
+  // casos de test ya vienen verificados en el sandbox; si es 'respuesta_libre', no hay casos.
+  const [tipoSugerencia, setTipoSugerencia] = useState<TipoPregunta>('codigo')
   const [modalIaAbierto, setModalIaAbierto] = useState(false)
   const [generandoIa, setGenerandoIa] = useState(false)
-  const [sugerencias, setSugerencias] = useState<PreguntaCodigoSugerida[]>([])
+  const [sugerencias, setSugerencias] = useState<PreguntaSugerida[]>([])
   const [objetivosSinGenerar, setObjetivosSinGenerar] = useState<string[]>([])
   const [seleccionadas, setSeleccionadas] = useState<Set<number>>(new Set())
   const [aceptandoIa, setAceptandoIa] = useState(false)
@@ -137,9 +143,10 @@ export default function PaginaEditorLaboratorioDocente() {
     return () => controlador.abort()
   }, [laboratorioId])
 
-  const seleccionarPregunta = (pregunta: PreguntaCodigoDocente) => {
+  const seleccionarPregunta = (pregunta: PreguntaDocente) => {
     setSeleccion(pregunta.id)
     setForm({
+      tipo: pregunta.tipo,
       enunciado: pregunta.enunciado,
       lenguaje: pregunta.lenguaje,
       codigo_inicial: pregunta.codigo_inicial,
@@ -178,8 +185,13 @@ export default function PaginaEditorLaboratorioDocente() {
       toast.error('El enunciado es obligatorio')
       return
     }
+    if (form.tipo === 'respuesta_libre' && !form.criterios_ia.trim()) {
+      toast.error('La rúbrica de evaluación es obligatoria para preguntas de respuesta abierta')
+      return
+    }
 
-    const payload: PreguntaCodigoPayload = {
+    const payload: PreguntaPayload = {
+      tipo: form.tipo,
       enunciado,
       lenguaje: form.lenguaje,
       codigo_inicial: form.codigo_inicial,
@@ -187,18 +199,21 @@ export default function PaginaEditorLaboratorioDocente() {
       criterios_ia: form.criterios_ia,
       puntos: form.puntos,
       orden: laboratorio.preguntas.length,
-      casos_test: casos.map(({ entrada, salida_esperada, es_publico, orden }) => ({
-        entrada,
-        salida_esperada,
-        es_publico,
-        orden,
-      })),
+      casos_test:
+        form.tipo === 'codigo'
+          ? casos.map(({ entrada, salida_esperada, es_publico, orden }) => ({
+              entrada,
+              salida_esperada,
+              es_publico,
+              orden,
+            }))
+          : [],
     }
 
     setGuardando(true)
     try {
       if (seleccion === 'nueva') {
-        const { data } = await api.post<PreguntaCodigoDocente>(
+        const { data } = await api.post<PreguntaDocente>(
           `/laboratorios/laboratorios/${laboratorioId}/preguntas/`,
           payload
         )
@@ -206,7 +221,7 @@ export default function PaginaEditorLaboratorioDocente() {
         seleccionarPregunta(data)
         toast.success('Pregunta creada')
       } else if (seleccion !== null) {
-        const { data } = await api.patch<PreguntaCodigoDocente>(
+        const { data } = await api.patch<PreguntaDocente>(
           `/laboratorios/preguntas/${seleccion}/`,
           payload
         )
@@ -237,16 +252,16 @@ export default function PaginaEditorLaboratorioDocente() {
     }
   }
 
-  // Pide a la IA un borrador por cada objetivo del curso. Tarda (genera con IA
-  // y luego ejecuta la solución de referencia de cada caso en el sandbox para
-  // verificar la salida real), así que puede tomar uno o dos minutos.
+  // Pide a la IA un borrador por cada objetivo del curso, del tipo elegido en `tipoSugerencia`.
+  // Si es código, tarda más (genera con IA y luego ejecuta la solución de referencia de cada
+  // caso en el sandbox para verificar la salida real), puede tomar uno o dos minutos.
   const pedirSugerenciasIa = async () => {
     if (!laboratorioId) return
     setGenerandoIa(true)
     try {
-      const { data } = await api.post<RespuestaSugerirPreguntasCodigo>(
+      const { data } = await api.post<RespuestaSugerirPreguntas>(
         `/laboratorios/laboratorios/${laboratorioId}/preguntas/sugerir-ia/`,
-        {},
+        { tipo: tipoSugerencia },
         { timeout: 300000 }
       )
       setSugerencias(data.preguntas)
@@ -280,19 +295,20 @@ export default function PaginaEditorLaboratorioDocente() {
     }
     setAceptandoIa(true)
     try {
-      const creadas: PreguntaCodigoDocente[] = []
+      const creadas: PreguntaDocente[] = []
       for (const sugerencia of elegidas) {
-        const payload: PreguntaCodigoPayload = {
+        const payload: PreguntaPayload = {
+          tipo: sugerencia.tipo,
           enunciado: sugerencia.enunciado,
-          lenguaje: sugerencia.lenguaje,
-          codigo_inicial: sugerencia.codigo_inicial,
-          setup_sql: sugerencia.setup_sql,
+          lenguaje: sugerencia.lenguaje ?? 'python',
+          codigo_inicial: sugerencia.codigo_inicial ?? '',
+          setup_sql: sugerencia.setup_sql ?? '',
           criterios_ia: sugerencia.criterios_ia,
           puntos: sugerencia.puntos,
           orden: laboratorio.preguntas.length + creadas.length,
           casos_test: sugerencia.casos_test,
         }
-        const { data } = await api.post<PreguntaCodigoDocente>(
+        const { data } = await api.post<PreguntaDocente>(
           `/laboratorios/laboratorios/${laboratorioId}/preguntas/`,
           payload
         )
@@ -359,7 +375,7 @@ export default function PaginaEditorLaboratorioDocente() {
     <div className="space-y-6">
       <EncabezadoGradiente
         titulo={laboratorio.titulo}
-        subtitulo="Editor de laboratorio de código"
+        subtitulo="Editor de laboratorio"
         volverA={`/mis-cursos/${cursoId}/examenes`}
         volverTexto="Volver al curso"
         badgeTexto={`${laboratorio.preguntas.length} pregunta(s)`}
@@ -382,12 +398,26 @@ export default function PaginaEditorLaboratorioDocente() {
         </TabsList>
 
         <TabsContent value="preguntas" className="space-y-4 pt-4">
-      <div className="flex justify-end">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+        <Select
+          items={OPCIONES_TIPO_PREGUNTA}
+          value={tipoSugerencia}
+          onValueChange={(valor) => valor && setTipoSugerencia(valor as TipoPregunta)}
+        >
+          <SelectTrigger className="w-full sm:w-44">
+            <SelectValue placeholder="Tipo" />
+          </SelectTrigger>
+          <SelectContent>
+            {OPCIONES_TIPO_PREGUNTA.map((o) => (
+              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Button variant="outline" onClick={pedirSugerenciasIa} disabled={generandoIa}>
           {generandoIa ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Generando y verificando... (puede tardar 1-2 min)
+              Generando{tipoSugerencia === 'codigo' ? ' y verificando... (puede tardar 1-2 min)' : '...'}
             </>
           ) : (
             <>
@@ -419,7 +449,7 @@ export default function PaginaEditorLaboratorioDocente() {
                 <span className="shrink-0 font-semibold text-muted-foreground">{indice + 1}.</span>
                 <span className="flex-1 line-clamp-2">{pregunta.enunciado}</span>
                 <Badge variant="outline" className="shrink-0 text-[10px] uppercase">
-                  {pregunta.lenguaje}
+                  {pregunta.tipo === 'codigo' ? pregunta.lenguaje : 'Ensayo'}
                 </Badge>
               </button>
             ))}
@@ -442,35 +472,62 @@ export default function PaginaEditorLaboratorioDocente() {
           <Card>
             <CardContent className="space-y-4 pt-5">
               <div className="space-y-1.5">
+                <Label>Tipo de pregunta</Label>
+                <div className="flex gap-2">
+                  {OPCIONES_TIPO_PREGUNTA.map((o) => (
+                    <button
+                      key={o.value}
+                      type="button"
+                      onClick={() => setForm((f) => ({ ...f, tipo: o.value }))}
+                      className={`flex-1 rounded-lg border px-3 py-2 text-sm transition-colors ${
+                        form.tipo === o.value
+                          ? 'border-primary bg-primary/5 text-foreground'
+                          : 'border-border text-muted-foreground hover:bg-muted'
+                      }`}
+                    >
+                      {o.value === 'codigo' ? <Code2 className="mr-1.5 inline h-3.5 w-3.5" /> : <NotebookPen className="mr-1.5 inline h-3.5 w-3.5" />}
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
                 <Label>Enunciado *</Label>
                 <Textarea
                   rows={3}
-                  placeholder="Ej: Lee un entero por stdin e imprime su doble."
+                  placeholder={
+                    form.tipo === 'codigo'
+                      ? 'Ej: Lee un entero por stdin e imprime su doble.'
+                      : 'Ej: Analiza el siguiente caso y argumenta si hubo incumplimiento contractual.'
+                  }
                   value={form.enunciado}
                   onChange={(e) => setForm((f) => ({ ...f, enunciado: e.target.value }))}
                 />
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label>Lenguaje</Label>
-                  <Select
-                    items={OPCIONES_LENGUAJE}
-                    value={form.lenguaje}
-                    onValueChange={(valor) =>
-                      valor && setForm((f) => ({ ...f, lenguaje: valor as LenguajeCodigo }))
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Seleccionar" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {OPCIONES_LENGUAJE.map((o) => (
-                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {form.tipo === 'codigo' && (
+                  <div className="space-y-1.5">
+                    <Label>Lenguaje</Label>
+                    <Select
+                      items={OPCIONES_LENGUAJE}
+                      value={form.lenguaje}
+                      onValueChange={(valor) =>
+                        valor && setForm((f) => ({ ...f, lenguaje: valor as LenguajeCodigo }))
+                      }
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Seleccionar" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {OPCIONES_LENGUAJE.map((o) => (
+                          <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div className="space-y-1.5">
                   <Label>Puntos</Label>
                   <Input
@@ -482,103 +539,115 @@ export default function PaginaEditorLaboratorioDocente() {
                 </div>
               </div>
 
-              {form.lenguaje !== 'sql' ? (
-                <div className="space-y-1.5">
-                  <Label>
-                    Código inicial (plantilla que ve el estudiante)
-                    {form.lenguaje === 'java' && ' — la clase pública debe llamarse "Main"'}
-                  </Label>
-                  <EditorCodigo
-                    lenguaje={form.lenguaje}
-                    valor={form.codigo_inicial}
-                    onChange={(valor) => setForm((f) => ({ ...f, codigo_inicial: valor }))}
-                    altura="180px"
-                  />
-                </div>
-              ) : (
-                <div className="space-y-1.5">
-                  <Label>Setup SQL (esquema + datos semilla, corre antes de la consulta del estudiante)</Label>
-                  <EditorCodigo
-                    lenguaje="sql"
-                    valor={form.setup_sql}
-                    onChange={(valor) => setForm((f) => ({ ...f, setup_sql: valor }))}
-                    altura="180px"
-                  />
-                </div>
+              {form.tipo === 'codigo' && (
+                form.lenguaje !== 'sql' ? (
+                  <div className="space-y-1.5">
+                    <Label>
+                      Código inicial (plantilla que ve el estudiante)
+                      {form.lenguaje === 'java' && ' — la clase pública debe llamarse "Main"'}
+                    </Label>
+                    <EditorCodigo
+                      lenguaje={form.lenguaje}
+                      valor={form.codigo_inicial}
+                      onChange={(valor) => setForm((f) => ({ ...f, codigo_inicial: valor }))}
+                      altura="180px"
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <Label>Setup SQL (esquema + datos semilla, corre antes de la consulta del estudiante)</Label>
+                    <EditorCodigo
+                      lenguaje="sql"
+                      valor={form.setup_sql}
+                      onChange={(valor) => setForm((f) => ({ ...f, setup_sql: valor }))}
+                      altura="180px"
+                    />
+                  </div>
+                )
               )}
 
               <div className="space-y-1.5">
-                <Label>Criterios para evaluación por IA (opcional)</Label>
+                <Label>
+                  {form.tipo === 'respuesta_libre'
+                    ? 'Rúbrica de evaluación * (la IA calificará la respuesta del estudiante contra esto)'
+                    : 'Criterios para evaluación por IA (opcional)'}
+                </Label>
                 <Textarea
-                  rows={2}
-                  placeholder="Ej: valora legibilidad y que no use variables globales innecesarias."
+                  rows={form.tipo === 'respuesta_libre' ? 4 : 2}
+                  placeholder={
+                    form.tipo === 'respuesta_libre'
+                      ? 'Ej: 1) Identifica correctamente las partes del contrato. 2) Argumenta con base en el código civil. 3) Redacción clara y coherente.'
+                      : 'Ej: valora legibilidad y que no use variables globales innecesarias.'
+                  }
                   value={form.criterios_ia}
                   onChange={(e) => setForm((f) => ({ ...f, criterios_ia: e.target.value }))}
                 />
               </div>
 
-              {/* Casos de test */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Casos de test</Label>
-                  <Button variant="outline" size="sm" onClick={agregarCaso}>
-                    <Plus className="h-3.5 w-3.5" />
-                    Agregar caso
-                  </Button>
-                </div>
-
-                {casos.length === 0 && (
-                  <p className="text-xs text-muted-foreground">Sin casos de test todavía.</p>
-                )}
-
-                {casos.map((caso, indice) => (
-                  <div key={caso.clave} className="space-y-2 rounded-lg border p-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={caso.es_publico}
-                          onCheckedChange={(valor) => actualizarCaso(caso.clave, { es_publico: valor })}
-                        />
-                        <span className="text-xs text-muted-foreground">
-                          {caso.es_publico ? `Caso ${indice + 1} · público (ejemplo)` : `Caso ${indice + 1} · oculto (solo calificación)`}
-                        </span>
-                      </div>
-                      <Button
-                        size="icon-sm"
-                        variant="ghost"
-                        className="text-muted-foreground hover:text-destructive"
-                        onClick={() => eliminarCaso(caso.clave)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">
-                          {form.lenguaje !== 'sql' ? 'Entrada (stdin)' : 'SQL adicional para este caso (opcional)'}
-                        </Label>
-                        <Textarea
-                          rows={2}
-                          value={caso.entrada}
-                          onChange={(e) => actualizarCaso(caso.clave, { entrada: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">
-                          {form.lenguaje !== 'sql'
-                            ? 'Salida esperada (stdout exacto)'
-                            : 'Filas esperadas, ej: [[3]]'}
-                        </Label>
-                        <Textarea
-                          rows={2}
-                          value={caso.salida_esperada}
-                          onChange={(e) => actualizarCaso(caso.clave, { salida_esperada: e.target.value })}
-                        />
-                      </div>
-                    </div>
+              {/* Casos de test (solo código) */}
+              {form.tipo === 'codigo' && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Casos de test</Label>
+                    <Button variant="outline" size="sm" onClick={agregarCaso}>
+                      <Plus className="h-3.5 w-3.5" />
+                      Agregar caso
+                    </Button>
                   </div>
-                ))}
-              </div>
+
+                  {casos.length === 0 && (
+                    <p className="text-xs text-muted-foreground">Sin casos de test todavía.</p>
+                  )}
+
+                  {casos.map((caso, indice) => (
+                    <div key={caso.clave} className="space-y-2 rounded-lg border p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={caso.es_publico}
+                            onCheckedChange={(valor) => actualizarCaso(caso.clave, { es_publico: valor })}
+                          />
+                          <span className="text-xs text-muted-foreground">
+                            {caso.es_publico ? `Caso ${indice + 1} · público (ejemplo)` : `Caso ${indice + 1} · oculto (solo calificación)`}
+                          </span>
+                        </div>
+                        <Button
+                          size="icon-sm"
+                          variant="ghost"
+                          className="text-muted-foreground hover:text-destructive"
+                          onClick={() => eliminarCaso(caso.clave)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">
+                            {form.lenguaje !== 'sql' ? 'Entrada (stdin)' : 'SQL adicional para este caso (opcional)'}
+                          </Label>
+                          <Textarea
+                            rows={2}
+                            value={caso.entrada}
+                            onChange={(e) => actualizarCaso(caso.clave, { entrada: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">
+                            {form.lenguaje !== 'sql'
+                              ? 'Salida esperada (stdout exacto)'
+                              : 'Filas esperadas, ej: [[3]]'}
+                          </Label>
+                          <Textarea
+                            rows={2}
+                            value={caso.salida_esperada}
+                            onChange={(e) => actualizarCaso(caso.clave, { salida_esperada: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <div className="flex items-center justify-between border-t pt-4">
                 {typeof seleccion === 'number' ? (
@@ -623,7 +692,7 @@ export default function PaginaEditorLaboratorioDocente() {
                   onChange={(e) => setConfigFechaLimite(e.target.value)}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Vacío = sin límite. Después de esta fecha, el estudiante ya no puede enviar (pero sí puede seguir usando "Ejecutar").
+                  Vacío = sin límite. Después de esta fecha, el estudiante ya no puede enviar (pero sí puede seguir usando "Ejecutar" en preguntas de código).
                 </p>
               </div>
               <Button onClick={guardarConfiguracion} disabled={guardandoConfig}>
@@ -657,7 +726,9 @@ export default function PaginaEditorLaboratorioDocente() {
                     <CardContent className="space-y-2 pt-4">
                       <div className="flex items-start justify-between gap-2">
                         <p className="text-sm">{p.enunciado}</p>
-                        <Badge variant="outline" className="shrink-0 text-[10px] uppercase">{p.lenguaje}</Badge>
+                        <Badge variant="outline" className="shrink-0 text-[10px] uppercase">
+                          {p.tipo === 'codigo' ? p.lenguaje : 'Ensayo'}
+                        </Badge>
                       </div>
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1"><Users className="h-3 w-3" />{p.estudiantes_resueltas}/{p.estudiantes_intentaron} la resolvieron</span>
@@ -702,9 +773,11 @@ export default function PaginaEditorLaboratorioDocente() {
               Preguntas sugeridas por IA
             </DialogTitle>
             <DialogDescription>
-              Una por objetivo del curso. Los casos de test ya se verificaron ejecutando una
-              solución de referencia en el sandbox, no son un cálculo a mano de la IA. Marca las
-              que quieras agregar.
+              Una por objetivo del curso.{' '}
+              {tipoSugerencia === 'codigo'
+                ? 'Los casos de test ya se verificaron ejecutando una solución de referencia en el sandbox, no son un cálculo a mano de la IA.'
+                : 'Cada una incluye la rúbrica que usará la IA para calificar las respuestas de los estudiantes.'}{' '}
+              Marca las que quieras agregar.
             </DialogDescription>
           </DialogHeader>
 
@@ -736,10 +809,14 @@ export default function PaginaEditorLaboratorioDocente() {
                 <div className="flex-1 space-y-1">
                   <p className="text-xs text-muted-foreground">Objetivo: {s.objetivo}</p>
                   <p className="text-foreground">{s.enunciado}</p>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[10px] uppercase">{s.lenguaje}</Badge>
-                    <span className="text-xs text-muted-foreground">{s.casos_test.length} caso(s) de test verificados</span>
-                  </div>
+                  {s.tipo === 'codigo' ? (
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-[10px] uppercase">{s.lenguaje}</Badge>
+                      <span className="text-xs text-muted-foreground">{s.casos_test.length} caso(s) de test verificados</span>
+                    </div>
+                  ) : (
+                    <p className="line-clamp-2 text-xs text-muted-foreground">Rúbrica: {s.criterios_ia}</p>
+                  )}
                 </div>
               </button>
             ))}

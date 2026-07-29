@@ -7,7 +7,7 @@ from apps.laboratorios.views import (
     VistaLaboratoriosCursoEstudiante,
     VistaDetalleLaboratorioEstudiante,
     VistaEjecutarCodigo,
-    VistaEnviarCodigo,
+    VistaEnviarRespuesta,
     VistaMisEntregas,
 )
 
@@ -18,11 +18,11 @@ urlpatterns = [
     # Detalle de un laboratorio (preguntas sin casos de test ocultos).
     path('mis-cursos/<int:curso_id>/laboratorios/<int:laboratorio_id>/', VistaDetalleLaboratorioEstudiante.as_view(), name='detalle_laboratorio_estudiante'),
 
-    # "Run": ejecuta el código del estudiante contra los casos de test públicos. No persiste nada.
+    # "Run": ejecuta el código del estudiante contra los casos de test públicos. Solo tipo=codigo. No persiste nada.
     path('preguntas/<int:pregunta_id>/ejecutar/', VistaEjecutarCodigo.as_view(), name='ejecutar_codigo'),
 
-    # "Submit": envío calificado contra TODOS los casos (públicos y ocultos). Persiste un intento.
-    path('preguntas/<int:pregunta_id>/enviar/', VistaEnviarCodigo.as_view(), name='enviar_codigo'),
+    # "Submit": envío calificado (código: todos los casos; respuesta abierta: la IA la califica). Persiste un intento.
+    path('preguntas/<int:pregunta_id>/enviar/', VistaEnviarRespuesta.as_view(), name='enviar_respuesta'),
 
     # Historial de mis propias entregas para una pregunta (intentos usados/restantes).
     path('preguntas/<int:pregunta_id>/mis-entregas/', VistaMisEntregas.as_view(), name='mis_entregas'),

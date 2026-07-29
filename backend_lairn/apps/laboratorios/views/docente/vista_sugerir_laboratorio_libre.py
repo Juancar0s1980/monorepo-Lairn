@@ -79,6 +79,7 @@ class VistaSugerirLaboratorioLibre(APIView):
             if not casos:
                 continue
             preguntas_verificadas.append({
+                'tipo': 'codigo',
                 'enunciado': pregunta['enunciado'],
                 'lenguaje': pregunta['lenguaje'],
                 'codigo_inicial': pregunta.get('codigo_inicial', ''),

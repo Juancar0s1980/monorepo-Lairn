@@ -13,6 +13,7 @@
 //            PATCH /campo-estudio/temas/{temaId}/aprobar/.
 
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api from '@/services/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -29,9 +30,10 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { Check, Lightbulb, Loader2, Pencil, Sparkles, Trash2 } from 'lucide-react'
+import { Check, FlaskConical, Lightbulb, Loader2, Pencil, Sparkles, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { TemaEstudio } from '@/types/campo-estudio'
+import type { LaboratorioDetalleDocente } from '@/types/laboratorio'
 
 interface TabCampoEstudioDocenteProps {
   cursoId: string
@@ -39,6 +41,7 @@ interface TabCampoEstudioDocenteProps {
 }
 
 export function TabCampoEstudioDocente({ cursoId, habilitado: habilitadoInicial }: TabCampoEstudioDocenteProps) {
+  const navigate = useNavigate()
   const [habilitado, setHabilitado] = useState(habilitadoInicial)
   const [cambiandoHabilitado, setCambiandoHabilitado] = useState(false)
 
@@ -53,6 +56,7 @@ export function TabCampoEstudioDocente({ cursoId, habilitado: habilitadoInicial 
 
   const [aprobandoId, setAprobandoId] = useState<number | null>(null)
   const [eliminandoId, setEliminandoId] = useState<number | null>(null)
+  const [generandoLabId, setGenerandoLabId] = useState<number | null>(null)
 
   useEffect(() => {
     const controlador = new AbortController()
@@ -152,6 +156,27 @@ export function TabCampoEstudioDocente({ cursoId, habilitado: habilitadoInicial 
       toast.error('No se pudo eliminar el tema')
     } finally {
       setEliminandoId(null)
+    }
+  }
+
+  // Genera (o recupera, si ya existe) el laboratorio de práctica ligado a un tema aprobado.
+  const generarLaboratorio = async (tema: TemaEstudio) => {
+    if (tema.laboratorio_practica_id) {
+      navigate(`/mis-cursos/${cursoId}/laboratorios/${tema.laboratorio_practica_id}`)
+      return
+    }
+    setGenerandoLabId(tema.id)
+    try {
+      const { data } = await api.post<LaboratorioDetalleDocente>(
+        `/campo-estudio/temas/${tema.id}/generar-laboratorio/`
+      )
+      setTemas((prev) => prev.map((t) => (t.id === tema.id ? { ...t, laboratorio_practica_id: data.id } : t)))
+      toast.success('Laboratorio de práctica generado')
+      navigate(`/mis-cursos/${cursoId}/laboratorios/${data.id}`)
+    } catch {
+      toast.error('No se pudo generar el laboratorio de práctica')
+    } finally {
+      setGenerandoLabId(null)
     }
   }
 
@@ -298,6 +323,19 @@ export function TabCampoEstudioDocente({ cursoId, habilitado: habilitadoInicial 
                     <Badge variant="outline" className="text-emerald-600 border-emerald-600/30">
                       Aprobado
                     </Badge>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => generarLaboratorio(tema)}
+                      disabled={generandoLabId === tema.id}
+                    >
+                      {generandoLabId === tema.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <FlaskConical className="h-3.5 w-3.5" />
+                      )}
+                      {tema.laboratorio_practica_id ? 'Ver laboratorio' : 'Generar práctica'}
+                    </Button>
                     <Button
                       size="icon-sm"
                       variant="ghost"

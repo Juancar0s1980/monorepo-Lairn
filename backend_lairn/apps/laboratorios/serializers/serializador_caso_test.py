@@ -1,7 +1,7 @@
 """
 Serializers del recurso `CasoTest`.
 
-Dos variantes por la misma razón que en `PreguntaCodigo`: el docente ve y
+Dos variantes por la misma razón que en `Pregunta`: el docente ve y
 edita todo (incluye `es_publico` y sirve tanto para casos de ejemplo como
 ocultos); el estudiante solo puede ver los casos públicos, sin el campo
 `es_publico` (no aporta nada verlo si ya sabe que es público por estar en

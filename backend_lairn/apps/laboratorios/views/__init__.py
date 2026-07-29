@@ -2,8 +2,8 @@ from .docente import (
     VistaLaboratoriosCurso,
     VistaDetalleLaboratorio,
     VistaPreguntasLaboratorio,
-    VistaDetallePreguntaCodigo,
-    VistaSugerirPreguntasCodigo,
+    VistaDetallePregunta,
+    VistaSugerirPreguntas,
     VistaSugerirLaboratorioLibre,
     VistaAnaliticaLaboratorio,
 )
@@ -11,7 +11,7 @@ from .estudiante import (
     VistaLaboratoriosCursoEstudiante,
     VistaDetalleLaboratorioEstudiante,
     VistaEjecutarCodigo,
-    VistaEnviarCodigo,
+    VistaEnviarRespuesta,
     VistaMisEntregas,
 )
 
@@ -19,13 +19,13 @@ __all__ = [
     'VistaLaboratoriosCurso',
     'VistaDetalleLaboratorio',
     'VistaPreguntasLaboratorio',
-    'VistaDetallePreguntaCodigo',
-    'VistaSugerirPreguntasCodigo',
+    'VistaDetallePregunta',
+    'VistaSugerirPreguntas',
     'VistaSugerirLaboratorioLibre',
     'VistaAnaliticaLaboratorio',
     'VistaLaboratoriosCursoEstudiante',
     'VistaDetalleLaboratorioEstudiante',
     'VistaEjecutarCodigo',
-    'VistaEnviarCodigo',
+    'VistaEnviarRespuesta',
     'VistaMisEntregas',
 ]

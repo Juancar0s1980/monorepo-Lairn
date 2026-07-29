@@ -12,6 +12,7 @@ from apps.campo_estudio.views import (
     VistaGenerarTemasEstudio,
     VistaDetalleTemaEstudio,
     VistaAprobarTemaEstudio,
+    VistaGenerarLaboratorioTema,
 )
 
 urlpatterns = [
@@ -29,4 +30,7 @@ urlpatterns = [
 
     # Aprobar un tema pendiente: lo hace visible para los estudiantes.
     path('temas/<int:tema_id>/aprobar/', VistaAprobarTemaEstudio.as_view(), name='aprobar_tema_estudio'),
+
+    # Generar (o recuperar) el laboratorio de práctica ligado a un tema.
+    path('temas/<int:tema_id>/generar-laboratorio/', VistaGenerarLaboratorioTema.as_view(), name='generar_laboratorio_tema'),
 ]

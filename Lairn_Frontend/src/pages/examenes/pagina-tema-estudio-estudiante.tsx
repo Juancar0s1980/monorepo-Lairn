@@ -17,7 +17,7 @@ import { EncabezadoGradiente } from '@/components/encabezado-gradiente'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
-import { Loader2, Send, Sparkles } from 'lucide-react'
+import { FlaskConical, Loader2, Send, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import type { MensajeTemaEstudio, TemaEstudio } from '@/types/campo-estudio'
 
@@ -109,8 +109,17 @@ export default function PaginaTemaEstudioEstudiante() {
 
       {/* Contenido del tema aprobado por el docente */}
       <Card>
-        <CardContent className="whitespace-pre-line text-sm leading-relaxed">
-          {tema.contenido}
+        <CardContent className="space-y-4">
+          <p className="whitespace-pre-line text-sm leading-relaxed">{tema.contenido}</p>
+          {tema.laboratorio_practica_id && (
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/mis-cursos/${cursoId}/laboratorios/${tema.laboratorio_practica_id}`)}
+            >
+              <FlaskConical className="h-4 w-4" />
+              Practicar este tema
+            </Button>
+          )}
         </CardContent>
       </Card>
 

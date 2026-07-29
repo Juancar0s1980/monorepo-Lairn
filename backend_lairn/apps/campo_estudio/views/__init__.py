@@ -4,6 +4,7 @@ from .docente import (
     VistaGenerarTemasEstudio,
     VistaDetalleTemaEstudio,
     VistaAprobarTemaEstudio,
+    VistaGenerarLaboratorioTema,
 )
 from .estudiante import (
     VistaTemasEstudioEstudiante,
@@ -16,6 +17,7 @@ __all__ = [
     'VistaGenerarTemasEstudio',
     'VistaDetalleTemaEstudio',
     'VistaAprobarTemaEstudio',
+    'VistaGenerarLaboratorioTema',
     'VistaTemasEstudioEstudiante',
     'VistaMensajesTemaEstudio',
 ]
