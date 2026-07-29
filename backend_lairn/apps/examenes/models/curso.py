@@ -32,6 +32,10 @@ class Curso(models.Model):
     )
     codigo = models.CharField(max_length=8, unique=True, default=generar_codigo)
     creado_en = models.DateTimeField(auto_now_add=True)
+    campo_estudio_habilitado = models.BooleanField(
+        default=False,
+        help_text='Si está activo, el docente puede publicar temas de estudio con IA y los estudiantes inscritos pueden verlos y preguntar sobre ellos.'
+    )
 
     class Meta:
         db_table = 'cursos'

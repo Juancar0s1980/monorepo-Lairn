@@ -3,15 +3,16 @@ from .serializador_laboratorio import (
     SerializadorLaboratorioDetalleDocente,
     SerializadorLaboratorioDetalleEstudiante,
 )
-from .serializador_pregunta_codigo import (
-    SerializadorPreguntaCodigoDocente,
-    SerializadorPreguntaCodigoEstudiante,
+from .serializador_pregunta import (
+    SerializadorPreguntaDocente,
+    SerializadorPreguntaEstudiante,
 )
 from .serializador_caso_test import SerializadorCasoTest, SerializadorCasoTestPublico
 from .serializador_ejecucion import (
     SerializadorEjecutarCodigo,
     SerializadorResultadoCaso,
     SerializadorResultadoEjecucion,
+    SerializadorEnviarRespuesta,
 )
 from .serializador_laboratorio_libre import SerializadorSugerirLaboratorioLibre
 
@@ -19,12 +20,13 @@ __all__ = [
     'SerializadorLaboratorio',
     'SerializadorLaboratorioDetalleDocente',
     'SerializadorLaboratorioDetalleEstudiante',
-    'SerializadorPreguntaCodigoDocente',
-    'SerializadorPreguntaCodigoEstudiante',
+    'SerializadorPreguntaDocente',
+    'SerializadorPreguntaEstudiante',
     'SerializadorCasoTest',
     'SerializadorCasoTestPublico',
     'SerializadorEjecutarCodigo',
     'SerializadorResultadoCaso',
     'SerializadorResultadoEjecucion',
+    'SerializadorEnviarRespuesta',
     'SerializadorSugerirLaboratorioLibre',
 ]

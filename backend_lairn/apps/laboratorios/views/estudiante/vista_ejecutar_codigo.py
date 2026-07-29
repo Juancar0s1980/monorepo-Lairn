@@ -6,9 +6,11 @@ Expone `/laboratorios/preguntas/<pregunta_id>/ejecutar/`: corre el código o
 consulta que el estudiante está escribiendo contra los casos de test
 PÚBLICOS de la pregunta, en el sandbox del microservicio ejecutor, y
 devuelve el resultado. NO GUARDA NADA — es retroalimentación inmediata
-mientras el estudiante programa, no una entrega calificada (eso es la
-Fase 4: un endpoint "Enviar" aparte que correrá también los casos ocultos
-y persistirá el resultado).
+mientras el estudiante programa, no una entrega calificada (eso es
+"Enviar" — ver `vista_enviar_respuesta.py`).
+
+Solo aplica a preguntas `tipo='codigo'`: no tiene sentido "ejecutar" una
+respuesta abierta.
 """
 
 from rest_framework.views import APIView
@@ -17,7 +19,7 @@ from rest_framework import status
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from core.permissions.permisos_rol import EsEstudiante
 from apps.examenes.models import Inscripcion
-from apps.laboratorios.models import PreguntaCodigo
+from apps.laboratorios.models import Pregunta
 from apps.laboratorios.serializers import SerializadorEjecutarCodigo, SerializadorResultadoEjecucion
 from apps.laboratorios.services.cliente_ejecutor import correr_casos_test, EjecutorNoDisponible
 
@@ -28,7 +30,7 @@ from apps.laboratorios.services.cliente_ejecutor import correr_casos_test, Ejecu
     request=SerializadorEjecutarCodigo,
     responses={
         200: SerializadorResultadoEjecucion,
-        400: OpenApiResponse(description='Datos inválidos'),
+        400: OpenApiResponse(description='Datos inválidos o la pregunta no es de tipo código'),
         403: OpenApiResponse(description='No estás inscrito en el curso de esta pregunta'),
         404: OpenApiResponse(description='Pregunta no encontrada'),
         503: OpenApiResponse(description='El servicio de ejecución no está disponible'),
@@ -39,9 +41,12 @@ class VistaEjecutarCodigo(APIView):
 
     def post(self, request, pregunta_id):
         try:
-            pregunta = PreguntaCodigo.objects.select_related('laboratorio__curso').get(id=pregunta_id)
-        except PreguntaCodigo.DoesNotExist:
+            pregunta = Pregunta.objects.select_related('laboratorio__curso').get(id=pregunta_id)
+        except Pregunta.DoesNotExist:
             return Response({'detalle': 'Pregunta no encontrada.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if pregunta.tipo != 'codigo':
+            return Response({'detalle': 'Esta pregunta no es de código: no se puede ejecutar.'}, status=status.HTTP_400_BAD_REQUEST)
 
         curso = pregunta.laboratorio.curso
         if not Inscripcion.objects.filter(estudiante=request.user, curso=curso).exists():

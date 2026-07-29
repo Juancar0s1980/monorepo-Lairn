@@ -1,6 +1,6 @@
 from .laboratorio import Laboratorio
-from .pregunta_codigo import PreguntaCodigo, LENGUAJE_CHOICES
+from .pregunta import Pregunta, TIPO_CHOICES, LENGUAJE_CHOICES
 from .caso_test import CasoTest
-from .entrega_codigo import EntregaCodigo
+from .entrega import Entrega
 
-__all__ = ['Laboratorio', 'PreguntaCodigo', 'LENGUAJE_CHOICES', 'CasoTest', 'EntregaCodigo']
+__all__ = ['Laboratorio', 'Pregunta', 'TIPO_CHOICES', 'LENGUAJE_CHOICES', 'CasoTest', 'Entrega']

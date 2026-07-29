@@ -19,12 +19,14 @@ import { TabExamenesEstudiante } from './componentes/tab-examenes-estudiante'
 import { TabResumenEstudiante } from './componentes/tab-resumen-estudiante'
 import { TabIntentoEstudiante } from './componentes/tab-intento-estudiante'
 import { TabLaboratoriosEstudiante } from './componentes/tab-laboratorios-estudiante'
+import { TabCampoEstudioEstudiante } from './componentes/tab-campo-estudio-estudiante'
 import {
   FileText,
   Loader2,
   BarChart3,
   Hash,
   Code2,
+  Lightbulb,
 } from 'lucide-react'
 import type { MiConocimiento } from '@/types/analitica'
 
@@ -142,6 +144,10 @@ export default function PaginaExamenesCursoEstudiante() {
             <Code2 className="h-4 w-4" />
             Laboratorios
           </TabsTrigger>
+          <TabsTrigger value="campo-estudio">
+            <Lightbulb className="h-4 w-4" />
+            Campo de Estudio
+          </TabsTrigger>
         </TabsList>
 
         {/* Tab de Exámenes */}
@@ -191,6 +197,11 @@ export default function PaginaExamenesCursoEstudiante() {
         {/* Tab de Laboratorios */}
         <TabsContent value="laboratorios">
           <TabLaboratoriosEstudiante cursoId={id} />
+        </TabsContent>
+
+        {/* Tab de Campo de Estudio */}
+        <TabsContent value="campo-estudio">
+          <TabCampoEstudioEstudiante cursoId={id} />
         </TabsContent>
       </Tabs>
     </div>

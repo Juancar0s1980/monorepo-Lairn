@@ -1,11 +1,11 @@
 """
 Modelo de dominio `CasoTest`.
 
-Caso de prueba de una `PreguntaCodigo`, definido por el docente. Los casos
-`es_publico=True` se muestran al estudiante como ejemplo (igual que los
-"Example 1/2/3" de un juez en línea); los `es_publico=False` son ocultos y
-solo se usan para calificar (Fase 4), nunca se envían al frontend del
-estudiante antes de la entrega.
+Caso de prueba de una `Pregunta` de tipo `codigo` (no aplica a
+`respuesta_libre`), definido por el docente. Los casos `es_publico=True` se
+muestran al estudiante como ejemplo (igual que los "Example 1/2/3" de un
+juez en línea); los `es_publico=False` son ocultos y solo se usan para
+calificar, nunca se envían al frontend del estudiante antes de la entrega.
 """
 
 from django.db import models
@@ -13,7 +13,7 @@ from django.db import models
 
 class CasoTest(models.Model):
     pregunta = models.ForeignKey(
-        'PreguntaCodigo',
+        'Pregunta',
         on_delete=models.CASCADE,
         related_name='casos_test'
     )

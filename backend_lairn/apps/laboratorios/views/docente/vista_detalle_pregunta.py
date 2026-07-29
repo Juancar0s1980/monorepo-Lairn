@@ -1,5 +1,6 @@
 """
-Vista de detalle de una pregunta de código, para el rol Docente.
+Vista de detalle de una pregunta (código o respuesta abierta), para el rol
+Docente.
 
 Expone `/laboratorios/preguntas/<pregunta_id>/` con PATCH (edición, incluidos
 los casos de test anidados — se reemplazan enteros si vienen en el payload)
@@ -12,38 +13,38 @@ from rest_framework import status
 from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiResponse, OpenApiParameter
 from drf_spectacular.openapi import OpenApiTypes
 from core.permissions.permisos_rol import EsDocente
-from apps.laboratorios.models import PreguntaCodigo
-from apps.laboratorios.serializers import SerializadorPreguntaCodigoDocente
+from apps.laboratorios.models import Pregunta
+from apps.laboratorios.serializers import SerializadorPreguntaDocente
 
 
 @extend_schema_view(
     patch=extend_schema(
         tags=['Laboratorios'],
-        summary='Editar pregunta de código',
-        request=SerializadorPreguntaCodigoDocente,
+        summary='Editar pregunta',
+        request=SerializadorPreguntaDocente,
         parameters=[OpenApiParameter('pregunta_id', OpenApiTypes.INT, OpenApiParameter.PATH)],
-        responses={200: SerializadorPreguntaCodigoDocente, 400: OpenApiResponse(description='Datos inválidos'), 404: OpenApiResponse(description='Pregunta no encontrada')},
+        responses={200: SerializadorPreguntaDocente, 400: OpenApiResponse(description='Datos inválidos'), 404: OpenApiResponse(description='Pregunta no encontrada')},
     ),
     delete=extend_schema(
         tags=['Laboratorios'],
-        summary='Eliminar pregunta de código',
+        summary='Eliminar pregunta',
         parameters=[OpenApiParameter('pregunta_id', OpenApiTypes.INT, OpenApiParameter.PATH)],
         responses={204: OpenApiResponse(description='Pregunta eliminada'), 404: OpenApiResponse(description='Pregunta no encontrada')},
     ),
 )
-class VistaDetallePreguntaCodigo(APIView):
+class VistaDetallePregunta(APIView):
     permission_classes = [EsDocente]
 
     def _obtener(self, request, pregunta_id):
-        return PreguntaCodigo.objects.get(id=pregunta_id, laboratorio__curso__docente=request.user)
+        return Pregunta.objects.get(id=pregunta_id, laboratorio__curso__docente=request.user)
 
     def patch(self, request, pregunta_id):
         try:
             pregunta = self._obtener(request, pregunta_id)
-        except PreguntaCodigo.DoesNotExist:
+        except Pregunta.DoesNotExist:
             return Response({'detalle': 'Pregunta no encontrada.'}, status=status.HTTP_404_NOT_FOUND)
 
-        serializador = SerializadorPreguntaCodigoDocente(pregunta, data=request.data, partial=True)
+        serializador = SerializadorPreguntaDocente(pregunta, data=request.data, partial=True)
         if serializador.is_valid():
             serializador.save()
             return Response(serializador.data)
@@ -52,7 +53,7 @@ class VistaDetallePreguntaCodigo(APIView):
     def delete(self, request, pregunta_id):
         try:
             pregunta = self._obtener(request, pregunta_id)
-        except PreguntaCodigo.DoesNotExist:
+        except Pregunta.DoesNotExist:
             return Response({'detalle': 'Pregunta no encontrada.'}, status=status.HTTP_404_NOT_FOUND)
 
         pregunta.delete()

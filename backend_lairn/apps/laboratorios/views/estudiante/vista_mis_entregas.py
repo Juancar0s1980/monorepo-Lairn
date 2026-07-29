@@ -14,7 +14,7 @@ from rest_framework import status
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from core.permissions.permisos_rol import EsEstudiante
 from apps.examenes.models import Inscripcion
-from apps.laboratorios.models import PreguntaCodigo, EntregaCodigo
+from apps.laboratorios.models import Pregunta, Entrega
 
 
 @extend_schema(
@@ -31,22 +31,23 @@ class VistaMisEntregas(APIView):
 
     def get(self, request, pregunta_id):
         try:
-            pregunta = PreguntaCodigo.objects.select_related('laboratorio__curso').get(id=pregunta_id)
-        except PreguntaCodigo.DoesNotExist:
+            pregunta = Pregunta.objects.select_related('laboratorio__curso').get(id=pregunta_id)
+        except Pregunta.DoesNotExist:
             return Response({'detalle': 'Pregunta no encontrada.'}, status=status.HTTP_404_NOT_FOUND)
 
         laboratorio = pregunta.laboratorio
         if not Inscripcion.objects.filter(estudiante=request.user, curso=laboratorio.curso).exists():
             return Response({'detalle': 'No estás inscrito en este curso.'}, status=status.HTTP_403_FORBIDDEN)
 
-        entregas = EntregaCodigo.objects.filter(pregunta=pregunta, estudiante=request.user).order_by('intento')
+        entregas = Entrega.objects.filter(pregunta=pregunta, estudiante=request.user).order_by('intento')
         datos = [
             {
                 'id': e.id,
                 'intento': e.intento,
-                'casos_pasados': e.casos_pasados,
-                'casos_totales': e.casos_totales,
+                'casos_pasados': e.casos_pasados if pregunta.tipo == 'codigo' else None,
+                'casos_totales': e.casos_totales if pregunta.tipo == 'codigo' else None,
                 'puntaje': e.puntaje,
+                'retroalimentacion': e.resultados.get('retroalimentacion') if pregunta.tipo == 'respuesta_libre' else None,
                 'enviado_en': e.enviado_en,
             }
             for e in entregas

@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'apps.examenes.apps.ExamenesConfig',
     'apps.moderacion.apps.ModeracionConfig',
     'apps.laboratorios.apps.LaboratoriosConfig',
+    'apps.campo_estudio.apps.CampoEstudioConfig',
 ]
 
 MIDDLEWARE = [

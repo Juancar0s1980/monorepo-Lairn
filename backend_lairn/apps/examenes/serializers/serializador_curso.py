@@ -21,15 +21,15 @@ from apps.examenes.models import Curso
 class SerializadorCrearCurso(serializers.ModelSerializer):
     class Meta:
         model = Curso
-        fields = ['id', 'nombre', 'descripcion', 'codigo', 'creado_en']
-        read_only_fields = ['codigo', 'creado_en']
+        fields = ['id', 'nombre', 'descripcion', 'codigo', 'creado_en', 'campo_estudio_habilitado']
+        read_only_fields = ['codigo', 'creado_en', 'campo_estudio_habilitado']
 
 
 # Variante plena del curso, sin restricciones de solo lectura, para usos internos o administrativos.
 class SerializadorCurso(serializers.ModelSerializer):
     class Meta:
         model = Curso
-        fields = ['id', 'nombre', 'descripcion', 'codigo', 'creado_en']
+        fields = ['id', 'nombre', 'descripcion', 'codigo', 'creado_en', 'campo_estudio_habilitado']
 
 
 # Vista del curso pensada para el estudiante: expone el nombre del docente y omite el código de inscripción.
@@ -38,7 +38,7 @@ class SerializadorCursoEstudiante(serializers.ModelSerializer):
 
     class Meta:
         model = Curso
-        fields = ['id', 'nombre', 'descripcion', 'docente', 'creado_en']
+        fields = ['id', 'nombre', 'descripcion', 'docente', 'creado_en', 'campo_estudio_habilitado']
 
     # Devuelve el nombre completo del docente concatenando nombre y apellido para presentarlo al estudiante.
     def get_docente(self, obj):

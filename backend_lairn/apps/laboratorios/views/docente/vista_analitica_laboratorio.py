@@ -15,7 +15,7 @@ from rest_framework import status
 from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
 from drf_spectacular.openapi import OpenApiTypes
 from core.permissions.permisos_rol import EsDocente
-from apps.laboratorios.models import Laboratorio, EntregaCodigo
+from apps.laboratorios.models import Laboratorio, Entrega
 
 
 @extend_schema(
@@ -48,7 +48,7 @@ class VistaAnaliticaLaboratorio(APIView):
         resumen_estudiantes = {}
 
         for pregunta in preguntas:
-            entregas = EntregaCodigo.objects.filter(pregunta=pregunta).select_related('estudiante')
+            entregas = Entrega.objects.filter(pregunta=pregunta).select_related('estudiante')
 
             mejor_por_estudiante = {}
             intentos_por_estudiante = {}
@@ -72,7 +72,8 @@ class VistaAnaliticaLaboratorio(APIView):
             datos_preguntas.append({
                 'pregunta_id': pregunta.id,
                 'enunciado': pregunta.enunciado,
-                'lenguaje': pregunta.lenguaje,
+                'tipo': pregunta.tipo,
+                'lenguaje': pregunta.lenguaje if pregunta.tipo == 'codigo' else None,
                 'estudiantes_intentaron': estudiantes_intentaron,
                 'estudiantes_resueltas': estudiantes_resueltas,
                 'porcentaje_acierto_promedio': porcentaje_acierto_promedio,

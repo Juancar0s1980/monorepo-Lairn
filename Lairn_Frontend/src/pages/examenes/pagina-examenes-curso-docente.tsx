@@ -30,6 +30,7 @@ import {
   Trash2,
   BookOpen,
   Code2,
+  Lightbulb,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { EncabezadoGradiente } from '@/components/encabezado-gradiente'
@@ -57,6 +58,7 @@ import { TabEstudiantesDocente } from './componentes/tab-estudiantes-docente'
 import { TabAnaliticaDocente } from './componentes/tab-analitica-docente'
 import { TabObjetivosDocente } from './componentes/tab-objetivos-docente'
 import { TabLaboratoriosDocente } from './componentes/tab-laboratorios-docente'
+import { TabCampoEstudioDocente } from './componentes/tab-campo-estudio-docente'
 import type { Examen } from '@/types/examen'
 import type { ResumenCursoDocente, PatronesCurso } from '@/types/analitica'
 
@@ -67,6 +69,7 @@ interface Curso {
   descripcion: string
   codigo: string
   creado_en: string
+  campo_estudio_habilitado: boolean
 }
 
 // Esquema de validación para actualizar los datos del curso.
@@ -478,6 +481,10 @@ export default function PaginaExamenesCursoDocente() {
             <Users className="h-4 w-4" />
             Estudiantes
           </TabsTrigger>
+          <TabsTrigger value="campo-estudio">
+            <Lightbulb className="h-4 w-4" />
+            Campo de Estudio
+          </TabsTrigger>
         </TabsList>
 
         {/* Tab de Exámenes */}
@@ -520,6 +527,14 @@ export default function PaginaExamenesCursoDocente() {
             cargandoPatrones={cargandoPatrones}
             cargandoResumen={cargandoResumen}
             cursoId={id!}
+          />
+        </TabsContent>
+
+        {/* Tab de Campo de Estudio */}
+        <TabsContent value="campo-estudio">
+          <TabCampoEstudioDocente
+            cursoId={id!}
+            habilitado={curso?.campo_estudio_habilitado ?? false}
           />
         </TabsContent>
       </Tabs>
