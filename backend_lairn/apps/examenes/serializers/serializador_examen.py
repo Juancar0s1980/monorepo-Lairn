@@ -19,25 +19,43 @@ from apps.motor_adaptativo.models import SesionExamen
 
 # Contrato usado por el docente para crear, listar y editar exámenes; incluye validaciones de coherencia.
 class SerializadorCrearExamen(serializers.ModelSerializer):
+    # Obligatorio y con al menos un elemento: todo examen debe anclarse a por lo
+    # menos un objetivo del curso (evita exámenes genéricos que solo dependen del
+    # texto libre de `tema`). En PATCH parcial esto no molesta a las ediciones que
+    # no tocan `objetivos`, porque DRF no valida campos ausentes del payload.
     objetivos = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=ObjetivoCurso.objects.all(),
-        required=False,
+        required=True,
+        allow_empty=False,
+        error_messages={'empty': 'Selecciona al menos un objetivo para anclar el examen.'},
     )
+    laboratorio_practica_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Examen
         fields = [
             'id', 'curso', 'titulo', 'tema', 'tiempo', 'num_preguntas',
             'retroalimentacion', 'dificultad_inicial', 'max_intentos', 'fecha_limite', 'es_guiado',
-            'modo', 'max_preguntas', 'objetivos', 'creado_en'
+            'modo', 'max_preguntas', 'objetivos', 'peso_practica', 'laboratorio_practica_id', 'creado_en'
         ]
         read_only_fields = ['creado_en']
+
+    # Devuelve el id del laboratorio de práctica vinculado (o None si no tiene).
+    def get_laboratorio_practica_id(self, examen):
+        laboratorio = examen.laboratorio_practica.first()
+        return laboratorio.id if laboratorio else None
 
     # Restringe max_intentos al rango [0, 10], donde 0 significa intentos ilimitados.
     def validate_max_intentos(self, value):
         if value < 0 or value > 10:
             raise serializers.ValidationError('max_intentos debe ser entre 0 (ilimitado) y 10.')
+        return value
+
+    # Restringe peso_practica al rango [0, 100] (porcentaje que aporta la práctica a la nota final).
+    def validate_peso_practica(self, value):
+        if value < 0 or value > 100:
+            raise serializers.ValidationError('peso_practica debe ser entre 0 y 100.')
         return value
 
     # Aplica las reglas de negocio que dependen del conjunto completo de campos: coherencia maestría/num_preguntas, objetivos del mismo curso y bloqueo de mutaciones cuando hay sesiones activas.
@@ -75,10 +93,16 @@ class SerializadorCrearExamen(serializers.ModelSerializer):
 
 # Vista del examen para el estudiante: omite el FK del curso y los metadatos internos no relevantes.
 class SerializadorExamen(serializers.ModelSerializer):
+    laboratorio_practica_id = serializers.SerializerMethodField()
+
     class Meta:
         model = Examen
         fields = [
             'id', 'titulo', 'tema', 'tiempo', 'num_preguntas',
             'retroalimentacion', 'dificultad_inicial', 'max_intentos', 'fecha_limite', 'es_guiado',
-            'modo', 'max_preguntas', 'creado_en'
+            'modo', 'max_preguntas', 'peso_practica', 'laboratorio_practica_id', 'creado_en'
         ]
+
+    def get_laboratorio_practica_id(self, examen):
+        laboratorio = examen.laboratorio_practica.first()
+        return laboratorio.id if laboratorio else None

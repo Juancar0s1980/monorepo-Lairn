@@ -25,6 +25,10 @@ export interface Examen {
   max_preguntas: number
   // IDs de los objetivos del curso que este examen evalúa (puede venir vacío).
   objetivos?: number[]
+  // Porcentaje (0-100) que aporta la práctica (laboratorio vinculado) a la nota final. 0 = solo teoría.
+  peso_practica: number
+  // Id del laboratorio de práctica vinculado, o null si el examen no tiene práctica.
+  laboratorio_practica_id: number | null
   creado_en: string
 }
 
@@ -52,6 +56,8 @@ export interface SesionExamen {
   correctas?: number
   razon_fin?: string
   concepto_evaluado?: string
+  // Id del laboratorio de práctica vinculado al examen (solo viene cuando completado=true). Null si no tiene práctica.
+  laboratorio_practica_id?: number | null
   // Retroalimentación: null cuando no hay feedback aún, objeto al completar con retroalimentación activada.
   retroalimentacion?: {
     concepto: string

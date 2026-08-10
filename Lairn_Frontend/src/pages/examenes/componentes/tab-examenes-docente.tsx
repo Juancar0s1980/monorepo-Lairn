@@ -4,11 +4,13 @@
 // nuevo examen y estado vacío cuando no hay exámenes.
 
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useForm, Controller, useWatch } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import api from '@/services/api'
 import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -46,6 +48,7 @@ import {
   Trash2,
   Loader2,
   CalendarClock,
+  FlaskConical,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { ModalCrearExamen } from './modal-crear-examen'
@@ -126,7 +129,9 @@ export function TabExamenesDocente({
   onExamenActualizado,
   onExamenEliminado,
 }: TabExamenesDocenteProps) {
+  const navigate = useNavigate()
   const [modalCrearExamen, setModalCrearExamen] = useState(false)
+  const [generandoPracticaId, setGenerandoPracticaId] = useState<number | null>(null)
 
   // Estado de edición/eliminación.
   const [examenIdAccion, setExamenIdAccion] = useState<number | null>(null)
@@ -271,6 +276,24 @@ export function TabExamenesDocente({
     }
   }
 
+  // Navega al laboratorio de práctica del examen; si aún no existe (falló al crear el examen), lo genera primero.
+  const irAPractica = async (examen: Examen) => {
+    if (examen.laboratorio_practica_id) {
+      navigate(`/mis-cursos/${cursoId}/laboratorios/${examen.laboratorio_practica_id}`)
+      return
+    }
+    setGenerandoPracticaId(examen.id)
+    try {
+      const { data } = await api.post<{ id: number }>(`/examenes/examenes/${examen.id}/generar-practica/`)
+      onExamenActualizado({ ...examen, laboratorio_practica_id: data.id })
+      navigate(`/mis-cursos/${cursoId}/laboratorios/${data.id}`)
+    } catch {
+      toast.error('No se pudo generar la práctica')
+    } finally {
+      setGenerandoPracticaId(null)
+    }
+  }
+
   const examenActual =
     examenIdAccion !== null
       ? examenes.find((e) => e.id === examenIdAccion) ?? null
@@ -394,6 +417,32 @@ export function TabExamenesDocente({
                       </>
                     )}
                   </div>
+
+                  {/* Práctica vinculada (si el examen tiene peso_practica > 0) */}
+                  {examen.peso_practica > 0 && (
+                    <div className="flex items-center justify-between gap-2 rounded-lg border border-dashed p-2">
+                      <Badge variant="outline" className="gap-1 text-xs">
+                        <FlaskConical className="h-3 w-3" />
+                        Práctica: {examen.peso_practica}% de la nota
+                      </Badge>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs"
+                        disabled={generandoPracticaId === examen.id}
+                        onClick={() => irAPractica(examen)}
+                      >
+                        {generandoPracticaId === examen.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : examen.laboratorio_practica_id ? (
+                          'Ver laboratorio'
+                        ) : (
+                          'Generar práctica'
+                        )}
+                      </Button>
+                    </div>
+                  )}
 
                   {/* Espacio para alinear con el footer */}
                   <div className="mt-auto" />

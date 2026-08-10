@@ -8,7 +8,10 @@ pregunta — se usa para aplicar `Laboratorio.max_intentos`.
 
 `respuesta` guarda lo que escribió el estudiante: código/consulta si
 `pregunta.tipo='codigo'`, o el texto libre del ensayo si
-`tipo='respuesta_libre'` — el mismo campo sirve para ambos.
+`tipo='respuesta_libre'` — el mismo campo sirve para ambos. Va vacío si
+`tipo='problema_visual'`: ahí lo que se guarda es `opcion_seleccionada`
+(índice 0-3 de la variante asignada al estudiante, ver
+`apps.laboratorios.models.AsignacionVariante`).
 
 `resultados` guarda el detalle de la calificación, con forma distinta según
 el tipo:
@@ -19,6 +22,11 @@ el tipo:
 - `respuesta_libre`: `{"retroalimentacion": "..."}` devuelto por
   `services/agente_evaluador.evaluar_respuesta_libre`; `casos_pasados`/
   `casos_totales` no aplican y quedan en 0.
+- `problema_visual`: no aplica (`puntaje` es 0 o 100 según
+  `opcion_seleccionada`, comparación exacta, sin IA de por medio).
+- `pronunciacion`: `{"transcripcion": "..."}`, lo que Whisper entendió en
+  `audio_respuesta`; `puntaje` es la similitud de texto contra
+  `pregunta.texto_pronunciar` (ver `services/agente_pronunciacion.py`).
 """
 
 from django.conf import settings
@@ -36,7 +44,15 @@ class Entrega(models.Model):
         on_delete=models.CASCADE,
         related_name='entregas_laboratorio'
     )
-    respuesta = models.TextField()
+    respuesta = models.TextField(blank=True, default='')
+    opcion_seleccionada = models.PositiveSmallIntegerField(
+        null=True, blank=True,
+        help_text='Índice (0-3) de la opción elegida. Solo aplica si pregunta.tipo=problema_visual.'
+    )
+    audio_respuesta = models.FileField(
+        upload_to='pronunciacion/respuestas/', null=True, blank=True,
+        help_text='Grabación del estudiante. Solo aplica si pregunta.tipo=pronunciacion.'
+    )
     resultados = models.JSONField(default=list, blank=True)
     casos_pasados = models.PositiveIntegerField(default=0)
     casos_totales = models.PositiveIntegerField(default=0)

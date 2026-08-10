@@ -41,6 +41,8 @@ export interface CardCursoDocenteProps {
   tasaAprobados?: number
   /** Ruta base para el link. Por defecto '/mis-cursos/{id}/examenes' */
   rutaBase?: string
+  /** Si es false, el curso todavía no tiene el plan de aula cargado (bloquea sus secciones). */
+  planAulaCargado?: boolean
 }
 
 // Paleta de gradientes pasteles para los headers (azul y amarillo, tono universidad).
@@ -89,6 +91,7 @@ export function CardCursoDocente({
   notaPromedio,
   tasaAprobados,
   rutaBase,
+  planAulaCargado = true,
 }: CardCursoDocenteProps) {
   const [copiado, setCopiado] = useState(false)
   const destino = rutaBase ? `${rutaBase}/${id}` : `/mis-cursos/${id}/examenes`
@@ -153,6 +156,11 @@ export function CardCursoDocente({
             <p className="font-accent text-base text-[#325986] dark:text-primary/80 line-clamp-2 leading-relaxed">
               {descripcion || 'Sin descripción'}
             </p>
+            {!planAulaCargado && (
+              <Badge variant="outline" className="border-amber-500/40 text-amber-600 dark:text-amber-400">
+                Plan de aula pendiente
+              </Badge>
+            )}
           </div>
 
           {/* Stats row */}

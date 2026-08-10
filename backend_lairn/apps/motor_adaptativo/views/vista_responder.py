@@ -203,6 +203,10 @@ class VistaResponder(APIView):
             resultado.total_preguntas = total_real
             resultado.puntaje = round((resultado.correctas / total_real) * 100, 2)
             resultado.nota = round(1.0 + (resultado.correctas / total_real) * 4.0, 1)
+            # Snapshot de la nota de teoría: si el examen tiene una práctica vinculada,
+            # `resultado.nota` se sobrescribe más adelante con la nota combinada al
+            # finalizarla (ver VistaFinalizarPractica), pero este valor no cambia.
+            resultado.nota_teoria = resultado.nota
             resultado.save()
 
             estado_conceptos = {
@@ -214,6 +218,8 @@ class VistaResponder(APIView):
                 for nombre, datos in modelo.conceptos.items()
             }
 
+            laboratorio_practica = sesion.examen.laboratorio_practica.first()
+
             return Response({
                 'completado': True,
                 'razon_fin': razon,
@@ -223,6 +229,7 @@ class VistaResponder(APIView):
                 'total_preguntas': total_real,
                 'estado_conceptos': estado_conceptos,
                 'retroalimentacion': retroalimentacion,
+                'laboratorio_practica_id': laboratorio_practica.id if laboratorio_practica else None,
             })
 
         historial = list(

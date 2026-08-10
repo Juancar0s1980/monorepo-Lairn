@@ -41,6 +41,7 @@ interface Curso {
   descripcion: string
   codigo: string
   creado_en: string
+  plan_aula_cargado: boolean
 }
 
 interface ModalCrearCursoProps {

@@ -48,6 +48,10 @@ class VistaMisEntregas(APIView):
                 'casos_totales': e.casos_totales if pregunta.tipo == 'codigo' else None,
                 'puntaje': e.puntaje,
                 'retroalimentacion': e.resultados.get('retroalimentacion') if pregunta.tipo == 'respuesta_libre' else None,
+                'opcion_seleccionada': e.opcion_seleccionada if pregunta.tipo == 'problema_visual' else None,
+                'transcripcion': e.resultados.get('transcripcion') if pregunta.tipo == 'pronunciacion' else None,
+                'audio_respuesta': (request.build_absolute_uri(e.audio_respuesta.url)
+                                     if pregunta.tipo == 'pronunciacion' and e.audio_respuesta else None),
                 'enviado_en': e.enviado_en,
             }
             for e in entregas

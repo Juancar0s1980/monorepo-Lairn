@@ -1,9 +1,10 @@
-// Tab de laboratorios de código del curso (vista del docente).
+// Tab de laboratorios del curso (vista del docente): actividad práctica
+// independiente del examen adaptativo, para CUALQUIER carrera — no solo
+// programación. Cada laboratorio puede tener preguntas de código, respuesta
+// abierta, problema con imagen o pronunciación (ver types/laboratorio.ts).
 //
-// Lista los laboratorios (actividad de código independiente del examen
-// adaptativo) con creación y eliminación. Editar las preguntas y sus casos
-// de test pasa a la página dedicada /mis-cursos/{cursoId}/laboratorios/{id},
-// donde hay espacio para el editor de código.
+// Lista los laboratorios con creación y eliminación. Editar las preguntas
+// pasa a la página dedicada /mis-cursos/{cursoId}/laboratorios/{id}.
 //
 // Endpoints: GET/POST /laboratorios/cursos/{cursoId}/laboratorios/,
 //            DELETE /laboratorios/laboratorios/{laboratorioId}/.
@@ -32,9 +33,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Check, Code2, Loader2, Plus, Sparkles, Trash2 } from 'lucide-react'
+import { Check, Code2, ImageIcon, Loader2, Mic, NotebookPen, Plus, Sparkles, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { OPCIONES_LENGUAJE } from '@/types/laboratorio'
+import { OPCIONES_LENGUAJE, OPCIONES_TIPO_PREGUNTA } from '@/types/laboratorio'
 import type {
   Laboratorio,
   LenguajeCodigo,
@@ -42,6 +43,7 @@ import type {
   PreguntaPayload,
   PreguntaLibreSugerida,
   RespuestaSugerirLaboratorioLibre,
+  TipoPregunta,
 } from '@/types/laboratorio'
 
 interface TabLaboratoriosDocenteProps {
@@ -61,6 +63,7 @@ export function TabLaboratoriosDocente({ cursoId }: TabLaboratoriosDocenteProps)
   // Generación de laboratorio completo con IA a partir de un enunciado libre.
   const [dialogoIaAbierto, setDialogoIaAbierto] = useState(false)
   const [enunciadoLibre, setEnunciadoLibre] = useState('')
+  const [tipoLibre, setTipoLibre] = useState<TipoPregunta>('codigo')
   const [lenguajeLibre, setLenguajeLibre] = useState<LenguajeCodigo>('python')
   const [cantidadPreguntas, setCantidadPreguntas] = useState(3)
   const [generandoLibre, setGenerandoLibre] = useState(false)
@@ -133,7 +136,12 @@ export function TabLaboratoriosDocente({ cursoId }: TabLaboratoriosDocenteProps)
     try {
       const { data } = await api.post<RespuestaSugerirLaboratorioLibre>(
         `/laboratorios/cursos/${cursoId}/laboratorios/sugerir-libre/`,
-        { enunciado: texto, lenguaje: lenguajeLibre, cantidad_preguntas: cantidadPreguntas },
+        {
+          enunciado: texto,
+          tipo: tipoLibre,
+          lenguaje: tipoLibre === 'codigo' ? lenguajeLibre : undefined,
+          cantidad_preguntas: cantidadPreguntas,
+        },
         { timeout: 300000 }
       )
       setBorrador(data)
@@ -182,12 +190,14 @@ export function TabLaboratoriosDocente({ cursoId }: TabLaboratoriosDocenteProps)
 
       for (const pregunta of elegidas as PreguntaLibreSugerida[]) {
         const payload: PreguntaPayload = {
-          tipo: 'codigo',
+          tipo: pregunta.tipo,
           enunciado: pregunta.enunciado,
           lenguaje: pregunta.lenguaje ?? 'python',
           codigo_inicial: pregunta.codigo_inicial ?? '',
           setup_sql: pregunta.setup_sql ?? '',
           criterios_ia: pregunta.criterios_ia,
+          variantes_base64: pregunta.variantes,
+          texto_pronunciar: pregunta.texto_pronunciar,
           puntos: pregunta.puntos,
           orden: pregunta.orden,
           casos_test: pregunta.casos_test,
@@ -220,7 +230,7 @@ export function TabLaboratoriosDocente({ cursoId }: TabLaboratoriosDocenteProps)
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground max-w-prose">
-          Actividades de código (Python, JavaScript, Java, C++, C, SQL) con casos de test, independientes de los exámenes de opción múltiple.
+          Actividades prácticas independientes de los exámenes de opción múltiple: código, respuesta abierta, problema con imagen o pronunciación — para cualquier carrera.
         </p>
         <div className="flex shrink-0 gap-2">
           <Button variant="outline" onClick={() => setDialogoIaAbierto(true)}>
@@ -292,7 +302,7 @@ export function TabLaboratoriosDocente({ cursoId }: TabLaboratoriosDocenteProps)
               Nuevo laboratorio
             </DialogTitle>
             <DialogDescription>
-              Después de crearlo podrás agregar preguntas de código y sus casos de test.
+              Después de crearlo podrás agregar preguntas de código, respuesta abierta, problema con imagen o pronunciación.
             </DialogDescription>
           </DialogHeader>
 
@@ -332,17 +342,54 @@ export function TabLaboratoriosDocente({ cursoId }: TabLaboratoriosDocenteProps)
               Generar laboratorio con IA
             </DialogTitle>
             <DialogDescription>
-              Describe qué laboratorio quieres y elige el lenguaje. La IA genera título, preguntas
-              y casos de test, y cada caso se verifica ejecutando una solución de referencia real
-              en el sandbox antes de mostrártelo. Puede tardar uno o dos minutos.
+              Describe qué laboratorio quieres y elige el tipo de ejercicio. La IA genera título,
+              instrucciones y las preguntas
+              {tipoLibre === 'codigo' && ' — cada caso de test se verifica ejecutando una solución de referencia real en el sandbox'}
+              . Puede tardar uno o dos minutos.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3">
             <div className="space-y-1.5">
+              <Label>Tipo de laboratorio</Label>
+              <div className="flex gap-2">
+                {OPCIONES_TIPO_PREGUNTA.map((o) => (
+                  <button
+                    key={o.value}
+                    type="button"
+                    onClick={() => setTipoLibre(o.value)}
+                    className={`flex-1 rounded-lg border px-2 py-2 text-xs transition-colors ${
+                      tipoLibre === o.value
+                        ? 'border-primary bg-primary/5 text-foreground'
+                        : 'border-border text-muted-foreground hover:bg-muted'
+                    }`}
+                  >
+                    {o.value === 'codigo' ? (
+                      <Code2 className="mr-1 inline h-3.5 w-3.5" />
+                    ) : o.value === 'respuesta_libre' ? (
+                      <NotebookPen className="mr-1 inline h-3.5 w-3.5" />
+                    ) : o.value === 'problema_visual' ? (
+                      <ImageIcon className="mr-1 inline h-3.5 w-3.5" />
+                    ) : (
+                      <Mic className="mr-1 inline h-3.5 w-3.5" />
+                    )}
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-1.5">
               <Label>Describe el laboratorio</Label>
               <Textarea
-                placeholder="Ej: un laboratorio de estructuras de datos con listas enlazadas, de dificultad media."
+                placeholder={
+                  tipoLibre === 'codigo'
+                    ? 'Ej: un laboratorio de estructuras de datos con listas enlazadas, de dificultad media.'
+                    : tipoLibre === 'respuesta_libre'
+                      ? 'Ej: un laboratorio de inglés de negocios sobre cómo escribir correos formales.'
+                      : tipoLibre === 'problema_visual'
+                        ? 'Ej: un laboratorio de mecánica de fluidos sobre redes de tuberías en serie.'
+                        : 'Ej: un laboratorio de pronunciación de vocabulario técnico de redes de computadoras.'
+                }
                 rows={3}
                 value={enunciadoLibre}
                 onChange={(e) => setEnunciadoLibre(e.target.value)}
@@ -350,23 +397,25 @@ export function TabLaboratoriosDocente({ cursoId }: TabLaboratoriosDocenteProps)
               />
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label>Lenguaje</Label>
-                <Select
-                  items={OPCIONES_LENGUAJE}
-                  value={lenguajeLibre}
-                  onValueChange={(valor) => valor && setLenguajeLibre(valor as LenguajeCodigo)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Seleccionar" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {OPCIONES_LENGUAJE.map((o) => (
-                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {tipoLibre === 'codigo' && (
+                <div className="space-y-1.5">
+                  <Label>Lenguaje</Label>
+                  <Select
+                    items={OPCIONES_LENGUAJE}
+                    value={lenguajeLibre}
+                    onValueChange={(valor) => valor && setLenguajeLibre(valor as LenguajeCodigo)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Seleccionar" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {OPCIONES_LENGUAJE.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="space-y-1.5">
                 <Label>Cantidad de preguntas</Label>
                 <Input
@@ -388,7 +437,7 @@ export function TabLaboratoriosDocente({ cursoId }: TabLaboratoriosDocenteProps)
               {generandoLibre ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Generando y verificando...
+                  Generando...
                 </>
               ) : (
                 'Generar'
@@ -407,8 +456,14 @@ export function TabLaboratoriosDocente({ cursoId }: TabLaboratoriosDocenteProps)
               Revisa el laboratorio generado
             </DialogTitle>
             <DialogDescription>
-              Los casos de test ya se verificaron ejecutando una solución de referencia real en el
-              sandbox. Ajusta el título/instrucciones si quieres y marca las preguntas que quieras agregar.
+              {tipoLibre === 'codigo'
+                ? 'Los casos de test ya se verificaron ejecutando una solución de referencia real en el sandbox.'
+                : tipoLibre === 'problema_visual'
+                  ? 'Cada pregunta es un problema independiente, con sus propias variantes (diagrama + 4 opciones cada una).'
+                  : tipoLibre === 'pronunciacion'
+                    ? 'El audio de referencia de cada frase se genera al aceptar el borrador.'
+                    : 'Cada pregunta incluye la rúbrica que usará la IA para calificar las respuestas de los estudiantes.'}{' '}
+              Ajusta el título/instrucciones si quieres y marca las preguntas que quieras agregar.
             </DialogDescription>
           </DialogHeader>
 
@@ -441,12 +496,35 @@ export function TabLaboratoriosDocente({ cursoId }: TabLaboratoriosDocenteProps)
                   >
                     {seleccionadas.has(i) && <Check className="h-3 w-3" />}
                   </span>
-                  <div className="flex-1 space-y-1">
+                  <div className="flex-1 space-y-1.5">
                     <p className="text-foreground">{p.enunciado}</p>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-[10px] uppercase">{p.lenguaje}</Badge>
-                      <span className="text-xs text-muted-foreground">{p.casos_test.length} caso(s) de test verificados</span>
-                    </div>
+                    {p.tipo === 'codigo' ? (
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-[10px] uppercase">{p.lenguaje}</Badge>
+                        <span className="text-xs text-muted-foreground">{p.casos_test.length} caso(s) de test verificados</span>
+                      </div>
+                    ) : p.tipo === 'problema_visual' ? (
+                      p.variantes && p.variantes.length > 0 && (
+                        <div className="flex gap-2 overflow-x-auto pb-1">
+                          {p.variantes.map((v, vi) => (
+                            <img
+                              key={vi}
+                              src={`data:image/svg+xml;base64,${v.imagen_base64}`}
+                              alt={`Variante ${vi + 1}`}
+                              className="h-16 w-16 shrink-0 rounded border object-cover"
+                            />
+                          ))}
+                          <span className="self-center text-xs text-muted-foreground">{p.variantes.length} variante(s)</span>
+                        </div>
+                      )
+                    ) : p.tipo === 'pronunciacion' ? (
+                      <div className="flex items-center gap-1.5">
+                        <Mic className="h-3.5 w-3.5 text-muted-foreground" />
+                        <Badge variant="outline" className="text-[10px]">{p.texto_pronunciar}</Badge>
+                      </div>
+                    ) : (
+                      <p className="line-clamp-2 text-xs text-muted-foreground">Rúbrica: {p.criterios_ia}</p>
+                    )}
                   </div>
                 </button>
               ))}

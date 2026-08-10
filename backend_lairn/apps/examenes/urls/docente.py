@@ -21,6 +21,8 @@ from apps.examenes.views import (
     VistaObjetivosCurso,
     VistaDetalleObjetivo,
     VistaSugerirObjetivos,
+    VistaCargarPlanAula,
+    VistaGenerarPracticaExamen,
 )
 
 urlpatterns = [
@@ -37,6 +39,9 @@ urlpatterns = [
     # Update/delete se bloquean si hay sesiones de estudiantes en progreso sobre el examen.
     path('examenes/<int:examen_id>/', VistaDetalleExamen.as_view(), name='detalle_examen'),
 
+    # Genera (o recupera) el laboratorio de práctica vinculado a un examen. Idempotente.
+    path('examenes/<int:examen_id>/generar-practica/', VistaGenerarPracticaExamen.as_view(), name='generar_practica_examen'),
+
     # Listado de estudiantes inscritos en un curso del docente.
     path('cursos/<int:curso_id>/estudiantes/', VistaEstudiantesCurso.as_view(), name='estudiantes_curso'),
 
@@ -51,4 +56,7 @@ urlpatterns = [
 
     # Detalle de un objetivo: edición (PATCH) y eliminación (DELETE).
     path('cursos/<int:curso_id>/objetivos/<int:objetivo_id>/', VistaDetalleObjetivo.as_view(), name='detalle_objetivo'),
+
+    # Carga del plan de aula (PDF): genera y guarda los objetivos directamente. Un solo uso por curso.
+    path('cursos/<int:curso_id>/plan-aula/', VistaCargarPlanAula.as_view(), name='cargar_plan_aula'),
 ]

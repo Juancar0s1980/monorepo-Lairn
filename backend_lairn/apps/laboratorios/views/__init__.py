@@ -13,6 +13,7 @@ from .estudiante import (
     VistaEjecutarCodigo,
     VistaEnviarRespuesta,
     VistaMisEntregas,
+    VistaFinalizarPractica,
 )
 
 __all__ = [
@@ -28,4 +29,5 @@ __all__ = [
     'VistaEjecutarCodigo',
     'VistaEnviarRespuesta',
     'VistaMisEntregas',
+    'VistaFinalizarPractica',
 ]

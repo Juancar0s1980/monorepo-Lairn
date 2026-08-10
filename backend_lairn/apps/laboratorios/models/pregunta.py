@@ -23,6 +23,34 @@ sugerencia de IA). El campo `tipo` decide qué más aplica:
   `casos_test` no aplican. `criterios_ia` pasa a ser obligatorio: es la
   rúbrica que la IA usa para calificar la respuesta (LLM-as-judge, ver
   `services/agente_evaluador.py`), no una sugerencia opcional.
+
+- `tipo='problema_visual'`: problema de opción múltiple con un diagrama
+  generado por IA (útil para física, mecánica de fluidos, circuitos, etc.).
+  `enunciado` incluye el texto del problema y las fórmulas de apoyo.
+  A diferencia de los otros dos tipos, no hay una única imagen/rúbrica: la
+  IA genera VARIAS VARIANTES (`variantes`, ver
+  `services/agente_problema_visual.py`), cada una con su propio diagrama y
+  sus propias 4 opciones de respuesta — el estudiante resuelve a mano en
+  papel y solo selecciona la opción correcta (no sube nada, no hay
+  calificación por visión: comparar el índice elegido es instantáneo).
+  Cada estudiante recibe una variante fija asignada al azar (ver
+  `AsignacionVariante`), para dificultar copiarse entre compañeros.
+  `imagen_referencia` es opcional: una imagen que el docente sube como guía
+  de contexto (no la procesa ninguna IA, es solo para su propia referencia
+  o para mostrarle al estudiante el tipo de ejercicio).
+  `lenguaje`/`codigo_inicial`/`setup_sql`/`casos_test`/`criterios_ia` no aplican.
+
+- `tipo='pronunciacion'`: práctica de pronunciación (pensado para inglés,
+  pero el texto puede ser de cualquier idioma que soporte Edge TTS).
+  `texto_pronunciar` es la palabra/frase a practicar; `audio_referencia` es
+  su pronunciación correcta, generada con Edge TTS (gratis, sin API key —
+  ver `services/agente_pronunciacion.py`) cada vez que se guarda la
+  pregunta. El estudiante escucha el audio y graba su propia voz; la
+  calificación transcribe esa grabación con Whisper (Groq) y compara el
+  texto contra `texto_pronunciar` — sin evaluación fonética fina de acento,
+  solo si dijo la palabra/frase correcta.
+  `lenguaje`/`codigo_inicial`/`setup_sql`/`casos_test`/`criterios_ia`/
+  `imagen_referencia` no aplican.
 """
 
 from django.db import models
@@ -30,6 +58,8 @@ from django.db import models
 TIPO_CHOICES = [
     ('codigo', 'Código'),
     ('respuesta_libre', 'Respuesta abierta'),
+    ('problema_visual', 'Problema con imagen'),
+    ('pronunciacion', 'Pronunciación'),
 ]
 
 LENGUAJE_CHOICES = [
@@ -61,7 +91,19 @@ class Pregunta(models.Model):
     )
     criterios_ia = models.TextField(
         blank=True, default='',
-        help_text='Si tipo=respuesta_libre: rúbrica obligatoria que la IA usa para calificar. Si tipo=codigo: instrucciones opcionales para evaluación cualitativa adicional.'
+        help_text='Si tipo=respuesta_libre: rúbrica obligatoria que la IA usa para calificar. Si tipo=codigo: instrucciones opcionales para evaluación cualitativa adicional. No aplica a tipo=problema_visual (calificación por opción múltiple, no por IA).'
+    )
+    imagen_referencia = models.ImageField(
+        upload_to='problemas_visuales/referencias/', null=True, blank=True,
+        help_text='Imagen que el docente sube como guía/ejemplo. Opcional, solo contexto — no la procesa ninguna IA. Solo aplica si tipo=problema_visual.'
+    )
+    texto_pronunciar = models.CharField(
+        max_length=300, blank=True, default='',
+        help_text='Palabra o frase a pronunciar. Solo aplica si tipo=pronunciacion.'
+    )
+    audio_referencia = models.FileField(
+        upload_to='pronunciacion/referencias/', null=True, blank=True,
+        help_text='Audio de la pronunciación correcta, generado con Edge TTS. Solo aplica si tipo=pronunciacion.'
     )
     puntos = models.PositiveIntegerField(default=100)
     orden = models.PositiveIntegerField(default=0)

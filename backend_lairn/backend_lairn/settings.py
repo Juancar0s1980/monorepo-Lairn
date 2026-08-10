@@ -28,6 +28,12 @@ ALLOWED_HOSTS = [config("ALLOWED_HOSTS")]
 OPENAI_API_KEY = config("OPENAI_API_KEY", default="")
 XAI_API_KEY = config("XAI_API_KEY", default="")
 GROQ_API_KEY = config("GROQ_API_KEY", default="")
+# Solo para generación de imágenes (Gemini), separado de AI_PROVIDER (que es
+# solo para los tres proveedores de texto/chat completions de ia_client.py).
+GEMINI_API_KEY = config("GEMINI_API_KEY", default="")
+# Hugging Face Inference API: generación de imágenes (variantes de diagramas)
+# y, si aplica, calificación por visión — separado de AI_PROVIDER por la misma razón.
+HF_TOKEN = config("HF_TOKEN", default="")
 
 # Proveedor de IA generativa usado por los servicios de agente_ia/agente_codigo.
 # "openai", "grok" o "groq" (default "openai"). Cambiar de proveedor no
@@ -186,3 +192,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Archivos subidos por usuarios (diagramas generados por IA, fotos de soluciones
+# de estudiantes). Guardados en disco local: el volumen de docker-compose ya
+# monta todo backend_lairn/ al contenedor, así que persisten sin volumen aparte.
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

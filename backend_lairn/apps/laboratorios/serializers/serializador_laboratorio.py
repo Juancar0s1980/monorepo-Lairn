@@ -20,8 +20,8 @@ class SerializadorLaboratorio(serializers.ModelSerializer):
 
     class Meta:
         model = Laboratorio
-        fields = ['id', 'titulo', 'instrucciones', 'max_intentos', 'fecha_limite', 'creado_en', 'total_preguntas', 'tema_estudio']
-        read_only_fields = ['id', 'creado_en', 'tema_estudio']
+        fields = ['id', 'titulo', 'instrucciones', 'max_intentos', 'fecha_limite', 'creado_en', 'total_preguntas', 'tema_estudio', 'examen']
+        read_only_fields = ['id', 'creado_en', 'tema_estudio', 'examen']
 
 
 class SerializadorLaboratorioDetalleDocente(serializers.ModelSerializer):
@@ -30,8 +30,8 @@ class SerializadorLaboratorioDetalleDocente(serializers.ModelSerializer):
 
     class Meta:
         model = Laboratorio
-        fields = ['id', 'titulo', 'instrucciones', 'max_intentos', 'fecha_limite', 'creado_en', 'tema_estudio', 'preguntas']
-        read_only_fields = ['id', 'creado_en', 'tema_estudio']
+        fields = ['id', 'titulo', 'instrucciones', 'max_intentos', 'fecha_limite', 'creado_en', 'tema_estudio', 'examen', 'preguntas']
+        read_only_fields = ['id', 'creado_en', 'tema_estudio', 'examen']
 
 
 class SerializadorLaboratorioDetalleEstudiante(serializers.ModelSerializer):
@@ -40,5 +40,5 @@ class SerializadorLaboratorioDetalleEstudiante(serializers.ModelSerializer):
 
     class Meta:
         model = Laboratorio
-        fields = ['id', 'titulo', 'instrucciones', 'max_intentos', 'fecha_limite', 'creado_en', 'tema_estudio', 'preguntas']
+        fields = ['id', 'titulo', 'instrucciones', 'max_intentos', 'fecha_limite', 'creado_en', 'tema_estudio', 'examen', 'preguntas']
         read_only_fields = fields

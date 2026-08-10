@@ -13,4 +13,7 @@ class SerializadorResultado(serializers.ModelSerializer):
 
     class Meta:
         model = Resultado
-        fields = ['id', 'examen', 'puntaje', 'nota', 'total_preguntas', 'correctas', 'completado_en', 'respuestas']
+        fields = [
+            'id', 'examen', 'puntaje', 'nota', 'total_preguntas', 'correctas', 'completado_en', 'respuestas',
+            'nota_teoria', 'nota_practica', 'puntaje_practica',
+        ]

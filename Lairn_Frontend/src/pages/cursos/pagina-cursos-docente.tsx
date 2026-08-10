@@ -5,6 +5,7 @@
 // Permite crear nuevos cursos mediante un botón que abre una modal.
 
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api from '@/services/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -22,6 +23,7 @@ interface Curso {
   descripcion: string
   codigo: string
   creado_en: string
+  plan_aula_cargado: boolean
 }
 
 // Calcula stats del curso a partir del resumen de estudiantes.
@@ -44,6 +46,7 @@ function calcularStats(resumen: ResumenCursoDocente) {
 }
 
 export default function PaginaCursosDocente() {
+  const navigate = useNavigate()
   const [cursos, setCursos] = useState<Curso[]>([])
   const [resumenes, setResumenes] = useState<Map<number, ResumenCursoDocente>>(
     new Map()
@@ -86,9 +89,11 @@ export default function PaginaCursosDocente() {
     cargarDatos()
   }, [])
 
-  // Agrega el curso creado a la lista sin recargar.
+  // Agrega el curso creado a la lista y navega directo a su plan de aula (paso
+  // obligatorio antes de ver el resto de las secciones del curso).
   const agregarCurso = (curso: Curso) => {
     setCursos((prev) => [curso, ...prev])
+    navigate(`/mis-cursos/${curso.id}/examenes`)
   }
 
   // Estado de carga: skeleton cards.
@@ -167,6 +172,7 @@ export default function PaginaCursosDocente() {
                 totalExamenes={stats.totalExamenes}
                 notaPromedio={resumen?.nota_promedio_curso}
                 tasaAprobados={stats.tasaAprobados}
+                planAulaCargado={curso.plan_aula_cargado}
               />
             )
           })}

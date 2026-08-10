@@ -36,6 +36,10 @@ class Curso(models.Model):
         default=False,
         help_text='Si está activo, el docente puede publicar temas de estudio con IA y los estudiantes inscritos pueden verlos y preguntar sobre ellos.'
     )
+    plan_aula_cargado = models.BooleanField(
+        default=False,
+        help_text='Indica si el docente ya subió el PDF del plan de aula y se generaron los objetivos iniciales del curso.'
+    )
 
     class Meta:
         db_table = 'cursos'

@@ -19,9 +19,24 @@ class Resultado(models.Model):
         related_name='resultados'
     )
     puntaje = models.FloatField(default=0)
-    nota = models.FloatField(default=1.0, help_text='Calificación en escala 1.0 a 5.0')
+    nota = models.FloatField(
+        default=1.0,
+        help_text='Calificación final en escala 1.0 a 5.0. Si el examen tiene práctica vinculada, es la combinación ponderada de nota_teoria y nota_practica; si no, es igual a nota_teoria.'
+    )
     total_preguntas = models.IntegerField()
     correctas = models.IntegerField(default=0)
+    nota_teoria = models.FloatField(
+        null=True, blank=True,
+        help_text='Snapshot de la nota (1.0-5.0) obtenida solo en la parte de teoría, antes de combinar con la práctica.'
+    )
+    nota_practica = models.FloatField(
+        null=True, blank=True,
+        help_text='Nota (1.0-5.0) de la parte práctica (laboratorio vinculado), calculada al finalizarla. Null si el examen no tiene práctica o aún no se ha finalizado.'
+    )
+    puntaje_practica = models.FloatField(
+        null=True, blank=True,
+        help_text='Puntaje (0-100) de la parte práctica, promedio del mejor intento por pregunta del laboratorio vinculado.'
+    )
     completado_en = models.DateTimeField(auto_now_add=True)
 
     class Meta:

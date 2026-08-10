@@ -59,6 +59,7 @@ import { TabAnaliticaDocente } from './componentes/tab-analitica-docente'
 import { TabObjetivosDocente } from './componentes/tab-objetivos-docente'
 import { TabLaboratoriosDocente } from './componentes/tab-laboratorios-docente'
 import { TabCampoEstudioDocente } from './componentes/tab-campo-estudio-docente'
+import { GatePlanAulaDocente } from './componentes/gate-plan-aula-docente'
 import type { Examen } from '@/types/examen'
 import type { ResumenCursoDocente, PatronesCurso } from '@/types/analitica'
 
@@ -70,6 +71,7 @@ interface Curso {
   codigo: string
   creado_en: string
   campo_estudio_habilitado: boolean
+  plan_aula_cargado: boolean
 }
 
 // Esquema de validación para actualizar los datos del curso.
@@ -296,6 +298,27 @@ export default function PaginaExamenesCursoDocente() {
 
   const nombreCurso = curso?.nombre || resumen?.curso || 'Curso'
   const codigoCurso = curso?.codigo || resumen?.codigo
+
+  // Bloquea todo el curso hasta que se suba el plan de aula (solo aplica a cursos nuevos:
+  // los existentes quedan exentos con plan_aula_cargado=true por la migración de backfill).
+  if (curso && !curso.plan_aula_cargado) {
+    return (
+      <div className="space-y-6">
+        <EncabezadoGradiente
+          titulo={nombreCurso}
+          subtitulo="Gestión de exámenes y estudiantes"
+          volverA="/mis-cursos"
+          volverTexto="Volver a mis cursos"
+          badgeTexto={codigoCurso}
+        />
+        <GatePlanAulaDocente
+          cursoId={id!}
+          nombreCurso={nombreCurso}
+          onCargado={() => setCurso({ ...curso, plan_aula_cargado: true })}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">

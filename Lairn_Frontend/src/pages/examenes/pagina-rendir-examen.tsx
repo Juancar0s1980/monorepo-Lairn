@@ -27,6 +27,7 @@ import {
   SignalMedium,
   SignalHigh,
   Clock,
+  FlaskConical,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { SesionExamen, ResultadoExamen } from '@/types/examen'
@@ -50,6 +51,10 @@ export default function PaginaRendirExamen() {
   const [estadoPagina, setEstadoPagina] = useState<EstadoPagina>('iniciando')
   const [respondiendo, setRespondiendo] = useState(false)
   const [resultado, setResultado] = useState<ResultadoExamen | null>(null)
+
+  // Si el examen tiene una práctica vinculada, la teoría termina en esta pantalla
+  // intermedia (con la nota parcial) en vez de mostrar directo el resultado final.
+  const [practicaPendiente, setPracticaPendiente] = useState<{ laboratorioId: number; notaTeoria: number } | null>(null)
 
   // Estado de los modales.
   const [feedbackAbierto, setFeedbackAbierto] = useState(false)
@@ -181,13 +186,20 @@ export default function PaginaRendirExamen() {
     setFeedbackAbierto(false)
 
     if (examenTerminadoRef.current && data) {
-      setResultado({
-        puntaje: data.puntaje ?? 0,
-        nota: data.nota ?? 0,
-        correctas: data.correctas ?? 0,
-        total_preguntas: data.total_preguntas,
-      })
-      setResultadoAbierto(true)
+      if (data.laboratorio_practica_id) {
+        setPracticaPendiente({
+          laboratorioId: data.laboratorio_practica_id,
+          notaTeoria: data.nota ?? 0,
+        })
+      } else {
+        setResultado({
+          puntaje: data.puntaje ?? 0,
+          nota: data.nota ?? 0,
+          correctas: data.correctas ?? 0,
+          total_preguntas: data.total_preguntas,
+        })
+        setResultadoAbierto(true)
+      }
     } else if (data) {
       setSesion(data)
       preguntaMostradaEn.current = Date.now()
@@ -246,6 +258,37 @@ export default function PaginaRendirExamen() {
         >
           <ArrowLeft className="h-4 w-4" />
           Volver a exámenes
+        </Link>
+      </div>
+    )
+  }
+
+  // Teoría terminada y el examen tiene una práctica vinculada: pantalla intermedia
+  // con la nota parcial, antes de ver la nota final combinada.
+  if (practicaPendiente) {
+    return (
+      <div className="mx-auto max-w-md space-y-6 py-16 text-center">
+        <div className="flex justify-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+            <FlaskConical className="h-8 w-8 text-primary" />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-xl font-bold">Teoría terminada</h2>
+          <p className="text-sm text-muted-foreground">
+            Nota parcial de teoría:{' '}
+            <span className="font-semibold text-foreground">{practicaPendiente.notaTeoria.toFixed(1)}</span> de 5.0
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Completa la parte práctica para obtener tu nota final combinada.
+          </p>
+        </div>
+        <Link
+          to={`/mis-cursos/${cursoId}/laboratorios/${practicaPendiente.laboratorioId}`}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+        >
+          <FlaskConical className="h-4 w-4" />
+          Ir a la práctica
         </Link>
       </div>
     )

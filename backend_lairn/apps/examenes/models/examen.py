@@ -56,6 +56,10 @@ class Examen(models.Model):
         related_name='examenes',
         help_text='Objetivos del curso que este examen evalúa. Si hay, la IA ancla cada pregunta a uno de ellos'
     )
+    peso_practica = models.FloatField(
+        default=0,
+        help_text='Porcentaje (0-100) que aporta la parte práctica (laboratorio vinculado) a la nota final. 0 = examen solo de teoría.'
+    )
     creado_en = models.DateTimeField(auto_now_add=True)
 
     class Meta:

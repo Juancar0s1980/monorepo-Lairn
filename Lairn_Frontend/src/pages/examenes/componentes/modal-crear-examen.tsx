@@ -33,7 +33,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { Check, Loader2, FileText, Info, Target } from 'lucide-react'
+import { Check, Loader2, FileText, FlaskConical, Info, Target } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Examen, ObjetivoCurso } from '@/types/examen'
 
@@ -106,9 +106,16 @@ export function ModalCrearExamen({
 }: ModalCrearExamenProps) {
   const [enviando, setEnviando] = useState(false)
 
-  // Objetivos del curso disponibles para anclar el examen (selección opcional).
+  // Objetivos del curso disponibles para anclar el examen. La selección es
+  // obligatoria: el backend rechaza crear un examen sin al menos uno.
   const [objetivosCurso, setObjetivosCurso] = useState<ObjetivoCurso[]>([])
   const [objetivosSeleccionados, setObjetivosSeleccionados] = useState<Set<number>>(new Set())
+
+  // Parte práctica opcional: si está activa, al crear el examen se genera y
+  // vincula automáticamente un Laboratorio de práctica (código o respuesta
+  // abierta, como en cualquier carrera) que aporta `pesoPractica`% a la nota final.
+  const [incluirPractica, setIncluirPractica] = useState(false)
+  const [pesoPractica, setPesoPractica] = useState('30')
 
   // Carga los objetivos del curso al abrir la modal (para poblar el selector).
   useEffect(() => {
@@ -185,14 +192,36 @@ export function ModalCrearExamen({
             ? Number(datos.max_preguntas)
             : 0,
         objetivos: Array.from(objetivosSeleccionados),
+        peso_practica: incluirPractica ? Number(pesoPractica) : 0,
       })
+
+      let examenFinal = data
+      if (incluirPractica) {
+        try {
+          const { data: laboratorio } = await api.post<{ id: number }>(
+            `/examenes/examenes/${data.id}/generar-practica/`
+          )
+          examenFinal = { ...data, laboratorio_practica_id: laboratorio.id }
+        } catch {
+          toast.error('El examen se creó, pero no se pudo generar la práctica. Puedes reintentarlo desde la lista de exámenes.')
+        }
+      }
+
       toast.success('Examen creado exitosamente')
-      onExamenCreado(data)
+      onExamenCreado(examenFinal)
       reset()
       setObjetivosSeleccionados(new Set())
+      setIncluirPractica(false)
+      setPesoPractica('30')
       onCerrar()
-    } catch {
-      toast.error('No se pudo crear el examen')
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: Record<string, string[]> } }
+      const data = axiosErr.response?.data
+      if (data) {
+        toast.error(Object.values(data).flat().join('. '))
+      } else {
+        toast.error('No se pudo crear el examen')
+      }
     } finally {
       setEnviando(false)
     }
@@ -202,6 +231,8 @@ export function ModalCrearExamen({
   const manejarCerrar = () => {
     reset()
     setObjetivosSeleccionados(new Set())
+    setIncluirPractica(false)
+    setPesoPractica('30')
     onCerrar()
   }
 
@@ -262,12 +293,12 @@ export function ModalCrearExamen({
             )}
           </div>
 
-          {/* Selector de objetivos del curso (solo si el curso tiene objetivos) */}
-          {objetivosCurso.length > 0 && (
+          {/* Selector de objetivos del curso: obligatorio marcar al menos uno */}
+          {objetivosCurso.length > 0 ? (
             <div className="space-y-1.5">
               <div className="flex items-center gap-1.5">
-                <Label>Objetivos a evaluar</Label>
-                <Ayuda texto="La IA generará cada pregunta evaluando exactamente uno de los objetivos marcados. Si no marcas ninguno, usará solo el tema." />
+                <Label>Objetivos a evaluar *</Label>
+                <Ayuda texto="La IA generará cada pregunta evaluando exactamente uno de los objetivos marcados. Debes marcar al menos uno." />
               </div>
               <div className="max-h-36 space-y-1.5 overflow-y-auto rounded-lg border p-2">
                 {objetivosCurso.map((objetivo) => (
@@ -294,13 +325,20 @@ export function ModalCrearExamen({
                   </button>
                 ))}
               </div>
-              {objetivosSeleccionados.size > 0 && (
+              {objetivosSeleccionados.size > 0 ? (
                 <p className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Target className="h-3 w-3" />
                   {objetivosSeleccionados.size} objetivo(s) anclado(s) a este examen
                 </p>
+              ) : (
+                <p className="text-xs text-destructive">Selecciona al menos un objetivo.</p>
               )}
             </div>
+          ) : (
+            <p className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
+              Este curso todavía no tiene objetivos de aprendizaje. Agrega al menos uno en la
+              pestaña "Objetivos" antes de crear un examen.
+            </p>
           )}
 
           {/* Fila: tiempo y número de preguntas */}
@@ -512,6 +550,42 @@ export function ModalCrearExamen({
             </div>
           </div>
 
+          {/* Parte práctica: opcional, se genera y vincula un Laboratorio al crear el examen */}
+          <div className="space-y-3 rounded-lg border p-3">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-1.5">
+                  <FlaskConical className="h-3.5 w-3.5 text-muted-foreground" />
+                  <Label>Incluir parte práctica</Label>
+                  <Ayuda texto="Al terminar la teoría, el estudiante debe completar un laboratorio (código o respuesta abierta, según la carrera) antes de ver su nota final." />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Se genera un laboratorio de práctica vinculado a este examen
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">{incluirPractica ? 'Sí' : 'No'}</span>
+                <Switch checked={incluirPractica} onCheckedChange={setIncluirPractica} />
+              </div>
+            </div>
+            {incluirPractica && (
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Label htmlFor="peso_practica">Peso de la práctica en la nota final (%)</Label>
+                  <Ayuda texto="El resto lo aporta la teoría. Ej: 30 = 70% teoría + 30% práctica." />
+                </div>
+                <Input
+                  id="peso_practica"
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={pesoPractica}
+                  onChange={(e) => setPesoPractica(e.target.value)}
+                />
+              </div>
+            )}
+          </div>
+
           {/* Footer con botones */}
           <DialogFooter>
             <Button
@@ -522,7 +596,10 @@ export function ModalCrearExamen({
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={enviando}>
+            <Button
+              type="submit"
+              disabled={enviando || objetivosCurso.length === 0 || objetivosSeleccionados.size === 0}
+            >
               {enviando ? (
                 <div className="flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />

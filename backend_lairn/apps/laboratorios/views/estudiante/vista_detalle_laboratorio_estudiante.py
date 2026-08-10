@@ -44,5 +44,5 @@ class VistaDetalleLaboratorioEstudiante(APIView):
         except Laboratorio.DoesNotExist:
             return Response({'detalle': 'Laboratorio no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
 
-        serializador = SerializadorLaboratorioDetalleEstudiante(laboratorio)
+        serializador = SerializadorLaboratorioDetalleEstudiante(laboratorio, context={'request': request})
         return Response(serializador.data)

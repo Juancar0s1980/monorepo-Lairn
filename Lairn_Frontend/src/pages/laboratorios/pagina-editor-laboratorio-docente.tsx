@@ -35,7 +35,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { BarChart3, Check, Code2, ListChecks, Loader2, NotebookPen, Plus, Settings, Sparkles, Trash2, Users } from 'lucide-react'
+import { BarChart3, Check, Code2, ImageIcon, ListChecks, Loader2, Mic, NotebookPen, Plus, Settings, Sparkles, Trash2, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { OPCIONES_LENGUAJE, OPCIONES_TIPO_PREGUNTA } from '@/types/laboratorio'
 import type {
@@ -47,7 +47,18 @@ import type {
   AnaliticaLaboratorio,
   LenguajeCodigo,
   TipoPregunta,
+  VarianteProblemaVisual,
 } from '@/types/laboratorio'
+
+// Convierte un File a un string base64 puro (sin el prefijo "data:...;base64,").
+function archivoABase64(archivo: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const lector = new FileReader()
+    lector.onload = () => resolve((lector.result as string).split(',')[1])
+    lector.onerror = reject
+    lector.readAsDataURL(archivo)
+  })
+}
 
 // Caso de test en edición local: `clave` es solo para el key de React y el
 // remove, nunca se manda al backend (el POST/PATCH reemplaza el conjunto
@@ -87,6 +98,7 @@ const FORM_VACIO = {
   codigo_inicial: '',
   setup_sql: '',
   criterios_ia: '',
+  texto_pronunciar: '',
   puntos: 100,
 }
 
@@ -100,6 +112,13 @@ export default function PaginaEditorLaboratorioDocente() {
   const [seleccion, setSeleccion] = useState<number | 'nueva' | null>(null)
   const [form, setForm] = useState(FORM_VACIO)
   const [casos, setCasos] = useState<CasoEdicion[]>([])
+  // Variantes de la pregunta seleccionada (solo lectura: se generan con IA, no se editan a mano).
+  const [variantesPreguntaActual, setVariantesPreguntaActual] = useState<VarianteProblemaVisual[]>([])
+  // Imagen de referencia: la sube el docente directamente (opcional, solo contexto).
+  const [imagenReferenciaActual, setImagenReferenciaActual] = useState<string | null>(null)
+  const [imagenReferenciaBase64, setImagenReferenciaBase64] = useState<string | undefined>(undefined)
+  // Audio de referencia (tipo=pronunciacion): lo genera el backend con Edge TTS, solo lectura.
+  const [audioReferenciaActual, setAudioReferenciaActual] = useState<string | null>(null)
   const [guardando, setGuardando] = useState(false)
 
   // Sugerencias de IA (una por objetivo del curso). Si tipoSugerencia='codigo', los
@@ -152,15 +171,31 @@ export default function PaginaEditorLaboratorioDocente() {
       codigo_inicial: pregunta.codigo_inicial,
       setup_sql: pregunta.setup_sql,
       criterios_ia: pregunta.criterios_ia,
+      texto_pronunciar: pregunta.texto_pronunciar,
       puntos: pregunta.puntos,
     })
     setCasos(casosDesdeApi(pregunta))
+    setVariantesPreguntaActual(pregunta.variantes)
+    setImagenReferenciaActual(pregunta.imagen_referencia)
+    setImagenReferenciaBase64(undefined)
+    setAudioReferenciaActual(pregunta.audio_referencia)
   }
 
   const nuevaPregunta = () => {
     setSeleccion('nueva')
     setForm(FORM_VACIO)
     setCasos([])
+    setVariantesPreguntaActual([])
+    setImagenReferenciaActual(null)
+    setImagenReferenciaBase64(undefined)
+    setAudioReferenciaActual(null)
+  }
+
+  const elegirImagenReferencia = async (archivo: File | null) => {
+    if (!archivo) return
+    const base64 = await archivoABase64(archivo)
+    setImagenReferenciaBase64(base64)
+    setImagenReferenciaActual(URL.createObjectURL(archivo))
   }
 
   const agregarCaso = () => {
@@ -186,7 +221,11 @@ export default function PaginaEditorLaboratorioDocente() {
       return
     }
     if (form.tipo === 'respuesta_libre' && !form.criterios_ia.trim()) {
-      toast.error('La rúbrica de evaluación es obligatoria para preguntas de respuesta abierta')
+      toast.error('La rúbrica de evaluación es obligatoria para este tipo de pregunta')
+      return
+    }
+    if (form.tipo === 'pronunciacion' && !form.texto_pronunciar.trim()) {
+      toast.error('La palabra o frase a pronunciar es obligatoria para este tipo de pregunta')
       return
     }
 
@@ -197,6 +236,8 @@ export default function PaginaEditorLaboratorioDocente() {
       codigo_inicial: form.codigo_inicial,
       setup_sql: form.setup_sql,
       criterios_ia: form.criterios_ia,
+      imagen_referencia_base64: form.tipo === 'problema_visual' ? imagenReferenciaBase64 : undefined,
+      texto_pronunciar: form.tipo === 'pronunciacion' ? form.texto_pronunciar : undefined,
       puntos: form.puntos,
       orden: laboratorio.preguntas.length,
       casos_test:
@@ -304,6 +345,8 @@ export default function PaginaEditorLaboratorioDocente() {
           codigo_inicial: sugerencia.codigo_inicial ?? '',
           setup_sql: sugerencia.setup_sql ?? '',
           criterios_ia: sugerencia.criterios_ia,
+          variantes_base64: sugerencia.variantes,
+          texto_pronunciar: sugerencia.texto_pronunciar,
           puntos: sugerencia.puntos,
           orden: laboratorio.preguntas.length + creadas.length,
           casos_test: sugerencia.casos_test,
@@ -417,7 +460,14 @@ export default function PaginaEditorLaboratorioDocente() {
           {generandoIa ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Generando{tipoSugerencia === 'codigo' ? ' y verificando... (puede tardar 1-2 min)' : '...'}
+              Generando
+              {tipoSugerencia === 'codigo'
+                ? ' y verificando... (puede tardar 1-2 min)'
+                : tipoSugerencia === 'problema_visual'
+                  ? ' texto e imagen... (puede tardar un momento)'
+                  : tipoSugerencia === 'pronunciacion'
+                    ? ' práctica de pronunciación...'
+                    : '...'}
             </>
           ) : (
             <>
@@ -449,7 +499,13 @@ export default function PaginaEditorLaboratorioDocente() {
                 <span className="shrink-0 font-semibold text-muted-foreground">{indice + 1}.</span>
                 <span className="flex-1 line-clamp-2">{pregunta.enunciado}</span>
                 <Badge variant="outline" className="shrink-0 text-[10px] uppercase">
-                  {pregunta.tipo === 'codigo' ? pregunta.lenguaje : 'Ensayo'}
+                  {pregunta.tipo === 'codigo'
+                    ? pregunta.lenguaje
+                    : pregunta.tipo === 'respuesta_libre'
+                      ? 'Ensayo'
+                      : pregunta.tipo === 'problema_visual'
+                        ? 'Opción múltiple'
+                        : 'Pronunciación'}
                 </Badge>
               </button>
             ))}
@@ -485,7 +541,15 @@ export default function PaginaEditorLaboratorioDocente() {
                           : 'border-border text-muted-foreground hover:bg-muted'
                       }`}
                     >
-                      {o.value === 'codigo' ? <Code2 className="mr-1.5 inline h-3.5 w-3.5" /> : <NotebookPen className="mr-1.5 inline h-3.5 w-3.5" />}
+                      {o.value === 'codigo' ? (
+                        <Code2 className="mr-1.5 inline h-3.5 w-3.5" />
+                      ) : o.value === 'respuesta_libre' ? (
+                        <NotebookPen className="mr-1.5 inline h-3.5 w-3.5" />
+                      ) : o.value === 'problema_visual' ? (
+                        <ImageIcon className="mr-1.5 inline h-3.5 w-3.5" />
+                      ) : (
+                        <Mic className="mr-1.5 inline h-3.5 w-3.5" />
+                      )}
                       {o.label}
                     </button>
                   ))}
@@ -505,6 +569,75 @@ export default function PaginaEditorLaboratorioDocente() {
                   onChange={(e) => setForm((f) => ({ ...f, enunciado: e.target.value }))}
                 />
               </div>
+
+              {form.tipo === 'problema_visual' && (
+                <div className="space-y-4">
+                  {/* Variantes generadas por IA: solo lectura, cada una con su imagen y sus 4 opciones */}
+                  <div className="space-y-1.5">
+                    <Label>Variantes ({variantesPreguntaActual.length})</Label>
+                    {variantesPreguntaActual.length === 0 ? (
+                      <p className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
+                        Esta pregunta todavía no tiene variantes. Usa "Generar con IA a partir de los
+                        objetivos" arriba — cada variante (imagen + 4 opciones) se genera con IA, no se
+                        crea a mano.
+                      </p>
+                    ) : (
+                      <div className="flex gap-3 overflow-x-auto pb-1">
+                        {variantesPreguntaActual.map((v, vi) => (
+                          <div key={v.id} className="w-48 shrink-0 space-y-1.5 rounded-lg border p-2">
+                            <img src={v.imagen} alt={`Variante ${vi + 1}`} className="h-28 w-full rounded object-contain" />
+                            <div className="space-y-0.5 text-[11px]">
+                              {v.opciones.map((op, oi) => (
+                                <p
+                                  key={oi}
+                                  className={oi === v.respuesta_correcta ? 'font-semibold text-emerald-600' : 'text-muted-foreground'}
+                                >
+                                  {String.fromCharCode(65 + oi)}. {op}
+                                </p>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Imagen de referencia: subida directa del docente, solo contexto (ninguna IA la procesa) */}
+                  <div className="space-y-1.5">
+                    <Label>Imagen de referencia (opcional)</Label>
+                    {imagenReferenciaActual && (
+                      <img src={imagenReferenciaActual} alt="Referencia del docente" className="max-h-48 rounded-lg border object-contain" />
+                    )}
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => elegirImagenReferencia(e.target.files?.[0] ?? null)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Solo para tu propio contexto o para mostrarle al estudiante el tipo de ejercicio —
+                      ninguna IA la analiza.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {form.tipo === 'pronunciacion' && (
+                <div className="space-y-1.5">
+                  <Label>Palabra o frase a pronunciar (en inglés) *</Label>
+                  <Input
+                    placeholder="Ej: Network Architecture"
+                    value={form.texto_pronunciar}
+                    onChange={(e) => setForm((f) => ({ ...f, texto_pronunciar: e.target.value }))}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Al guardar, se genera automáticamente un audio de referencia con la pronunciación
+                    correcta (Edge TTS) — se regenera cada vez que cambies este texto.
+                  </p>
+                  {audioReferenciaActual && (
+                    <audio controls src={audioReferenciaActual} className="mt-1 h-9 w-full max-w-xs" />
+                  )}
+                </div>
+              )}
 
               <div className="grid gap-3 sm:grid-cols-2">
                 {form.tipo === 'codigo' && (
@@ -566,23 +699,26 @@ export default function PaginaEditorLaboratorioDocente() {
                 )
               )}
 
-              <div className="space-y-1.5">
-                <Label>
-                  {form.tipo === 'respuesta_libre'
-                    ? 'Rúbrica de evaluación * (la IA calificará la respuesta del estudiante contra esto)'
-                    : 'Criterios para evaluación por IA (opcional)'}
-                </Label>
-                <Textarea
-                  rows={form.tipo === 'respuesta_libre' ? 4 : 2}
-                  placeholder={
-                    form.tipo === 'respuesta_libre'
-                      ? 'Ej: 1) Identifica correctamente las partes del contrato. 2) Argumenta con base en el código civil. 3) Redacción clara y coherente.'
-                      : 'Ej: valora legibilidad y que no use variables globales innecesarias.'
-                  }
-                  value={form.criterios_ia}
-                  onChange={(e) => setForm((f) => ({ ...f, criterios_ia: e.target.value }))}
-                />
-              </div>
+              {/* Rúbrica: no aplica a problema_visual (opción múltiple) ni a pronunciacion (comparación de texto) */}
+              {form.tipo !== 'problema_visual' && form.tipo !== 'pronunciacion' && (
+                <div className="space-y-1.5">
+                  <Label>
+                    {form.tipo === 'respuesta_libre'
+                      ? 'Rúbrica de evaluación * (la IA calificará la respuesta del estudiante contra esto)'
+                      : 'Criterios para evaluación por IA (opcional)'}
+                  </Label>
+                  <Textarea
+                    rows={form.tipo === 'codigo' ? 2 : 4}
+                    placeholder={
+                      form.tipo === 'respuesta_libre'
+                        ? 'Ej: 1) Identifica correctamente las partes del contrato. 2) Argumenta con base en el código civil. 3) Redacción clara y coherente.'
+                        : 'Ej: valora legibilidad y que no use variables globales innecesarias.'
+                    }
+                    value={form.criterios_ia}
+                    onChange={(e) => setForm((f) => ({ ...f, criterios_ia: e.target.value }))}
+                  />
+                </div>
+              )}
 
               {/* Casos de test (solo código) */}
               {form.tipo === 'codigo' && (
@@ -727,7 +863,13 @@ export default function PaginaEditorLaboratorioDocente() {
                       <div className="flex items-start justify-between gap-2">
                         <p className="text-sm">{p.enunciado}</p>
                         <Badge variant="outline" className="shrink-0 text-[10px] uppercase">
-                          {p.tipo === 'codigo' ? p.lenguaje : 'Ensayo'}
+                          {p.tipo === 'codigo'
+                            ? p.lenguaje
+                            : p.tipo === 'respuesta_libre'
+                              ? 'Ensayo'
+                              : p.tipo === 'problema_visual'
+                                ? 'Opción múltiple'
+                                : 'Pronunciación'}
                         </Badge>
                       </div>
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
@@ -776,7 +918,11 @@ export default function PaginaEditorLaboratorioDocente() {
               Una por objetivo del curso.{' '}
               {tipoSugerencia === 'codigo'
                 ? 'Los casos de test ya se verificaron ejecutando una solución de referencia en el sandbox, no son un cálculo a mano de la IA.'
-                : 'Cada una incluye la rúbrica que usará la IA para calificar las respuestas de los estudiantes.'}{' '}
+                : tipoSugerencia === 'problema_visual'
+                  ? 'Cada una trae 5 variantes (diagrama + 4 opciones) para que cada estudiante reciba una distinta.'
+                  : tipoSugerencia === 'pronunciacion'
+                    ? 'Cada una trae la palabra o frase en inglés a pronunciar; el audio de referencia se genera al aceptar.'
+                    : 'Cada una incluye la rúbrica que usará la IA para calificar las respuestas de los estudiantes.'}{' '}
               Marca las que quieras agregar.
             </DialogDescription>
           </DialogHeader>
@@ -813,6 +959,44 @@ export default function PaginaEditorLaboratorioDocente() {
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="text-[10px] uppercase">{s.lenguaje}</Badge>
                       <span className="text-xs text-muted-foreground">{s.casos_test.length} caso(s) de test verificados</span>
+                    </div>
+                  ) : s.tipo === 'problema_visual' ? (
+                    <div className="space-y-1.5">
+                      {s.variantes && s.variantes.length > 0 && (
+                        <>
+                          <div className="flex gap-2 overflow-x-auto pb-1">
+                            {s.variantes.map((v, vi) => (
+                              <img
+                                key={vi}
+                                src={`data:image/svg+xml;base64,${v.imagen_base64}`}
+                                alt={`Variante ${vi + 1}`}
+                                className="h-20 w-20 shrink-0 rounded border object-cover"
+                              />
+                            ))}
+                          </div>
+                          <div className="space-y-0.5 rounded-lg border p-2 text-[11px]">
+                            <p className="font-medium text-muted-foreground">Opciones de la variante 1:</p>
+                            {s.variantes[0].opciones.map((op, oi) => (
+                              <p
+                                key={oi}
+                                className={oi === s.variantes![0].respuesta_correcta ? 'font-semibold text-emerald-600' : 'text-muted-foreground'}
+                              >
+                                {String.fromCharCode(65 + oi)}. {op}
+                              </p>
+                            ))}
+                          </div>
+                          {s.variantes.length > 1 && (
+                            <p className="text-xs text-muted-foreground">
+                              +{s.variantes.length - 1} variante(s) más, cada una con sus propias opciones.
+                            </p>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  ) : s.tipo === 'pronunciacion' ? (
+                    <div className="flex items-center gap-1.5">
+                      <Mic className="h-3.5 w-3.5 text-muted-foreground" />
+                      <Badge variant="outline" className="text-[10px]">{s.texto_pronunciar}</Badge>
                     </div>
                   ) : (
                     <p className="line-clamp-2 text-xs text-muted-foreground">Rúbrica: {s.criterios_ia}</p>

@@ -9,6 +9,7 @@ from apps.laboratorios.views import (
     VistaEjecutarCodigo,
     VistaEnviarRespuesta,
     VistaMisEntregas,
+    VistaFinalizarPractica,
 )
 
 urlpatterns = [
@@ -26,4 +27,7 @@ urlpatterns = [
 
     # Historial de mis propias entregas para una pregunta (intentos usados/restantes).
     path('preguntas/<int:pregunta_id>/mis-entregas/', VistaMisEntregas.as_view(), name='mis_entregas'),
+
+    # Finaliza la práctica de un examen (laboratorio con `examen` vinculado) y combina la nota final.
+    path('laboratorios/<int:laboratorio_id>/finalizar-practica/', VistaFinalizarPractica.as_view(), name='finalizar_practica'),
 ]

@@ -16,8 +16,17 @@ La calificación se bifurca por `pregunta.tipo`:
   `agente_evaluador.evaluar_respuesta_libre` con la rúbrica
   (`pregunta.criterios_ia`) y se guarda el puntaje + retroalimentación que
   devuelve la IA.
+- `problema_visual`: opción múltiple, sin IA de por medio en este paso. Se
+  compara `opcion_seleccionada` contra `respuesta_correcta` de la variante
+  ya asignada al estudiante (`AsignacionVariante.obtener_o_asignar`) —
+  comparación exacta, instantánea.
+- `pronunciacion`: multipart con `audio` (la grabación del estudiante). Se
+  transcribe con Whisper (`agente_pronunciacion.transcribir_audio`) y se
+  compara el texto contra `pregunta.texto_pronunciar`
+  (`agente_pronunciacion.calcular_similitud`) para el puntaje.
 """
 
+import openai
 from django.utils import timezone
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -25,10 +34,11 @@ from rest_framework import status
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from core.permissions.permisos_rol import EsEstudiante
 from apps.examenes.models import Inscripcion
-from apps.laboratorios.models import Pregunta, Entrega
+from apps.laboratorios.models import Pregunta, Entrega, AsignacionVariante
 from apps.laboratorios.serializers import SerializadorEnviarRespuesta
 from apps.laboratorios.services.cliente_ejecutor import correr_casos_test, EjecutorNoDisponible
 from apps.laboratorios.services.agente_evaluador import evaluar_respuesta_libre
+from apps.laboratorios.services.agente_pronunciacion import transcribir_audio, calcular_similitud
 
 
 @extend_schema(
@@ -66,6 +76,16 @@ class VistaEnviarRespuesta(APIView):
             return Response(
                 {'detalle': f'Alcanzaste el límite de {laboratorio.max_intentos} intento(s) para esta pregunta.'},
                 status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if pregunta.tipo == 'problema_visual':
+            return self._enviar_problema_visual(
+                pregunta, laboratorio, request.user, request.data.get('opcion_seleccionada'), entregas_previas
+            )
+
+        if pregunta.tipo == 'pronunciacion':
+            return self._enviar_pronunciacion(
+                pregunta, laboratorio, request.user, request.FILES.get('audio'), entregas_previas
             )
 
         serializador = SerializadorEnviarRespuesta(data=request.data)
@@ -151,6 +171,75 @@ class VistaEnviarRespuesta(APIView):
             'casos_totales': None,
             'puntaje': entrega.puntaje,
             'retroalimentacion': evaluacion['retroalimentacion'],
+            'intento': entrega.intento,
+            'intentos_restantes': (laboratorio.max_intentos - entrega.intento) if laboratorio.max_intentos else None,
+            'resultados': [],
+            'enviado_en': entrega.enviado_en,
+        })
+
+    def _enviar_pronunciacion(self, pregunta, laboratorio, estudiante, audio, entregas_previas):
+        if audio is None:
+            return Response({'detalle': 'Falta el archivo "audio" con la grabación.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        audio_bytes = audio.read()
+        audio.seek(0)
+        try:
+            transcripcion = transcribir_audio(audio_bytes, audio.name)
+        except openai.APIError as e:
+            return Response({'detalle': f'No se pudo transcribir el audio: {e}'}, status=status.HTTP_502_BAD_GATEWAY)
+
+        puntaje = calcular_similitud(pregunta.texto_pronunciar, transcripcion)
+
+        entrega = Entrega.objects.create(
+            pregunta=pregunta,
+            estudiante=estudiante,
+            respuesta='',
+            audio_respuesta=audio,
+            resultados={'transcripcion': transcripcion},
+            puntaje=puntaje,
+            intento=entregas_previas + 1,
+        )
+
+        return Response({
+            'id': entrega.id,
+            'casos_pasados': None,
+            'casos_totales': None,
+            'puntaje': entrega.puntaje,
+            'retroalimentacion': None,
+            'transcripcion': transcripcion,
+            'intento': entrega.intento,
+            'intentos_restantes': (laboratorio.max_intentos - entrega.intento) if laboratorio.max_intentos else None,
+            'resultados': [],
+            'enviado_en': entrega.enviado_en,
+        })
+
+    def _enviar_problema_visual(self, pregunta, laboratorio, estudiante, opcion_seleccionada, entregas_previas):
+        if not isinstance(opcion_seleccionada, int) or not (0 <= opcion_seleccionada <= 3):
+            return Response({'detalle': '"opcion_seleccionada" debe ser un entero entre 0 y 3.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        asignacion = AsignacionVariante.obtener_o_asignar(pregunta, estudiante)
+        if asignacion is None:
+            return Response({'detalle': 'Esta pregunta todavía no tiene variantes generadas.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        puntaje = 100.0 if opcion_seleccionada == asignacion.variante.respuesta_correcta else 0.0
+
+        entrega = Entrega.objects.create(
+            pregunta=pregunta,
+            estudiante=estudiante,
+            respuesta='',
+            opcion_seleccionada=opcion_seleccionada,
+            puntaje=puntaje,
+            intento=entregas_previas + 1,
+        )
+
+        return Response({
+            'id': entrega.id,
+            'casos_pasados': None,
+            'casos_totales': None,
+            'puntaje': entrega.puntaje,
+            'retroalimentacion': None,
+            'opcion_seleccionada': opcion_seleccionada,
+            'respuesta_correcta': asignacion.variante.respuesta_correcta,
             'intento': entrega.intento,
             'intentos_restantes': (laboratorio.max_intentos - entrega.intento) if laboratorio.max_intentos else None,
             'resultados': [],

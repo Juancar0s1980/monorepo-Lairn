@@ -14,8 +14,11 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.conf import settings
+from django.conf.urls.static import static
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
+from core.utils.vista_media_con_rango import servir_media_con_rango
 
 urlpatterns = [
     path('api/usuarios/', include('apps.users.urls')),
@@ -30,3 +33,10 @@ urlpatterns = [
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 ]
+
+if settings.DEBUG:
+    # `view=servir_media_con_rango` en vez del default `django.views.static.serve`:
+    # ese soporta Range requests (necesario para que <audio>/<video> reproduzcan
+    # bien en el navegador), el default de Django siempre devuelve el archivo
+    # completo con 200 sin importar el header Range.
+    urlpatterns += static(settings.MEDIA_URL, view=servir_media_con_rango, document_root=settings.MEDIA_ROOT)
