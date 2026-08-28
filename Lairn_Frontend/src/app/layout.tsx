@@ -47,7 +47,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-border bg-background">
         <div className="flex h-20 items-center justify-between px-4 md:px-6">
           {/* Logo de la aplicación */}
           <div className="flex items-center gap-2.5">

@@ -2,7 +2,12 @@
 Modelo de dominio `Pregunta`.
 
 Pregunta de un laboratorio, curada por el docente (a mano o aceptando una
-sugerencia de IA). El campo `tipo` decide qué más aplica:
+sugerencia de IA). `objetivo` es opcional y aplica a CUALQUIER tipo: ancla
+la pregunta a un `ObjetivoCurso` para que tanto el docente como el
+estudiante vean qué objetivo de aprendizaje evalúa (se llena automático al
+aceptar una sugerencia generada por objetivo, o a mano en el editor).
+
+El campo `tipo` decide qué más aplica:
 
 - `tipo='codigo'`: pregunta de programación tipo juez en línea. El
   `lenguaje` determina qué campos usa:
@@ -104,6 +109,11 @@ class Pregunta(models.Model):
     audio_referencia = models.FileField(
         upload_to='pronunciacion/referencias/', null=True, blank=True,
         help_text='Audio de la pronunciación correcta, generado con Edge TTS. Solo aplica si tipo=pronunciacion.'
+    )
+    objetivo = models.ForeignKey(
+        'examenes.ObjetivoCurso', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='preguntas_laboratorio',
+        help_text='Objetivo del curso que evalúa esta pregunta, si se generó/asoció a partir de uno.'
     )
     puntos = models.PositiveIntegerField(default=100)
     orden = models.PositiveIntegerField(default=0)

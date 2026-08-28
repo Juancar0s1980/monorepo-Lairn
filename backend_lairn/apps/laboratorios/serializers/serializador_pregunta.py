@@ -33,6 +33,7 @@ import uuid
 
 from django.core.files.base import ContentFile
 from rest_framework import serializers
+from apps.examenes.models import ObjetivoCurso
 from apps.laboratorios.models import Pregunta, CasoTest, VarianteProblemaVisual, AsignacionVariante
 from apps.laboratorios.services.agente_pronunciacion import generar_audio_referencia
 from .serializador_caso_test import SerializadorCasoTest, SerializadorCasoTestPublico
@@ -62,6 +63,10 @@ class SerializadorPreguntaDocente(serializers.ModelSerializer):
     variantes = SerializadorVarianteProblemaVisualDocente(many=True, read_only=True)
     variantes_base64 = serializers.ListField(child=serializers.DictField(), write_only=True, required=False)
     imagen_referencia_base64 = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    objetivo = serializers.PrimaryKeyRelatedField(
+        queryset=ObjetivoCurso.objects.all(), required=False, allow_null=True
+    )
+    objetivo_descripcion = serializers.CharField(source='objetivo.descripcion', read_only=True, default=None)
 
     class Meta:
         model = Pregunta
@@ -69,6 +74,7 @@ class SerializadorPreguntaDocente(serializers.ModelSerializer):
             'id', 'tipo', 'enunciado', 'lenguaje', 'codigo_inicial', 'setup_sql',
             'criterios_ia', 'imagen_referencia', 'imagen_referencia_base64',
             'variantes', 'variantes_base64', 'texto_pronunciar', 'audio_referencia',
+            'objetivo', 'objetivo_descripcion',
             'puntos', 'orden', 'creado_en', 'casos_test',
         ]
         read_only_fields = ['id', 'imagen_referencia', 'variantes', 'audio_referencia', 'creado_en']
@@ -143,12 +149,14 @@ class SerializadorPreguntaDocente(serializers.ModelSerializer):
 class SerializadorPreguntaEstudiante(serializers.ModelSerializer):
     casos_test = serializers.SerializerMethodField()
     mi_variante = serializers.SerializerMethodField()
+    objetivo_descripcion = serializers.CharField(source='objetivo.descripcion', read_only=True, default=None)
 
     class Meta:
         model = Pregunta
         fields = [
             'id', 'tipo', 'enunciado', 'lenguaje', 'codigo_inicial', 'setup_sql',
             'imagen_referencia', 'mi_variante', 'texto_pronunciar', 'audio_referencia',
+            'objetivo_descripcion',
             'puntos', 'orden', 'casos_test',
         ]
         read_only_fields = fields

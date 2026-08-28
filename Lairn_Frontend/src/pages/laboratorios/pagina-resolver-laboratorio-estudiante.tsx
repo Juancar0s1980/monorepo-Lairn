@@ -34,15 +34,45 @@ import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { ArrowLeft, Check, CheckCircle2, Clock, Code2, FlaskConical, Loader2, Mic, NotebookPen, Play, Send, Square, Trophy, XCircle } from 'lucide-react'
+import { ArrowLeft, Check, CheckCircle2, Clock, Code2, FlaskConical, Loader2, Mic, NotebookPen, Play, Send, Square, Target, Trophy, XCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import type {
   LaboratorioDetalleEstudiante,
   MisEntregas,
+  ProgresoPregunta,
   ResultadoEjecucion,
   ResultadoEnvio,
   ResultadoFinalizarPractica,
 } from '@/types/laboratorio'
+
+// Borrador local (código/respuesta abierta) para no perder lo escrito si se
+// recarga la página sin enviar. Se limpia al enviar exitosamente.
+const claveBorrador = (preguntaId: number) => `lairn-borrador-laboratorio-pregunta-${preguntaId}`
+
+function leerBorrador(preguntaId: number): string | null {
+  try {
+    return localStorage.getItem(claveBorrador(preguntaId))
+  } catch {
+    return null
+  }
+}
+
+function guardarBorrador(preguntaId: number, texto: string) {
+  try {
+    localStorage.setItem(claveBorrador(preguntaId), texto)
+  } catch {
+    // localStorage puede fallar (incógnito estricto, storage lleno) — el
+    // autosave es una comodidad, no algo crítico, así que se ignora.
+  }
+}
+
+function borrarBorrador(preguntaId: number) {
+  try {
+    localStorage.removeItem(claveBorrador(preguntaId))
+  } catch {
+    // ver guardarBorrador
+  }
+}
 
 // Formatea un ISO a fecha/hora legible en español.
 function formatearFecha(iso: string): string {
@@ -74,6 +104,8 @@ export default function PaginaResolverLaboratorioEstudiante() {
   const [audioGrabadoUrl, setAudioGrabadoUrl] = useState<string | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const fragmentosAudioRef = useRef<Blob[]>([])
+  // Debounce del autosave de borrador por pregunta (código/respuesta abierta).
+  const timersBorradorRef = useRef<Record<number, ReturnType<typeof setTimeout>>>({})
 
   // Ids de preguntas con al menos una entrega (para saber si ya se puede "Finalizar
   // práctica" cuando el laboratorio es la práctica de un examen). Se siembra al cargar
@@ -81,6 +113,10 @@ export default function PaginaResolverLaboratorioEstudiante() {
   const [preguntasConEntrega, setPreguntasConEntrega] = useState<Set<number>>(new Set())
   const [finalizando, setFinalizando] = useState(false)
   const [resultadoFinal, setResultadoFinal] = useState<ResultadoFinalizarPractica | null>(null)
+
+  // Progreso del laboratorio (mejor puntaje por pregunta), para colorear el
+  // selector de preguntas de un vistazo sin entrar a cada una.
+  const [progreso, setProgreso] = useState<Record<number, ProgresoPregunta>>({})
 
   useEffect(() => {
     if (!cursoId || !laboratorioId) return
@@ -93,7 +129,10 @@ export default function PaginaResolverLaboratorioEstudiante() {
         )
         setLaboratorio(data)
         const inicial: Record<number, string> = {}
-        for (const p of data.preguntas) inicial[p.id] = p.codigo_inicial
+        for (const p of data.preguntas) {
+          const borrador = (p.tipo === 'codigo' || p.tipo === 'respuesta_libre') ? leerBorrador(p.id) : null
+          inicial[p.id] = borrador ?? p.codigo_inicial
+        }
         setRespuestas(inicial)
       } catch {
         if (!controlador.signal.aborted) toast.error('No se pudo cargar el laboratorio')
@@ -104,6 +143,25 @@ export default function PaginaResolverLaboratorioEstudiante() {
     cargar()
     return () => controlador.abort()
   }, [cursoId, laboratorioId])
+
+  // Progreso del laboratorio completo (una sola consulta), para las píldoras del selector.
+  useEffect(() => {
+    if (!laboratorioId) return
+    const controlador = new AbortController()
+    api
+      .get<{ progreso: ProgresoPregunta[] }>(`/laboratorios/laboratorios/${laboratorioId}/mi-progreso/`, {
+        signal: controlador.signal,
+      })
+      .then(({ data }) => {
+        const porPregunta: Record<number, ProgresoPregunta> = {}
+        for (const p of data.progreso) porPregunta[p.pregunta_id] = p
+        setProgreso(porPregunta)
+      })
+      .catch(() => {
+        if (!controlador.signal.aborted) setProgreso({})
+      })
+    return () => controlador.abort()
+  }, [laboratorioId])
 
   // Si el laboratorio es la práctica de un examen, siembra qué preguntas ya
   // tienen entregas previas (de esta sesión o de una anterior) para habilitar
@@ -235,6 +293,15 @@ export default function PaginaResolverLaboratorioEstudiante() {
       }
       setResultadoEnvio(data)
       setPreguntasConEntrega((prev) => new Set(prev).add(pregunta.id))
+      setProgreso((prev) => ({
+        ...prev,
+        [pregunta.id]: {
+          pregunta_id: pregunta.id,
+          intentado: true,
+          mejor_puntaje: Math.max(data.puntaje, prev[pregunta.id]?.mejor_puntaje ?? 0),
+        },
+      }))
+      if (esCodigo || (!esVisual && !esPronunciacion)) borrarBorrador(pregunta.id)
       setMisEntregas((prev) =>
         prev
           ? {
@@ -262,6 +329,15 @@ export default function PaginaResolverLaboratorioEstudiante() {
     } finally {
       setEnviando(false)
     }
+  }
+
+  // Actualiza la respuesta en memoria y, con un pequeño debounce, en
+  // localStorage (código/respuesta abierta) — así no se pierde si recargan
+  // la página antes de enviar, sin golpear localStorage en cada tecla.
+  const actualizarRespuestaTexto = (preguntaId: number, valor: string) => {
+    setRespuestas((prev) => ({ ...prev, [preguntaId]: valor }))
+    clearTimeout(timersBorradorRef.current[preguntaId])
+    timersBorradorRef.current[preguntaId] = setTimeout(() => guardarBorrador(preguntaId, valor), 500)
   }
 
   const cambiarPregunta = (indice: number) => {
@@ -326,23 +402,38 @@ export default function PaginaResolverLaboratorioEstudiante() {
         </div>
       )}
 
-      {/* Selector de pregunta, si el laboratorio tiene más de una */}
+      {/* Selector de pregunta, si el laboratorio tiene más de una — coloreado
+          según el progreso: gris = sin intentar, ámbar = intentada pero no
+          perfecta, verde = 100%. */}
       {laboratorio.preguntas.length > 1 && (
         <div className="flex flex-wrap gap-2">
-          {laboratorio.preguntas.map((p, i) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => cambiarPregunta(i)}
-              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-                i === indiceActivo
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-border text-muted-foreground hover:bg-muted'
-              }`}
-            >
-              {i + 1}
-            </button>
-          ))}
+          {laboratorio.preguntas.map((p, i) => {
+            const info = progreso[p.id]
+            const completa = info?.intentado && info.mejor_puntaje === 100
+            const parcial = info?.intentado && info.mejor_puntaje !== 100
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => cambiarPregunta(i)}
+                title={
+                  completa ? 'Resuelta al 100%' : parcial ? `Intentada · mejor puntaje ${info!.mejor_puntaje}%` : 'Sin intentar'
+                }
+                className={`flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                  i === indiceActivo
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : completa
+                      ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-400'
+                      : parcial
+                        ? 'border-amber-500/40 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 dark:text-amber-400'
+                        : 'border-border text-muted-foreground hover:bg-muted'
+                }`}
+              >
+                {completa && <Check className="h-3 w-3" />}
+                {i + 1}
+              </button>
+            )
+          })}
         </div>
       )}
 
@@ -361,6 +452,12 @@ export default function PaginaResolverLaboratorioEstudiante() {
                       : 'Respuesta abierta'}
               </Badge>
               <Badge variant="secondary">{pregunta.puntos} pts</Badge>
+              {pregunta.objetivo_descripcion && (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Target className="h-3 w-3" />
+                  {pregunta.objetivo_descripcion}
+                </span>
+              )}
             </div>
             <p className="whitespace-pre-wrap text-sm">{pregunta.enunciado}</p>
 
@@ -473,7 +570,7 @@ export default function PaginaResolverLaboratorioEstudiante() {
               <EditorCodigo
                 lenguaje={pregunta.lenguaje}
                 valor={respuestas[pregunta.id] ?? ''}
-                onChange={(valor) => setRespuestas((prev) => ({ ...prev, [pregunta.id]: valor }))}
+                onChange={(valor) => actualizarRespuestaTexto(pregunta.id, valor)}
                 altura="280px"
               />
             ) : esVisual ? (
@@ -545,7 +642,7 @@ export default function PaginaResolverLaboratorioEstudiante() {
                 rows={12}
                 placeholder="Escribe tu respuesta aquí..."
                 value={respuestas[pregunta.id] ?? ''}
-                onChange={(e) => setRespuestas((prev) => ({ ...prev, [pregunta.id]: e.target.value }))}
+                onChange={(e) => actualizarRespuestaTexto(pregunta.id, e.target.value)}
               />
             )}
 

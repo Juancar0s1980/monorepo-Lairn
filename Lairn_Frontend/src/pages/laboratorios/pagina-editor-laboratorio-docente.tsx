@@ -35,7 +35,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { BarChart3, Check, Code2, ImageIcon, ListChecks, Loader2, Mic, NotebookPen, Plus, Settings, Sparkles, Trash2, Users } from 'lucide-react'
+import { BarChart3, Check, Code2, ImageIcon, ListChecks, Loader2, Mic, NotebookPen, Plus, Settings, Sparkles, Target, Trash2, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { OPCIONES_LENGUAJE, OPCIONES_TIPO_PREGUNTA } from '@/types/laboratorio'
 import type {
@@ -49,6 +49,7 @@ import type {
   TipoPregunta,
   VarianteProblemaVisual,
 } from '@/types/laboratorio'
+import type { ObjetivoCurso } from '@/types/examen'
 
 // Convierte un File a un string base64 puro (sin el prefijo "data:...;base64,").
 function archivoABase64(archivo: File): Promise<string> {
@@ -99,6 +100,7 @@ const FORM_VACIO = {
   setup_sql: '',
   criterios_ia: '',
   texto_pronunciar: '',
+  objetivo_id: null as number | null,
   puntos: 100,
 }
 
@@ -107,6 +109,8 @@ export default function PaginaEditorLaboratorioDocente() {
 
   const [laboratorio, setLaboratorio] = useState<LaboratorioDetalleDocente | null>(null)
   const [cargando, setCargando] = useState(true)
+  // Objetivos del curso, para poder anclar cada pregunta a uno (opcional).
+  const [objetivos, setObjetivos] = useState<ObjetivoCurso[]>([])
 
   // Pregunta seleccionada: id existente, 'nueva', o null (nada seleccionado).
   const [seleccion, setSeleccion] = useState<number | 'nueva' | null>(null)
@@ -162,6 +166,18 @@ export default function PaginaEditorLaboratorioDocente() {
     return () => controlador.abort()
   }, [laboratorioId])
 
+  useEffect(() => {
+    if (!cursoId) return
+    const controlador = new AbortController()
+    api
+      .get<ObjetivoCurso[]>(`/examenes/cursos/${cursoId}/objetivos/`, { signal: controlador.signal })
+      .then(({ data }) => setObjetivos(data))
+      .catch(() => {
+        if (!controlador.signal.aborted) setObjetivos([])
+      })
+    return () => controlador.abort()
+  }, [cursoId])
+
   const seleccionarPregunta = (pregunta: PreguntaDocente) => {
     setSeleccion(pregunta.id)
     setForm({
@@ -172,6 +188,7 @@ export default function PaginaEditorLaboratorioDocente() {
       setup_sql: pregunta.setup_sql,
       criterios_ia: pregunta.criterios_ia,
       texto_pronunciar: pregunta.texto_pronunciar,
+      objetivo_id: pregunta.objetivo,
       puntos: pregunta.puntos,
     })
     setCasos(casosDesdeApi(pregunta))
@@ -238,6 +255,7 @@ export default function PaginaEditorLaboratorioDocente() {
       criterios_ia: form.criterios_ia,
       imagen_referencia_base64: form.tipo === 'problema_visual' ? imagenReferenciaBase64 : undefined,
       texto_pronunciar: form.tipo === 'pronunciacion' ? form.texto_pronunciar : undefined,
+      objetivo_id: form.objetivo_id,
       puntos: form.puntos,
       orden: laboratorio.preguntas.length,
       casos_test:
@@ -347,6 +365,7 @@ export default function PaginaEditorLaboratorioDocente() {
           criterios_ia: sugerencia.criterios_ia,
           variantes_base64: sugerencia.variantes,
           texto_pronunciar: sugerencia.texto_pronunciar,
+          objetivo_id: sugerencia.objetivo_id,
           puntos: sugerencia.puntos,
           orden: laboratorio.preguntas.length + creadas.length,
           casos_test: sugerencia.casos_test,
@@ -569,6 +588,35 @@ export default function PaginaEditorLaboratorioDocente() {
                   onChange={(e) => setForm((f) => ({ ...f, enunciado: e.target.value }))}
                 />
               </div>
+
+              {objetivos.length > 0 && (
+                <div className="space-y-1.5">
+                  <Label className="flex items-center gap-1.5">
+                    <Target className="h-3.5 w-3.5" />
+                    Objetivo del curso (opcional)
+                  </Label>
+                  <Select
+                    items={[{ value: 'ninguno', label: 'Sin objetivo' }, ...objetivos.map((o) => ({ value: String(o.id), label: o.descripcion }))]}
+                    value={form.objetivo_id === null ? 'ninguno' : String(form.objetivo_id)}
+                    onValueChange={(valor) =>
+                      setForm((f) => ({ ...f, objetivo_id: valor && valor !== 'ninguno' ? Number(valor) : null }))
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Sin objetivo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ninguno">Sin objetivo</SelectItem>
+                      {objetivos.map((o) => (
+                        <SelectItem key={o.id} value={String(o.id)}>{o.descripcion}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Marca qué objetivo de aprendizaje evalúa esta pregunta — el estudiante lo verá al resolverla.
+                  </p>
+                </div>
+              )}
 
               {form.tipo === 'problema_visual' && (
                 <div className="space-y-4">

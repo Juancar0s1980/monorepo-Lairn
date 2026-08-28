@@ -10,6 +10,7 @@ from apps.laboratorios.views import (
     VistaEnviarRespuesta,
     VistaMisEntregas,
     VistaFinalizarPractica,
+    VistaMiProgresoLaboratorio,
 )
 
 urlpatterns = [
@@ -30,4 +31,7 @@ urlpatterns = [
 
     # Finaliza la práctica de un examen (laboratorio con `examen` vinculado) y combina la nota final.
     path('laboratorios/<int:laboratorio_id>/finalizar-practica/', VistaFinalizarPractica.as_view(), name='finalizar_practica'),
+
+    # Mi progreso en el laboratorio: mejor puntaje por pregunta, para pintar el selector de un vistazo.
+    path('laboratorios/<int:laboratorio_id>/mi-progreso/', VistaMiProgresoLaboratorio.as_view(), name='mi_progreso_laboratorio'),
 ]

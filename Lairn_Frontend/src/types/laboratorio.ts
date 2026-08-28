@@ -84,6 +84,8 @@ export interface PreguntaDocente {
   variantes: VarianteProblemaVisual[]
   texto_pronunciar: string
   audio_referencia: string | null
+  objetivo: number | null
+  objetivo_descripcion: string | null
   puntos: number
   orden: number
   creado_en: string
@@ -105,6 +107,7 @@ export interface PreguntaPayload {
   imagen_referencia_base64?: string
   variantes_base64?: Array<{ opciones: string[]; respuesta_correcta: number; imagen_base64: string }>
   texto_pronunciar?: string
+  objetivo_id?: number | null
   puntos: number
   orden: number
   casos_test: Array<Omit<CasoTest, 'id'>>
@@ -124,6 +127,7 @@ export interface PreguntaEstudiante {
   mi_variante: VarianteProblemaVisualEstudiante | null
   texto_pronunciar: string
   audio_referencia: string | null
+  objetivo_descripcion: string | null
   puntos: number
   orden: number
   casos_test: CasoTestPublico[]
@@ -262,6 +266,20 @@ export interface MisEntregas {
   intentos_usados: number
   intentos_restantes: number | null
   fecha_limite: string | null
+}
+
+// GET /laboratorios/laboratorios/{id}/mi-progreso/ — una fila por pregunta,
+// con la MEJOR entrega del estudiante autenticado (o null si no la intentó
+// todavía). Pensado para pintar el selector de preguntas de un vistazo, sin
+// tener que pedir /mis-entregas/ una por una.
+export interface ProgresoPregunta {
+  pregunta_id: number
+  intentado: boolean
+  mejor_puntaje: number | null
+}
+
+export interface MiProgresoLaboratorio {
+  progreso: ProgresoPregunta[]
 }
 
 // POST /laboratorios/laboratorios/{id}/finalizar-practica/

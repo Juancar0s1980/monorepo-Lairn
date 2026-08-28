@@ -36,10 +36,10 @@ export function EncabezadoGradiente({
   children,
 }: EncabezadoGradienteProps) {
   return (
-    <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#2d1b69] to-[#1a1145] p-6">
-      {/* Patrón de puntos decorativo */}
+    <div className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-surface-alt to-secondary p-6">
+      {/* Patrón de puntos decorativo, muy sutil sobre fondo claro */}
       <div
-        className="absolute inset-0 opacity-10"
+        className="absolute inset-0 text-primary opacity-[0.05]"
         style={{
           backgroundImage:
             'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)',
@@ -51,7 +51,7 @@ export function EncabezadoGradiente({
       {volverA && (
         <Link
           to={volverA}
-          className="relative inline-flex items-center gap-1.5 text-sm text-white/70 hover:text-white transition-colors mb-3"
+          className="relative inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors mb-3"
         >
           <ArrowLeft className="h-4 w-4" />
           {volverTexto}
@@ -65,11 +65,11 @@ export function EncabezadoGradiente({
 
       {/* Título y subtítulo */}
       <div className="relative space-y-1">
-        <h2 className="text-2xl font-bold tracking-tight text-white">
+        <h2 className="font-heading text-2xl tracking-tight text-foreground">
           {titulo}
         </h2>
         {subtitulo && (
-          <p className="text-white/60 text-sm">{subtitulo}</p>
+          <p className="text-muted-foreground text-sm">{subtitulo}</p>
         )}
       </div>
 
@@ -77,7 +77,7 @@ export function EncabezadoGradiente({
       {badgeTexto && (
         <Badge
           variant="secondary"
-          className="relative mt-4 text-xs font-mono bg-white/10 text-white/80 border-white/20 backdrop-blur-sm"
+          className="relative mt-4 text-xs font-mono bg-secondary text-primary border-transparent"
         >
           {badgeTexto}
         </Badge>

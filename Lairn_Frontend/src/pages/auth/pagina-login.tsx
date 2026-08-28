@@ -31,7 +31,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { toast } from "sonner";
-import { CanvasParticulas } from "@/components/efectos/canvas-particulas";
+import { MascotaRobot } from "@/components/mascota-robot";
 
 // Lista de features destacados en el panel de branding.
 const features = [
@@ -165,63 +165,59 @@ export default function PaginaLogin() {
       <div className="flex w-full max-w-7xl h-full max-h-[46rem] rounded-2xl overflow-hidden border bg-card shadow-2xl shadow-primary/8">
         {/* ═══════════════════════════════════════════════════════════
             PANEL IZQUIERDO - Branding universitario (oculto en móvil)
+            Look claro/académico: la mascota robot es el único elemento
+            gráfico, sobre un halo suave — sin paneles de datos flotando.
+
+            IMPORTANTE: este panel usa colores FIJOS (no tokens de tema como
+            bg-card/text-foreground), a propósito — es contenido de marca,
+            igual que el panel oscuro original (antes hardcodeado en
+            from-[#16233A]...) NO reaccionaba al toggle claro/oscuro. Si acá
+            se usan tokens reactivos, en modo oscuro el panel hereda los
+            colores oscuros del resto de la app y el resultado se ve roto
+            (fue justo el bug reportado: mascota y panel ilegibles en dark).
             ═══════════════════════════════════════════════════════════ */}
-        <div className="relative hidden lg:flex lg:w-[55%] flex-col justify-between overflow-hidden">
-          {/* Fondo con gradiente azul profundo, tono universitario */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#16233A] via-[#1F3A5C] to-[#0B1220]" />
-
-          {/* Formas decorativas geométricas */}
-          {/* Anillo grande semitransparente - esquina superior derecha */}
-          <div className="absolute -top-20 -right-20 h-80 w-80 rounded-full border-[3px] border-white/[0.06] animate-pulse" style={{ animationDuration: "8s" }} />
-          <div className="absolute -top-10 -right-10 h-60 w-60 rounded-full border-[2px] border-white/[0.04]" />
-
-          {/* Círculo con blur - esquina inferior izquierda */}
-          <div className="absolute -bottom-16 -left-16 h-64 w-64 rounded-full bg-accent/10 blur-3xl" />
-
-          {/* Línea diagonal sutil */}
-          <div
-            className="absolute inset-0 opacity-[0.03]"
-            style={{
-              backgroundImage:
-                "linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.1) 50%, transparent 60%)",
-            }}
-          />
-
-          {/* Partículas con efecto de constelación / red neuronal */}
-          <CanvasParticulas />
-
+        <div className="relative hidden lg:flex lg:w-[55%] flex-col justify-between overflow-hidden bg-gradient-to-br from-[#EDF4FA] to-[#E3EFFB]">
           {/* Contenido del branding */}
           <div className="relative z-10 flex flex-col h-full p-[clamp(1.25rem,4vh,2.5rem)] overflow-hidden">
-            {/* Logo con badge ámbar */}
+            {/* Logo con badge "IA" */}
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 backdrop-blur-sm border border-white/10">
-                <BrainCircuit className="h-5 w-5 text-white" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#DCE7F0] bg-white shadow-sm">
+                <BrainCircuit className="h-5 w-5 text-[#2B7CD3]" />
               </div>
-              <span className="rounded-full bg-accent/90 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-accent-foreground">
+              <span className="rounded-full bg-[#2B7CD3] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
                 IA
               </span>
             </div>
 
+            {/* Mascota robot: elemento gráfico central, halo radial detrás.
+                Tamaño FIJO (no vh) a propósito: la tarjeta tiene max-h-[46rem]
+                fijo, así que escalar con vh puede desbordarla en pantallas
+                altas — un tamaño acotado siempre cabe. */}
+            <div className="relative my-1 flex flex-1 items-center justify-center min-h-0">
+              <div
+                className="animate-pulse-halo absolute h-44 w-44 rounded-full bg-radial from-[#E3EFFB] to-transparent"
+                aria-hidden="true"
+              />
+              <MascotaRobot
+                className="animate-float-mascota relative h-[clamp(9rem,18vh,13rem)] w-auto -rotate-6"
+              />
+            </div>
+
             {/* Título y descripción */}
-            <div className="mt-auto space-y-[clamp(0.5rem,2vh,1rem)]">
-              <div className="flex items-center gap-2 text-accent/80">
+            <div className="space-y-[clamp(0.5rem,2vh,1rem)]">
+              <div className="flex items-center gap-2 text-[#2B7CD3]">
                 <GraduationCap className="h-4 w-4 shrink-0" />
                 <span className="text-xs font-semibold uppercase tracking-widest">
                   Corporación Universitaria Autónoma del Cauca
                 </span>
               </div>
 
-              <h2 className="font-heading text-[clamp(1.5rem,4.5vh,2.5rem)] leading-[1.15] text-white tracking-tight text-balance">
-                Transforma tu
-                <br />
-                experiencia
-                <br />
-                <span className="bg-gradient-to-r from-accent to-[#FFE29A] bg-clip-text text-transparent">
-                  universitaria
-                </span>
+              <h2 className="font-heading text-[clamp(1.5rem,4.5vh,2.5rem)] leading-[1.15] text-[#14212E] tracking-tight text-balance">
+                Transforma tu experiencia{" "}
+                <span className="text-[#2B7CD3]">universitaria</span>
               </h2>
 
-              <p className="font-accent text-[clamp(0.8125rem,1.8vh,1rem)] text-white/60 max-w-sm leading-relaxed">
+              <p className="font-accent text-[clamp(0.8125rem,1.8vh,1rem)] text-[#5A6B7C] max-w-sm leading-relaxed">
                 Plataforma de aprendizaje adaptativo potenciada por inteligencia
                 artificial, diseñada para tu éxito académico.
               </p>
@@ -229,20 +225,19 @@ export default function PaginaLogin() {
 
             {/* Tarjetas de features */}
             <div className="mt-[clamp(0.75rem,3vh,2rem)] grid gap-[clamp(0.375rem,1vh,0.625rem)]">
-              {features.map((feature, index) => (
+              {features.map((feature) => (
                 <div
                   key={feature.titulo}
-                  className="group flex items-start gap-3.5 rounded-xl bg-white/[0.04] p-[clamp(0.5rem,1.4vh,0.875rem)] backdrop-blur-sm border border-white/[0.06] transition-all duration-300 hover:bg-white/[0.08] hover:border-white/[0.12] hover:translate-x-1"
-                  style={{ animationDelay: `${index * 100}ms` }}
+                  className="group flex items-start gap-3.5 rounded-xl border border-[#DCE7F0] bg-white p-[clamp(0.5rem,1.4vh,0.875rem)] shadow-sm transition-all duration-200 hover:border-[#2B7CD3]/30 hover:shadow-md"
                 >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/15 border border-accent/20">
-                    <feature.icon className="h-4 w-4 text-accent" />
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#E3EFFB]">
+                    <feature.icon className="h-4 w-4 text-[#2B7CD3]" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-sm font-semibold text-white/90">
+                    <h3 className="text-sm font-semibold text-[#14212E]">
                       {feature.titulo}
                     </h3>
-                    <p className="text-xs text-white/75 leading-relaxed mt-0.5 [@media(max-height:700px)]:hidden">
+                    <p className="text-xs text-[#5A6B7C] leading-relaxed mt-0.5 [@media(max-height:700px)]:hidden">
                       {feature.descripcion}
                     </p>
                   </div>
@@ -251,17 +246,17 @@ export default function PaginaLogin() {
             </div>
 
             {/* Stats en la parte inferior */}
-            <div className="mt-[clamp(0.75rem,3vh,1.75rem)] flex items-center gap-5 text-xs text-white/60 [@media(max-height:640px)]:hidden">
+            <div className="mt-[clamp(0.75rem,3vh,1.75rem)] flex items-center gap-5 text-xs text-[#5A6B7C] [@media(max-height:640px)]:hidden">
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#3EA97B] opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-[#3EA97B]" />
                 </span>
                 Sistema activo
               </div>
-              <div className="h-3 w-px bg-white/10" />
+              <div className="h-3 w-px bg-[#DCE7F0]" />
               <div>+2,500 estudiantes</div>
-              <div className="h-3 w-px bg-white/10" />
+              <div className="h-3 w-px bg-[#DCE7F0]" />
               <div>4.8★ valoración</div>
             </div>
           </div>
@@ -275,12 +270,14 @@ export default function PaginaLogin() {
           <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.02] to-transparent lg:from-transparent" />
 
           <div className="relative w-full max-w-sm space-y-[clamp(0.75rem,2.5vh,1.5rem)]">
-            {/* Logo visible solo en móvil */}
+            {/* Mascota + logo visibles solo en móvil (robot al 60% del tamaño desktop) */}
             <div className="text-center space-y-[clamp(0.375rem,1.2vh,0.75rem)] lg:hidden">
-              <div className="inline-flex items-center justify-center gap-2.5">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 shadow-lg shadow-primary/10">
-                  <BrainCircuit className="h-6 w-6 text-primary" />
-                </div>
+              <div className="relative mx-auto flex h-[clamp(13.5rem,24vh,17rem)] items-center justify-center">
+                <div
+                  className="animate-pulse-halo absolute h-32 w-32 rounded-full bg-radial from-[#E3EFFB] to-transparent"
+                  aria-hidden="true"
+                />
+                <MascotaRobot className="animate-float-mascota relative h-full w-auto -rotate-6" />
               </div>
               <p className="text-xs text-muted-foreground">
                 Aprendizaje adaptativo con inteligencia artificial
@@ -517,7 +514,7 @@ export default function PaginaLogin() {
               <button
                 type="button"
                 onClick={alternarModo}
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-[#325986] dark:hover:text-primary/80 transition-colors group/link"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary-hover dark:hover:text-primary/80 transition-colors group/link"
               >
                 {esLogin ? "Crear una cuenta" : "Iniciar sesión"}
                 <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover/link:translate-x-0.5" />

@@ -151,8 +151,14 @@ export function TabLaboratoriosDocente({ cursoId }: TabLaboratoriosDocenteProps)
       setDialogoIaAbierto(false)
       setDialogoCuracionAbierto(true)
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { detalle?: string } } }
-      toast.error(axiosErr.response?.data?.detalle ?? 'No se pudo generar el laboratorio con IA')
+      const axiosErr = err as { response?: { data?: Record<string, unknown> } }
+      const data = axiosErr.response?.data
+      const detalle = typeof data?.detalle === 'string' ? data.detalle : undefined
+      // Errores de validación del serializer vienen como {campo: ["mensaje"]}, no como {detalle}.
+      const mensajesCampos = data
+        ? Object.values(data).flat().filter((v): v is string => typeof v === 'string')
+        : []
+      toast.error(detalle ?? (mensajesCampos.join('. ') || 'No se pudo generar el laboratorio con IA'))
     } finally {
       setGenerandoLibre(false)
     }
@@ -417,13 +423,13 @@ export function TabLaboratoriosDocente({ cursoId }: TabLaboratoriosDocenteProps)
                 </div>
               )}
               <div className="space-y-1.5">
-                <Label>Cantidad de preguntas</Label>
+                <Label>Cantidad de preguntas (máximo 8)</Label>
                 <Input
                   type="number"
                   min={1}
                   max={8}
                   value={cantidadPreguntas}
-                  onChange={(e) => setCantidadPreguntas(Number(e.target.value) || 1)}
+                  onChange={(e) => setCantidadPreguntas(Math.min(8, Math.max(1, Number(e.target.value) || 1)))}
                 />
               </div>
             </div>

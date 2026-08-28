@@ -22,7 +22,10 @@ from django.conf import settings
 _MODELOS = {
     "openai": "gpt-5.5",
     "grok": "grok-4.5",
-    "groq": "llama-3.3-70b-versatile",
+    # "llama-3.3-70b-versatile" fue retirado de Groq (404 model_not_found,
+    # detectado 2026-08-25 vía client.models.list()) — reemplazado por
+    # openai/gpt-oss-120b, probado en vivo con response_format=json_object.
+    "groq": "openai/gpt-oss-120b",
 }
 
 

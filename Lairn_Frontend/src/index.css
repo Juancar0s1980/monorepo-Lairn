@@ -2,13 +2,13 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/inter/wght.css";
-@import "@fontsource/gfs-neohellenic/400.css";
+@import "@fontsource/fraunces/600.css";
 @import "@fontsource/ysabeau-infant/500.css";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    --font-heading: 'GFS Neohellenic', serif;
+    --font-heading: 'Fraunces', serif;
     --font-accent: 'Ysabeau Infant', serif;
     --font-sans: 'Inter Variable', sans-serif;
     --color-sidebar-ring: var(--sidebar-ring);
@@ -41,6 +41,10 @@
     --color-secondary: var(--secondary);
     --color-primary-foreground: var(--primary-foreground);
     --color-primary: var(--primary);
+    --color-primary-hover: var(--primary-hover);
+    --color-surface-alt: var(--surface-alt);
+    --color-success: var(--success);
+    --color-warning: var(--warning);
     --color-popover-foreground: var(--popover-foreground);
     --color-popover: var(--popover);
     --color-card-foreground: var(--card-foreground);
@@ -54,47 +58,75 @@
     --radius-2xl: calc(var(--radius) * 1.8);
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
+    /* Sombras casi imperceptibles (dirección de arte "académico luminoso"):
+       nunca más oscuras que rgba(20,33,46,.08), nunca con blur agresivo. */
+    --shadow-2xs: 0 1px 1px rgba(20, 33, 46, .04);
+    --shadow-xs: 0 1px 2px rgba(20, 33, 46, .05);
+    --shadow-sm: 0 1px 2px rgba(20, 33, 46, .06);
+    --shadow-md: 0 4px 10px rgba(20, 33, 46, .06);
+    --shadow-lg: 0 8px 24px rgba(20, 33, 46, .06);
+    --shadow-xl: 0 12px 32px rgba(20, 33, 46, .07);
+    --shadow-2xl: 0 16px 40px rgba(20, 33, 46, .08);
+    /* Flotación suave de la mascota + pulso del halo detrás — usadas en el
+       hero de login (`animate-float-mascota` / `animate-pulse-halo`). */
+    --animate-float-mascota: float-mascota 4s ease-in-out infinite;
+    --animate-pulse-halo: pulse-halo 4s ease-in-out infinite;
+}
+
+@keyframes float-mascota {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+
+@keyframes pulse-halo {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 0.85; }
 }
 
 :root {
-    /* Paleta "Campus": azul y amarillo pastel, contraste AA verificado. */
-    --background: #FBFDFF;
-    --foreground: #223148;
+    /* Paleta "Campus claro": blanco + azul institucional suave, look de
+       portal universitario luminoso (no SaaS oscuro). Contraste AA verificado. */
+    --background: #FFFFFF;
+    --foreground: #14212E;
     --card: #FFFFFF;
-    --card-foreground: #223148;
+    --card-foreground: #14212E;
     --popover: #FFFFFF;
-    --popover-foreground: #223148;
-    --primary: #3E6FA8;
+    --popover-foreground: #14212E;
+    --primary: #2B7CD3;
+    --primary-hover: #1F63AE;
     --primary-foreground: #FFFFFF;
-    --secondary: #E6F0FC;
-    --secondary-foreground: #223148;
-    --muted: #EFF5FE;
-    --muted-foreground: #64748B;
-    --accent: #F7C548;
-    --accent-foreground: #4A3A0C;
+    --secondary: #E3EFFB;
+    --secondary-foreground: #14212E;
+    --muted: #F6F9FC;
+    --muted-foreground: #5A6B7C;
+    --surface-alt: #EDF4FA;
+    --accent: #4FC3D9;
+    --accent-foreground: #14212E;
+    --success: #3EA97B;
+    --warning: #E0A33E;
     --destructive: #C0303F;
-    --border: #E7EDF7;
-    --input: #E7EDF7;
-    --ring: #3E6FA8;
-    --chart-1: #3E6FA8;
-    --chart-2: #6FA3E0;
-    --chart-3: #F7C548;
-    --chart-4: #1F7A50;
-    --chart-5: #96591A;
-    --purple-1: #1F3A5C;
-    --purple-2: #2F547F;
-    --purple-3: #3E6FA8;
-    --purple-4: #6FA3E0;
-    --purple-5: #B9D4F2;
-    --radius: 0.875rem;
-    --sidebar: #FBFDFF;
-    --sidebar-foreground: #223148;
-    --sidebar-primary: #3E6FA8;
+    --border: #DCE7F0;
+    --input: #DCE7F0;
+    --ring: #2B7CD3;
+    --chart-1: #2B7CD3;
+    --chart-2: #4FC3D9;
+    --chart-3: #E0A33E;
+    --chart-4: #3EA97B;
+    --chart-5: #5A6B7C;
+    --purple-1: #1F63AE;
+    --purple-2: #2B7CD3;
+    --purple-3: #5FA0DC;
+    --purple-4: #A9CEED;
+    --purple-5: #E3EFFB;
+    --radius: 0.5rem;
+    --sidebar: #FFFFFF;
+    --sidebar-foreground: #14212E;
+    --sidebar-primary: #2B7CD3;
     --sidebar-primary-foreground: #FFFFFF;
-    --sidebar-accent: #E6F0FC;
-    --sidebar-accent-foreground: #223148;
-    --sidebar-border: #E7EDF7;
-    --sidebar-ring: #3E6FA8;
+    --sidebar-accent: #E3EFFB;
+    --sidebar-accent-foreground: #14212E;
+    --sidebar-border: #DCE7F0;
+    --sidebar-ring: #2B7CD3;
 }
 
 .dark {
@@ -105,16 +137,22 @@
     --popover: #161E36;
     --popover-foreground: #EAF0FB;
     --primary: #8FBBEF;
+    --primary-hover: #A6CEF2;
     --primary-foreground: #0F1526;
     --secondary: #1D2745;
     --secondary-foreground: #EAF0FB;
     --muted: #1D2745;
     --muted-foreground: #8FA3C7;
+    --surface-alt: #1A2340;
     --accent: #F2C863;
     --accent-foreground: #0F1526;
+    --success: #4FC08D;
+    --warning: #F0B85A;
     --destructive: #E8828F;
-    --border: #232E52;
-    --input: #232E52;
+    /* Antes #232E52, casi igual al --card (#161E36): los inputs se veían
+       sin borde visible ("pared" uniforme). Se sube el contraste. */
+    --border: #3C4C82;
+    --input: #3C4C82;
     --ring: #8FBBEF;
     --chart-1: #8FBBEF;
     --chart-2: #3E6FA8;
@@ -145,5 +183,20 @@
     }
   html {
     @apply font-sans;
+    }
+  /* Solo se importa el corte 600 de Fraunces (ver imports arriba): se fija
+     acá una vez para que los 14+ usos de `font-heading` en el proyecto no
+     tengan que agregar `font-semibold` cada uno. */
+  .font-heading {
+    font-weight: 600;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
     }
 }

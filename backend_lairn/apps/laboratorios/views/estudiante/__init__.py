@@ -4,6 +4,7 @@ from .vista_ejecutar_codigo import VistaEjecutarCodigo
 from .vista_enviar_respuesta import VistaEnviarRespuesta
 from .vista_mis_entregas import VistaMisEntregas
 from .vista_finalizar_practica import VistaFinalizarPractica
+from .vista_mi_progreso_laboratorio import VistaMiProgresoLaboratorio
 
 __all__ = [
     'VistaLaboratoriosCursoEstudiante',
@@ -12,4 +13,5 @@ __all__ = [
     'VistaEnviarRespuesta',
     'VistaMisEntregas',
     'VistaFinalizarPractica',
+    'VistaMiProgresoLaboratorio',
 ]
