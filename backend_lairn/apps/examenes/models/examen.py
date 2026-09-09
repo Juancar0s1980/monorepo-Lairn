@@ -12,6 +12,7 @@ mágicos, y para que Django los exponga en las migraciones y en el admin.
 La eliminación del curso arrastra sus exámenes por `on_delete=CASCADE`.
 """
 
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
 
@@ -38,18 +39,32 @@ class Examen(models.Model):
     )
     titulo = models.CharField(max_length=200)
     tema = models.CharField(max_length=200)
-    tiempo = models.IntegerField(help_text='Duración total en minutos')
-    num_preguntas = models.IntegerField(help_text='Mínimo de preguntas. En modo fijo es el total exacto')
+    tiempo = models.IntegerField(
+        validators=[MinValueValidator(1)],
+        help_text='Duración total en minutos'
+    )
+    num_preguntas = models.IntegerField(
+        validators=[MinValueValidator(1)],
+        help_text='Mínimo de preguntas. En modo fijo es el total exacto'
+    )
     retroalimentacion = models.BooleanField(default=False)
     dificultad_inicial = models.IntegerField(choices=DIFICULTAD_CHOICES, default=2)
-    max_intentos = models.IntegerField(default=1, help_text='Número de intentos permitidos. 0 = ilimitado')
+    max_intentos = models.IntegerField(
+        default=1,
+        validators=[MinValueValidator(0)],
+        help_text='Número de intentos permitidos. 0 = ilimitado'
+    )
     fecha_limite = models.DateTimeField(
         null=True, blank=True,
         help_text='Fecha límite para INICIAR un intento nuevo. Vacío = sin límite. No afecta un intento ya en progreso.'
     )
     es_guiado = models.BooleanField(default=False, help_text='Si True, el agente genera una explicación antes de cada pregunta')
     modo = models.CharField(max_length=10, choices=MODO_CHOICES, default='fijo', help_text='Fijo: termina en num_preguntas. Maestría: termina cuando el estudiante domina los conceptos')
-    max_preguntas = models.IntegerField(default=20, help_text='Solo en modo maestría. Tope máximo para evitar examen infinito')
+    max_preguntas = models.IntegerField(
+        default=20,
+        validators=[MinValueValidator(1)],
+        help_text='Solo en modo maestría. Tope máximo para evitar examen infinito'
+    )
     objetivos = models.ManyToManyField(
         'ObjetivoCurso',
         blank=True,
@@ -58,6 +73,7 @@ class Examen(models.Model):
     )
     peso_practica = models.FloatField(
         default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
         help_text='Porcentaje (0-100) que aporta la parte práctica (laboratorio vinculado) a la nota final. 0 = examen solo de teoría.'
     )
     creado_en = models.DateTimeField(auto_now_add=True)
