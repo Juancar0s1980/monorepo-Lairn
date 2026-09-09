@@ -23,6 +23,8 @@ salida esperada. Si la IA se equivoca en la lógica, la ejecución lo revela
 
 import json
 
+import openai
+
 from backend_lairn.ia_client import obtener_cliente_ia
 
 MAX_INTENTOS = 2
@@ -107,19 +109,19 @@ Formato de salida (únicamente estas claves):
 
     ultimo_error = None
     for _ in range(MAX_INTENTOS):
-        respuesta = client.chat.completions.create(
-            model=modelo,
-            # Margen amplio: los tokens de razonamiento de gpt-5.5 consumen este
-            # presupuesto y un tope corto devuelve contenido vacío.
-            response_format={'type': 'json_object'},
-            messages=[{'role': 'user', 'content': mensaje}],
-            **{kwarg_max_tokens: 3000},
-        )
         try:
+            respuesta = client.chat.completions.create(
+                model=modelo,
+                # Margen amplio: los tokens de razonamiento de gpt-5.5 consumen este
+                # presupuesto y un tope corto devuelve contenido vacío.
+                response_format={'type': 'json_object'},
+                messages=[{'role': 'user', 'content': mensaje}],
+                **{kwarg_max_tokens: 3000},
+            )
             datos = json.loads(respuesta.choices[0].message.content)
             _validar_borrador(datos)
             return datos
-        except (json.JSONDecodeError, ValueError, TypeError) as e:
+        except (json.JSONDecodeError, ValueError, TypeError, openai.APIError) as e:
             ultimo_error = e
 
     raise ValueError(f'La IA no produjo una pregunta de código válida tras {MAX_INTENTOS} intentos: {ultimo_error}')
@@ -174,14 +176,14 @@ Formato de salida (únicamente estas claves):
 
     ultimo_error = None
     for _ in range(MAX_INTENTOS):
-        respuesta = client.chat.completions.create(
-            model=modelo,
-            # Varias preguntas completas en una sola respuesta: presupuesto generoso.
-            response_format={'type': 'json_object'},
-            messages=[{'role': 'user', 'content': mensaje}],
-            **{kwarg_max_tokens: 3000 + 1500 * cantidad_preguntas},
-        )
         try:
+            respuesta = client.chat.completions.create(
+                model=modelo,
+                # Varias preguntas completas en una sola respuesta: presupuesto generoso.
+                response_format={'type': 'json_object'},
+                messages=[{'role': 'user', 'content': mensaje}],
+                **{kwarg_max_tokens: 3000 + 1500 * cantidad_preguntas},
+            )
             datos = json.loads(respuesta.choices[0].message.content)
             if not isinstance(datos, dict):
                 raise ValueError('la respuesta no es un objeto JSON')
@@ -199,7 +201,7 @@ Formato de salida (únicamente estas claves):
                 'instrucciones': str(datos.get('instrucciones', '')).strip(),
                 'preguntas': preguntas,
             }
-        except (json.JSONDecodeError, ValueError, TypeError) as e:
+        except (json.JSONDecodeError, ValueError, TypeError, openai.APIError) as e:
             ultimo_error = e
 
     raise ValueError(f'La IA no produjo un laboratorio válido tras {MAX_INTENTOS} intentos: {ultimo_error}')

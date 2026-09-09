@@ -130,6 +130,12 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ),
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    # Límite aplicado solo a las ~11 vistas que llaman a un proveedor de IA
+    # (Groq/OpenAI/Gemini) vía `throttle_classes = [ThrottleIA]` — son las
+    # únicas con costo real por request. Ver core/throttling/throttle_ia.py.
+    'DEFAULT_THROTTLE_RATES': {
+        'ia': '10/min',
+    },
 }
 
 SPECTACULAR_SETTINGS = {

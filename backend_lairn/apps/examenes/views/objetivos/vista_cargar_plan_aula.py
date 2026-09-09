@@ -24,6 +24,7 @@ from rest_framework.parsers import MultiPartParser
 from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter, inline_serializer
 from drf_spectacular.openapi import OpenApiTypes
 from core.permissions.permisos_rol import EsDocente
+from core.throttling import ThrottleIA
 from apps.examenes.models import Curso, ObjetivoCurso
 from apps.examenes.serializers import SerializadorObjetivo
 from apps.examenes.services.agente_plan_aula import extraer_texto_pdf, extraer_objetivos_plan_aula
@@ -49,6 +50,7 @@ from apps.examenes.services.agente_plan_aula import extraer_texto_pdf, extraer_o
 )
 class VistaCargarPlanAula(APIView):
     permission_classes = [EsDocente]
+    throttle_classes = [ThrottleIA]
     parser_classes = [MultiPartParser]
 
     def post(self, request, curso_id):

@@ -1,5 +1,7 @@
 import json
 
+import openai
+
 from backend_lairn.ia_client import obtener_cliente_ia
 
 
@@ -118,17 +120,17 @@ Responde SOLO con este JSON (sin texto adicional):
     # esporádicas del modelo; si falla dos veces, ValueError con mensaje claro.
     ultimo_error = None
     for _ in range(2):
-        respuesta = client.chat.completions.create(
-            model=modelo,
-            response_format={'type': 'json_object'},
-            messages=[{'role': 'user', 'content': mensaje}],
-            **{kwarg_max_tokens: max_tokens},
-        )
         try:
+            respuesta = client.chat.completions.create(
+                model=modelo,
+                response_format={'type': 'json_object'},
+                messages=[{'role': 'user', 'content': mensaje}],
+                **{kwarg_max_tokens: max_tokens},
+            )
             datos = json.loads(respuesta.choices[0].message.content)
             _validar_pregunta(datos, guiado)
             return datos
-        except (json.JSONDecodeError, ValueError, TypeError) as e:
+        except (json.JSONDecodeError, ValueError, TypeError, openai.APIError) as e:
             ultimo_error = e
 
     raise ValueError(f'La IA no produjo una pregunta válida tras 2 intentos: {ultimo_error}')
@@ -211,15 +213,15 @@ Formato de salida (únicamente esta clave):
 
     ultimo_error = None
     for _ in range(2):
-        respuesta = client.chat.completions.create(
-            model=modelo,
-            # Margen amplio: los tokens de razonamiento de gpt-5.5 consumen este
-            # presupuesto y un tope corto devuelve contenido vacío (ver generar_pregunta).
-            response_format={'type': 'json_object'},
-            messages=[{'role': 'user', 'content': mensaje}],
-            **{kwarg_max_tokens: 2000},
-        )
         try:
+            respuesta = client.chat.completions.create(
+                model=modelo,
+                # Margen amplio: los tokens de razonamiento de gpt-5.5 consumen este
+                # presupuesto y un tope corto devuelve contenido vacío (ver generar_pregunta).
+                response_format={'type': 'json_object'},
+                messages=[{'role': 'user', 'content': mensaje}],
+                **{kwarg_max_tokens: 2000},
+            )
             datos = json.loads(respuesta.choices[0].message.content)
             objetivos = datos.get('objetivos')
             if not isinstance(objetivos, list) or not objetivos:
@@ -229,7 +231,7 @@ Formato de salida (únicamente esta clave):
                 raise ValueError('todos los objetivos vinieron vacíos')
             # Recorte defensivo: respeta el límite del modelo ObjetivoCurso (200 chars).
             return [o[:200] for o in objetivos[:cantidad]]
-        except (json.JSONDecodeError, ValueError) as e:
+        except (json.JSONDecodeError, ValueError, openai.APIError) as e:
             ultimo_error = e
 
     raise ValueError(f'La IA no produjo objetivos válidos tras 2 intentos: {ultimo_error}')

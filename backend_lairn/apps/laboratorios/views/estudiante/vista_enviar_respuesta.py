@@ -39,6 +39,7 @@ from apps.laboratorios.serializers import SerializadorEnviarRespuesta
 from apps.laboratorios.services.cliente_ejecutor import correr_casos_test, EjecutorNoDisponible
 from apps.laboratorios.services.agente_evaluador import evaluar_respuesta_libre
 from apps.laboratorios.services.agente_pronunciacion import transcribir_audio, calcular_similitud
+from apps.laboratorios.throttling import ThrottleEnviarRespuesta
 
 
 @extend_schema(
@@ -56,6 +57,7 @@ from apps.laboratorios.services.agente_pronunciacion import transcribir_audio, c
 )
 class VistaEnviarRespuesta(APIView):
     permission_classes = [EsEstudiante]
+    throttle_classes = [ThrottleEnviarRespuesta]
 
     def post(self, request, pregunta_id):
         try:

@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema, OpenApiResponse, inline_serializer, OpenApiExample
 from core.permissions.permisos_rol import EsEstudiante
+from core.throttling import ThrottleIA
 from apps.examenes.models import Examen, Inscripcion
 from apps.motor_adaptativo.models import SesionExamen, ModeloConocimiento
 from apps.motor_adaptativo.serializers import SerializadorIniciarExamen
@@ -59,6 +60,7 @@ from apps.motor_adaptativo.services.agente_ia import generar_pregunta
 )
 class VistaIniciarExamen(APIView):
     permission_classes = [EsEstudiante]
+    throttle_classes = [ThrottleIA]
 
     def post(self, request):
         serializador = SerializadorIniciarExamen(data=request.data)

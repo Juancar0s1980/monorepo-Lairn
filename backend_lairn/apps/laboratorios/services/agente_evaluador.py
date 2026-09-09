@@ -10,6 +10,8 @@ generada con `agente_respuesta_libre.generar_borrador_respuesta_libre`).
 
 import json
 
+import openai
+
 from backend_lairn.ia_client import obtener_cliente_ia
 
 MAX_INTENTOS = 2
@@ -55,13 +57,13 @@ Formato de salida (únicamente estas claves):
 
     ultimo_error = None
     for _ in range(MAX_INTENTOS):
-        respuesta = client.chat.completions.create(
-            model=modelo,
-            response_format={'type': 'json_object'},
-            messages=[{'role': 'user', 'content': mensaje}],
-            **{kwarg_max_tokens: 1000},
-        )
         try:
+            respuesta = client.chat.completions.create(
+                model=modelo,
+                response_format={'type': 'json_object'},
+                messages=[{'role': 'user', 'content': mensaje}],
+                **{kwarg_max_tokens: 1000},
+            )
             datos = json.loads(respuesta.choices[0].message.content)
             if not isinstance(datos, dict):
                 raise ValueError('la respuesta no es un objeto JSON')
@@ -75,7 +77,7 @@ Formato de salida (únicamente estas claves):
                 'puntaje': max(0.0, min(100.0, float(puntaje))),
                 'retroalimentacion': retroalimentacion,
             }
-        except (json.JSONDecodeError, ValueError, TypeError) as e:
+        except (json.JSONDecodeError, ValueError, TypeError, openai.APIError) as e:
             ultimo_error = e
 
     raise ValueError(f'La IA no pudo calificar la respuesta tras {MAX_INTENTOS} intentos: {ultimo_error}')

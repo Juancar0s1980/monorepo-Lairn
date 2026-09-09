@@ -17,6 +17,8 @@ Dos flujos:
 
 import json
 
+import openai
+
 from backend_lairn.ia_client import obtener_cliente_ia
 
 MAX_INTENTOS = 2
@@ -71,13 +73,13 @@ Formato de salida (únicamente esta clave):
 
     ultimo_error = None
     for _ in range(MAX_INTENTOS):
-        respuesta = client.chat.completions.create(
-            model=modelo,
-            response_format={'type': 'json_object'},
-            messages=[{'role': 'user', 'content': mensaje}],
-            **{kwarg_max_tokens: 3000},
-        )
         try:
+            respuesta = client.chat.completions.create(
+                model=modelo,
+                response_format={'type': 'json_object'},
+                messages=[{'role': 'user', 'content': mensaje}],
+                **{kwarg_max_tokens: 3000},
+            )
             datos = json.loads(respuesta.choices[0].message.content)
             temas = datos.get('temas')
             if not isinstance(temas, list) or not temas:
@@ -96,7 +98,7 @@ Formato de salida (únicamente esta clave):
             if not validados:
                 raise ValueError('todos los temas vinieron vacíos')
             return validados[:cantidad]
-        except (json.JSONDecodeError, ValueError) as e:
+        except (json.JSONDecodeError, ValueError, openai.APIError) as e:
             ultimo_error = e
 
     raise ValueError(f'La IA no produjo temas de estudio válidos tras {MAX_INTENTOS} intentos: {ultimo_error}')
@@ -140,11 +142,15 @@ Reglas estrictas:
         mensajes.append({'role': rol_openai, 'content': m.get('contenido', '')})
     mensajes.append({'role': 'user', 'content': pregunta})
 
-    respuesta = client.chat.completions.create(
-        model=modelo,
-        messages=mensajes,
-        **{kwarg_max_tokens: 1200},
-    )
+    try:
+        respuesta = client.chat.completions.create(
+            model=modelo,
+            messages=mensajes,
+            **{kwarg_max_tokens: 1200},
+        )
+    except openai.APIError as e:
+        raise ValueError(f'la IA no pudo responder: {e}') from e
+
     contenido = respuesta.choices[0].message.content
     if not contenido or not contenido.strip():
         raise ValueError('la IA no produjo una respuesta')
