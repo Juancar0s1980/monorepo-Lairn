@@ -31,7 +31,7 @@ import {
   Target,
   Zap,
 } from "lucide-react";
-import { colorNota, colorAprobados, coloresIntentos } from "../utilidades";
+import { colorNota, colorAprobados, coloresIntentos, porcentajeAprobados } from "../utilidades";
 import { CumplimientoObjetivosDocente } from "./cumplimiento-objetivos-docente";
 import { EvolucionCursoDocente } from "./evolucion-curso-docente";
 import { MejoraIntentosDocente } from "./mejora-intentos-docente";
@@ -456,12 +456,7 @@ export function TabAnaliticaDocente({
                           <Badge
                             variant="outline"
                             className={`text-xs ${colorAprobados(
-                              est.examenes_presentados > 0
-                                ? Math.round(
-                                    (est.aprobados / est.examenes_presentados) *
-                                      100,
-                                  )
-                                : 0,
+                              porcentajeAprobados(est.aprobados, est.examenes_presentados),
                             )}`}
                           >
                             {est.aprobados}/{est.examenes_presentados}
@@ -482,7 +477,12 @@ export function TabAnaliticaDocente({
         onOpenChange={(open) => !open && setEstudianteDetalle(null)}
       >
         <SheetContent side="right">
-          {estudianteDetalle && (
+          {estudianteDetalle && (() => {
+            const porcentajeAprobadosDetalle = porcentajeAprobados(
+              estudianteDetalle.aprobados,
+              estudianteDetalle.examenes_presentados,
+            );
+            return (
             <>
               <SheetHeader>
                 <SheetTitle>{estudianteDetalle.nombre}</SheetTitle>
@@ -529,38 +529,19 @@ export function TabAnaliticaDocente({
                         Tasa de aprobación
                       </span>
                       <span className="font-medium">
-                        {Math.round(
-                          (estudianteDetalle.aprobados /
-                            estudianteDetalle.examenes_presentados) *
-                            100,
-                        )}
-                        %
+                        {porcentajeAprobadosDetalle}%
                       </span>
                     </div>
                     <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all duration-700 ${
-                          Math.round(
-                            (estudianteDetalle.aprobados /
-                              estudianteDetalle.examenes_presentados) *
-                              100,
-                          ) >= 80
-                            ? "bg-emerald-500"
-                            : Math.round(
-                                  (estudianteDetalle.aprobados /
-                                    estudianteDetalle.examenes_presentados) *
-                                    100,
-                                ) >= 60
-                              ? "bg-amber-500"
-                              : "bg-red-500"
+                          porcentajeAprobadosDetalle >= 80
+                            ? "bg-success"
+                            : porcentajeAprobadosDetalle >= 60
+                              ? "bg-warning"
+                              : "bg-destructive"
                         }`}
-                        style={{
-                          width: `${Math.round(
-                            (estudianteDetalle.aprobados /
-                              estudianteDetalle.examenes_presentados) *
-                              100,
-                          )}%`,
-                        }}
+                        style={{ width: `${porcentajeAprobadosDetalle}%` }}
                       />
                     </div>
                   </div>
@@ -575,11 +556,7 @@ export function TabAnaliticaDocente({
                     <div className="flex flex-wrap gap-1.5">
                       {estudianteDetalle.conceptos_debiles.map(
                         (concepto, i) => (
-                          <Badge
-                            key={i}
-                            variant="outline"
-                            className="text-xs bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800"
-                          >
+                          <Badge key={i} variant="warning" className="text-xs">
                             {concepto}
                           </Badge>
                         ),
@@ -593,7 +570,8 @@ export function TabAnaliticaDocente({
                 </div>
               </div>
             </>
-          )}
+            );
+          })()}
         </SheetContent>
       </Sheet>
     </div>

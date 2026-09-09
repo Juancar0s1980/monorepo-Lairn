@@ -10,7 +10,8 @@ import { useAuth } from '@/context/contexto-auth/use-auth'
 import { Button } from '@/components/ui/button'
 import { ModeToggle } from '@/components/mode-toggle'
 import type { ReactNode } from 'react'
-import { BrainCircuit, LogOut, Menu, User } from 'lucide-react'
+import { LogOut, Menu, User } from 'lucide-react'
+import { LogoMarca } from '@/components/logo-marca'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { useState } from 'react'
@@ -52,7 +53,7 @@ export function Layout({ children }: { children: ReactNode }) {
           {/* Logo de la aplicación */}
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-full border border-secondary bg-card shadow-sm">
-              <BrainCircuit className="h-4 w-4 text-primary" />
+              <LogoMarca className="h-4 w-4 text-primary" />
             </div>
             <h1 className="font-heading text-xl text-foreground">
               Pseudo<span className="text-primary">Tutor</span>

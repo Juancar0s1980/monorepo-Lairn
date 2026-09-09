@@ -23,7 +23,7 @@ import { RutaProtegida } from '@/utilities/rutas-protegidas'
 import { ROLES } from '@/types/usuario'
 import { useAuth } from '@/context/contexto-auth/use-auth'
 import { Toaster } from '@/components/ui/sonner'
-import { BrainCircuit } from 'lucide-react'
+import { LogoMarca } from '@/components/logo-marca'
 
 // Lazy loading de todas las páginas.
 // Cada import() genera un chunk separado que se descarga solo cuando se visita la ruta.
@@ -51,7 +51,7 @@ function CargandoPagina() {
     <div className="flex min-h-[60vh] items-center justify-center">
       <div className="flex flex-col items-center gap-4">
         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 animate-pulse">
-          <BrainCircuit className="h-6 w-6 text-primary" />
+          <LogoMarca className="h-6 w-6 text-primary" />
         </div>
         <div className="flex gap-1">
           <span className="h-2 w-2 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />

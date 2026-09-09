@@ -101,7 +101,10 @@ export default function PaginaModeracionAdmin() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
         <Select value={filtro} onValueChange={(v) => v && setFiltro(v)}>
           <SelectTrigger className="w-40">
-            <SelectValue />
+            {/* SelectValue muestra el value crudo si no se le pasan children
+                (así lo hace @base-ui/react/select) — hay que darle la
+                etiqueta a mano. */}
+            <SelectValue>{filtros.find((f) => f.value === filtro)?.label ?? ''}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {filtros.map((f) => (
@@ -179,7 +182,7 @@ export default function PaginaModeracionAdmin() {
                       <Button
                         variant="ghost"
                         size="icon-sm"
-                        className="text-muted-foreground hover:text-emerald-600"
+                        className="text-muted-foreground hover:text-success"
                         title="Marcar como resuelto"
                         onClick={() => cambiarEstado(r.id, 'resuelto')}
                       >

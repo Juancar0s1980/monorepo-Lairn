@@ -34,9 +34,9 @@ import type { SesionExamen, ResultadoExamen } from '@/types/examen'
 
 // Configuración visual de dificultad.
 const dificultadConfig: Record<number, { label: string; clase: string; icono: typeof SignalLow }> = {
-  1: { label: 'Fácil', clase: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800', icono: SignalLow },
-  2: { label: 'Media', clase: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800', icono: SignalMedium },
-  3: { label: 'Difícil', clase: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800', icono: SignalHigh },
+  1: { label: 'Fácil', clase: 'bg-success/10 text-success border-success/20', icono: SignalLow },
+  2: { label: 'Media', clase: 'bg-warning/10 text-warning border-warning/20', icono: SignalMedium },
+  3: { label: 'Difícil', clase: 'bg-destructive/10 text-destructive border-destructive/20', icono: SignalHigh },
 }
 
 // Estados visuales de la página (sin feedback ni resultado — esos van en modales).
@@ -313,7 +313,7 @@ export default function PaginaRendirExamen() {
               Abandonar examen
             </Link>
             <div className="flex items-center gap-2">
-              <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${tiempoRestante <= 60 ? 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800' : ''}`}>
+              <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${tiempoRestante <= 60 ? 'bg-destructive/10 text-destructive border-destructive/20' : ''}`}>
                 <Clock className="h-3 w-3" />
                 {formatearTiempo(tiempoRestante)}
               </span>
@@ -421,14 +421,14 @@ export default function PaginaRendirExamen() {
             <div className="flex flex-col items-center gap-4 py-4">
               {feedbackCorrecta ? (
                 <>
-                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-950/20">
-                    <CheckCircle2 className="h-10 w-10 text-emerald-500" />
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-success/10">
+                    <CheckCircle2 className="h-10 w-10 text-success" />
                   </div>
-                  <p className="text-2xl font-bold text-emerald-500">¡Correcto!</p>
+                  <p className="text-2xl font-bold text-success">¡Correcto!</p>
                 </>
               ) : (
                 <>
-                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-red-50 dark:bg-red-950/20">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10">
                     <XCircle className="h-10 w-10 text-destructive" />
                   </div>
                   <p className="text-2xl font-bold text-destructive">Incorrecto</p>
@@ -491,7 +491,7 @@ export default function PaginaRendirExamen() {
                 {/* Estadísticas */}
                 <div className="flex justify-center gap-8 text-center">
                   <div>
-                    <p className="text-2xl font-bold text-emerald-600">
+                    <p className="text-2xl font-bold text-success">
                       {resultado.correctas}
                     </p>
                     <p className="text-xs text-muted-foreground">Correctas</p>
