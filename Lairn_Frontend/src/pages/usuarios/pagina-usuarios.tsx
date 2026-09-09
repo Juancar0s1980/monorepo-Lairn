@@ -69,6 +69,7 @@ export default function PaginaUsuarios() {
   const [roles, setRoles] = useState<Rol[]>([])
   const [cargando, setCargando] = useState(true)
   const [busqueda, setBusqueda] = useState('')
+  const [filtroRol, setFiltroRol] = useState('todos')
   const [usuarioAEliminar, setUsuarioAEliminar] = useState<{ id: number; nombre: string } | null>(null)
   const [eliminando, setEliminando] = useState(false)
 
@@ -91,16 +92,18 @@ export default function PaginaUsuarios() {
     cargarDatos()
   }, [])
 
-  // Filtra por nombre o email en el cliente (la lista de usuarios es pequeña).
+  // Filtra por nombre/email y por rol en el cliente (la lista de usuarios es pequeña).
   const usuariosFiltrados = useMemo(() => {
     const termino = busqueda.trim().toLowerCase()
-    if (!termino) return usuarios
-    return usuarios.filter(
-      (u) =>
+    return usuarios.filter((u) => {
+      const coincideTermino =
+        !termino ||
         nombreCompleto(u).toLowerCase().includes(termino) ||
         u.email.toLowerCase().includes(termino)
-    )
-  }, [usuarios, busqueda])
+      const coincideRol = filtroRol === 'todos' || String(u.role.id) === filtroRol
+      return coincideTermino && coincideRol
+    })
+  }, [usuarios, busqueda, filtroRol])
 
   // Cambia el rol de un usuario.
   const cambiarRol = async (usuarioId: number, roleId: string) => {
@@ -171,7 +174,27 @@ export default function PaginaUsuarios() {
         titulo="Usuarios"
         subtitulo="Gestión de usuarios del sistema"
       />
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+        <Select value={filtroRol} onValueChange={(valor) => valor && setFiltroRol(valor)}>
+          <SelectTrigger className="w-full sm:w-40">
+            {/* SelectValue muestra el value crudo si no se le pasan children
+                (así lo hace @base-ui/react/select) — hay que darle la
+                etiqueta a mano. */}
+            <SelectValue>
+              {filtroRol === 'todos'
+                ? 'Todos los roles'
+                : (roles.find((r) => String(r.id) === filtroRol)?.name ?? 'Todos los roles')}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos los roles</SelectItem>
+            {roles.map((rol) => (
+              <SelectItem key={rol.id} value={String(rol.id)}>
+                {rol.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <div className="relative w-full sm:w-64">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -231,7 +254,7 @@ export default function PaginaUsuarios() {
                       disabled={esUsuarioActual}
                     >
                       <SelectTrigger size="sm" className="w-36">
-                        <SelectValue />
+                        <SelectValue>{u.role.name}</SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {roles.map((rol) => (
