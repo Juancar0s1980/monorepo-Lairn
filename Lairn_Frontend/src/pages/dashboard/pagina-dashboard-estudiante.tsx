@@ -89,24 +89,29 @@ function tiempoRelativo(fechaISO: string): string {
 
 // Devuelve el color de la nota según su valor.
 function colorNota(nota: number): string {
-  if (nota >= 4.0) return "text-emerald-600 dark:text-emerald-400";
-  if (nota >= 3.0) return "text-amber-600 dark:text-amber-400";
-  return "text-red-600 dark:text-red-400";
+  if (nota >= 4.0) return "text-success";
+  if (nota >= 3.0) return "text-warning";
+  return "text-destructive";
 }
 
 // Devuelve el color de fondo del badge de dificultad.
 function badgeDificultad(dificultad: number): string {
-  if (dificultad === 1)
-    return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400";
-  if (dificultad === 2)
-    return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
-  return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+  if (dificultad === 1) return "bg-success/10 text-success";
+  if (dificultad === 2) return "bg-warning/10 text-warning";
+  return "bg-destructive/10 text-destructive";
 }
 
 function labelDificultad(dificultad: number): string {
   if (dificultad === 1) return "Básico";
   if (dificultad === 2) return "Intermedio";
   return "Avanzado";
+}
+
+// Meta sugerida: medio punto por encima del promedio actual (tope 5.0).
+// Sin exámenes aún, se sugiere 3.5 (justo sobre la nota mínima de aprobación).
+function calcularMetaNota(notaPromedio: number, totalExamenes: number): number {
+  if (totalExamenes === 0) return 3.5;
+  return Math.min(notaPromedio + 0.5, 5.0);
 }
 
 // Componente de skeleton para estado de carga.
@@ -177,6 +182,7 @@ export default function PaginaDashboardEstudiante() {
   const saludo = obtenerSaludo();
   const fecha = formatearFecha();
   const nombre = obtenerNombre(usuario);
+  const metaNota = calcularMetaNota(stats.notaPromedio, stats.totalExamenes);
 
   return (
     <div className="space-y-6">
@@ -206,9 +212,9 @@ export default function PaginaDashboardEstudiante() {
       />
 
       {/* ═══════════════════════════════════════════════════════════
-          SECCIÓN 2 — Stats rápidas (4 cards)
+          SECCIÓN 2 — Stats rápidas (5 cards)
           ═══════════════════════════════════════════════════════════ */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {/* Cursos inscritos */}
         <CardStat
           titulo="Cursos inscritos"
@@ -241,6 +247,17 @@ export default function PaginaDashboardEstudiante() {
           valor={stats.totalExamenes > 0 ? stats.mejorNota.toFixed(1) : "—"}
           icono={Trophy}
           subtitulo={stats.totalExamenes > 0 ? "tu mejor resultado" : "sin datos aún"}
+        />
+
+        {/* Meta de nota: objetivo sugerido, medio punto sobre el promedio actual */}
+        <CardStat
+          titulo="Meta de nota"
+          valor={metaNota.toFixed(1)}
+          icono={Target}
+          variante="exito"
+          subtitulo={
+            stats.totalExamenes > 0 ? "supera tu promedio actual" : "tu primer objetivo"
+          }
         />
       </div>
 
@@ -344,15 +361,13 @@ export default function PaginaDashboardEstudiante() {
                         {/* Icono de resultado */}
                         <div
                           className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                            aprobo
-                              ? "bg-emerald-100 dark:bg-emerald-900/30"
-                              : "bg-red-100 dark:bg-red-900/30"
+                            aprobo ? "bg-success/10" : "bg-destructive/10"
                           }`}
                         >
                           {aprobo ? (
-                            <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                            <CheckCircle2 className="h-4 w-4 text-success" />
                           ) : (
-                            <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                            <XCircle className="h-4 w-4 text-destructive" />
                           )}
                         </div>
 

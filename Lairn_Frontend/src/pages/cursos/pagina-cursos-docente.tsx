@@ -4,12 +4,13 @@
 // Obtiene los cursos de GET /examenes/cursos/ y analítica de /analitica/curso/{id}/resumen/.
 // Permite crear nuevos cursos mediante un botón que abre una modal.
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '@/services/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { BookOpen, Plus } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { BookOpen, Plus, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { CardCursoDocente } from '@/components/card-curso-docente'
 import { EncabezadoPagina } from '@/components/encabezado-pagina'
@@ -53,6 +54,19 @@ export default function PaginaCursosDocente() {
   )
   const [cargando, setCargando] = useState(true)
   const [modalAbierta, setModalAbierta] = useState(false)
+  const [busqueda, setBusqueda] = useState('')
+
+  // Filtra por nombre, código o descripción en el cliente.
+  const cursosFiltrados = useMemo(() => {
+    const termino = busqueda.trim().toLowerCase()
+    if (!termino) return cursos
+    return cursos.filter(
+      (c) =>
+        c.nombre.toLowerCase().includes(termino) ||
+        c.codigo.toLowerCase().includes(termino) ||
+        c.descripcion.toLowerCase().includes(termino)
+    )
+  }, [cursos, busqueda])
 
   // Carga el resumen de cada curso en paralelo.
   const cargarResumenes = async (listaCursos: Curso[]) => {
@@ -139,7 +153,21 @@ export default function PaginaCursosDocente() {
         }
       />
 
-      {/* Estado vacío */}
+      {cursos.length > 0 && (
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
+          <div className="relative w-full sm:w-64">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nombre o código"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              className="pl-8"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Estado vacío: sin cursos en absoluto */}
       {cursos.length === 0 && (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed p-12 text-center">
           <BookOpen className="h-10 w-10 text-muted-foreground/50" />
@@ -152,10 +180,20 @@ export default function PaginaCursosDocente() {
         </div>
       )}
 
+      {/* Estado vacío: la búsqueda no encontró nada */}
+      {cursos.length > 0 && cursosFiltrados.length === 0 && (
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed p-12 text-center">
+          <Search className="h-10 w-10 text-muted-foreground/50" />
+          <p className="mt-3 text-sm font-medium text-muted-foreground">
+            No se encontraron cursos
+          </p>
+        </div>
+      )}
+
       {/* Grid de cards de cursos */}
-      {cursos.length > 0 && (
+      {cursosFiltrados.length > 0 && (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {cursos.map((curso) => {
+          {cursosFiltrados.map((curso) => {
             const resumen = resumenes.get(curso.id)
             const stats = resumen
               ? calcularStats(resumen)
