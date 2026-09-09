@@ -2,6 +2,8 @@ from .serializador_laboratorio import (
     SerializadorLaboratorio,
     SerializadorLaboratorioDetalleDocente,
     SerializadorLaboratorioDetalleEstudiante,
+    SerializadorLaboratorioListaEstudiante,
+    SerializadorLaboratorioListaDocente,
 )
 from .serializador_pregunta import (
     SerializadorPreguntaDocente,
@@ -20,6 +22,8 @@ __all__ = [
     'SerializadorLaboratorio',
     'SerializadorLaboratorioDetalleDocente',
     'SerializadorLaboratorioDetalleEstudiante',
+    'SerializadorLaboratorioListaEstudiante',
+    'SerializadorLaboratorioListaDocente',
     'SerializadorPreguntaDocente',
     'SerializadorPreguntaEstudiante',
     'SerializadorCasoTest',

@@ -38,6 +38,7 @@ import { toast } from 'sonner'
 import { OPCIONES_LENGUAJE, OPCIONES_TIPO_PREGUNTA } from '@/types/laboratorio'
 import type {
   Laboratorio,
+  LaboratorioDocente,
   LenguajeCodigo,
   PreguntaDocente,
   PreguntaPayload,
@@ -52,7 +53,7 @@ interface TabLaboratoriosDocenteProps {
 
 export function TabLaboratoriosDocente({ cursoId }: TabLaboratoriosDocenteProps) {
   const navigate = useNavigate()
-  const [laboratorios, setLaboratorios] = useState<Laboratorio[]>([])
+  const [laboratorios, setLaboratorios] = useState<LaboratorioDocente[]>([])
   const [cargando, setCargando] = useState(true)
 
   const [dialogoAbierto, setDialogoAbierto] = useState(false)
@@ -80,7 +81,7 @@ export function TabLaboratoriosDocente({ cursoId }: TabLaboratoriosDocenteProps)
     const controlador = new AbortController()
     const cargar = async () => {
       try {
-        const { data } = await api.get<Laboratorio[]>(
+        const { data } = await api.get<LaboratorioDocente[]>(
           `/laboratorios/cursos/${cursoId}/laboratorios/`,
           { signal: controlador.signal }
         )
@@ -104,7 +105,10 @@ export function TabLaboratoriosDocente({ cursoId }: TabLaboratoriosDocenteProps)
         `/laboratorios/cursos/${cursoId}/laboratorios/`,
         { titulo: tituloLimpio, instrucciones: instrucciones.trim() }
       )
-      setLaboratorios((prev) => [data, ...prev])
+      // El POST devuelve el Laboratorio base (sin actividad agregada) — un
+      // laboratorio recién creado no tiene entregas todavía, así que se
+      // completan esos campos a mano en vez de volver a pedir la lista.
+      setLaboratorios((prev) => [{ ...data, total_entregas: 0, promedio_puntaje: null }, ...prev])
       setDialogoAbierto(false)
       setTitulo('')
       setInstrucciones('')
@@ -291,9 +295,19 @@ export function TabLaboratoriosDocente({ cursoId }: TabLaboratoriosDocenteProps)
                 <p className="line-clamp-2 text-xs text-muted-foreground">
                   {lab.instrucciones || 'Sin instrucciones adicionales'}
                 </p>
-                <Badge variant="outline" className="text-xs">
-                  {lab.total_preguntas} pregunta{lab.total_preguntas === 1 ? '' : 's'}
-                </Badge>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline" className="text-xs">
+                    {lab.total_preguntas} pregunta{lab.total_preguntas === 1 ? '' : 's'}
+                  </Badge>
+                  {lab.total_entregas > 0 ? (
+                    <span className="text-xs text-muted-foreground">
+                      {lab.total_entregas} entrega{lab.total_entregas === 1 ? '' : 's'}
+                      {lab.promedio_puntaje !== null && ` · promedio ${lab.promedio_puntaje}%`}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Sin entregas aún</span>
+                  )}
+                </div>
               </CardContent>
             </Card>
           ))}
