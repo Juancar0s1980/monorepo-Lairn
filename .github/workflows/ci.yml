@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: lairn_db_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      SECRET_KEY: clave-de-pruebas-solo-para-ci
+      DEBUG: "True"
+      ALLOWED_HOSTS: "*"
+      DB_NAME: lairn_db_test
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: localhost
+      DB_PORT: "5432"
+      # Los tests que tocan servicios de IA mockean obtener_cliente_ia(), pero
+      # settings.py igual necesita una key configurada para no fallar al
+      # construir el cliente en runtime — nunca se usa de verdad en CI.
+      AI_PROVIDER: groq
+      GROQ_API_KEY: gsk_ci_placeholder
+    defaults:
+      run:
+        working-directory: backend_lairn
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: backend_lairn/requirements.txt
+      - run: pip install -r requirements.txt
+      - run: python manage.py migrate --noinput
+      - run: python manage.py test apps
+
+  frontend-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Lairn_Frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: Lairn_Frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
