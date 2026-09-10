@@ -12,7 +12,7 @@
 // Al enviar exitosamente, redirige al dashboard (/).
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/contexto-auth/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -427,9 +427,19 @@ export default function PaginaLogin() {
 
               {/* Campo de contraseña con toggle de visibilidad */}
               <div className="space-y-1.5">
-                <Label htmlFor="password" className="text-sm font-medium">
-                  Contraseña
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password" className="text-sm font-medium">
+                    Contraseña
+                  </Label>
+                  {esLogin && (
+                    <Link
+                      to="/recuperar-contrasena"
+                      className="text-xs font-medium text-primary hover:text-primary-hover dark:hover:text-primary/80 transition-colors"
+                    >
+                      ¿Olvidaste tu contraseña?
+                    </Link>
+                  )}
+                </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
                   <Input

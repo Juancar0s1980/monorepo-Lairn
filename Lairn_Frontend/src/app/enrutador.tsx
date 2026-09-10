@@ -28,6 +28,8 @@ import { LogoMarca } from '@/components/logo-marca'
 // Lazy loading de todas las páginas.
 // Cada import() genera un chunk separado que se descarga solo cuando se visita la ruta.
 const PaginaLogin = lazy(() => import('@/pages/auth/pagina-login'))
+const PaginaRecuperarContrasena = lazy(() => import('@/pages/auth/pagina-recuperar-contrasena'))
+const PaginaRestablecerContrasena = lazy(() => import('@/pages/auth/pagina-restablecer-contrasena'))
 const PaginaDashboardAdmin = lazy(() => import('@/pages/dashboard/pagina-dashboard-admin'))
 const PaginaDashboardDocente = lazy(() => import('@/pages/dashboard/pagina-dashboard-docente'))
 const PaginaDashboardEstudiante = lazy(() => import('@/pages/dashboard/pagina-dashboard-estudiante'))
@@ -211,6 +213,8 @@ export function Enrutador() {
         <Suspense fallback={<CargandoPagina />}>
           <Routes>
             <Route path="/iniciar-sesion" element={<PaginaLogin />} />
+            <Route path="/recuperar-contrasena" element={<PaginaRecuperarContrasena />} />
+            <Route path="/restablecer-contrasena/:uid/:token" element={<PaginaRestablecerContrasena />} />
             <Route path="/*" element={<RutasPrivadas />} />
           </Routes>
         </Suspense>

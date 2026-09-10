@@ -55,6 +55,20 @@ ML_SERVICE_URL = config("ML_SERVICE_URL", default="")
 # En docker-compose se inyecta como http://ejecutor:8003
 EJECUTOR_SERVICE_URL = config("EJECUTOR_SERVICE_URL", default="")
 
+# Envío de correos (recuperación de contraseña). RESEND_API_KEY vacía (el
+# caso normal en desarrollo, donde nadie tiene una cuenta de Resend a mano)
+# usa el backend de consola: el correo se imprime en los logs del contenedor
+# en vez de enviarse de verdad, así que el flujo se puede probar completo sin
+# depender de un servicio externo. Ver core/email/enviar_email.py.
+RESEND_API_KEY = config("RESEND_API_KEY", default="")
+# Solo se usa cuando RESEND_API_KEY está vacía (enviar_email() llama a la API
+# de Resend directo, sin pasar por send_mail(), cuando sí hay key).
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="Lairn <onboarding@resend.dev>")
+# URL pública del frontend, usada para construir el link de restablecimiento
+# de contraseña que se envía por correo (ej. https://lairn.app).
+FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:5173")
+
 
 # Application definition
 
