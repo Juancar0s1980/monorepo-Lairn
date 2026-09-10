@@ -24,7 +24,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
-ALLOWED_HOSTS = [config("ALLOWED_HOSTS")]
+# Antes: ALLOWED_HOSTS = [config("ALLOWED_HOSTS")] — envolvía TODO el valor
+# de la variable en una lista de un solo elemento. Con un único host (o "*")
+# funcionaba por casualidad, pero "midominio.com,www.midominio.com" (el caso
+# normal en producción) se guardaba como UN string con coma, que Django
+# nunca hace match contra ningún Host real — todas las requests habrían
+# fallado con 400 "Invalid HTTP_HOST header" apenas alguien lo desplegara con
+# más de un host. Ahora se separa por comas y se recortan espacios.
+ALLOWED_HOSTS = [h.strip() for h in config("ALLOWED_HOSTS").split(",") if h.strip()]
 OPENAI_API_KEY = config("OPENAI_API_KEY", default="")
 XAI_API_KEY = config("XAI_API_KEY", default="")
 GROQ_API_KEY = config("GROQ_API_KEY", default="")
@@ -192,6 +199,28 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
+
+
+# Endurecimiento de producción — gateado por `not DEBUG` a propósito: en
+# local (DEBUG=True) no se activa nada de esto, así que no rompe el flujo de
+# desarrollo (HTTP plano, sin certificado). El día que se despliegue con
+# DEBUG=False, estas protecciones quedan encendidas automáticamente sin que
+# nadie tenga que acordarse de configurarlas a mano — es justo lo que
+# `manage.py check --deploy` señalaba como faltante (W004, W008, W011, W016).
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 año, el valor estándar recomendado por Django.
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    # Si el despliegue real queda detrás de un proxy/balanceador (nginx,
+    # Railway, etc.) que termina TLS y reenvía por HTTP interno, Django ve la
+    # request como no-segura y SECURE_SSL_REDIRECT la redirige en loop. Esta
+    # línea le dice que confíe en el header que ponen esos proxies — pero
+    # SOLO tiene sentido si el proxy real siempre lo setea (nunca confiar en
+    # esto si el backend está expuesto directo a internet).
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 # Static files (CSS, JavaScript, Images)
