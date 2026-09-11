@@ -52,6 +52,14 @@ function Ayuda({ texto }: { texto: string }) {
 }
 
 // Esquema de validación con Zod.
+// Entero positivo (>= mínimo), como los IntegerField con MinValueValidator
+// del backend — se valida acá también para que el error aparezca al
+// instante en el formulario, en vez de solo tras el POST.
+function esEnteroPositivo(valor: string, minimo: number): boolean {
+  const num = Number(valor)
+  return Number.isInteger(num) && num >= minimo
+}
+
 const esquemaCrearExamen = z.object({
   titulo: z.string().min(1, 'El título es obligatorio'),
   tema: z.string().min(1, 'El tema es obligatorio'),
@@ -65,6 +73,12 @@ const esquemaCrearExamen = z.object({
   retroalimentacion: z.boolean(),
   es_guiado: z.boolean(),
 }).refine(
+  (datos) => esEnteroPositivo(datos.tiempo, 1),
+  { message: 'Tiempo debe ser un número entero de al menos 1 minuto', path: ['tiempo'] }
+).refine(
+  (datos) => esEnteroPositivo(datos.num_preguntas, 1),
+  { message: 'N° Preguntas debe ser un número entero de al menos 1', path: ['num_preguntas'] }
+).refine(
   (datos) => {
     if (datos.max_intentos && datos.max_intentos !== '') {
       const val = Number(datos.max_intentos)
@@ -76,6 +90,14 @@ const esquemaCrearExamen = z.object({
     message: 'Max. Intentos debe ser entre 0 (ilimitado) y 10',
     path: ['max_intentos'],
   }
+).refine(
+  (datos) => {
+    if (datos.modo === 'maestria' && datos.max_preguntas) {
+      return esEnteroPositivo(datos.max_preguntas, 1)
+    }
+    return true
+  },
+  { message: 'Max. Preguntas debe ser un número entero de al menos 1', path: ['max_preguntas'] }
 ).refine(
   (datos) => {
     if (datos.modo === 'maestria' && datos.max_preguntas && datos.num_preguntas) {
@@ -153,6 +175,7 @@ export function ModalCrearExamen({
     formState: { errors },
   } = useForm<DatosCrearExamen>({
     resolver: zodResolver(esquemaCrearExamen),
+    mode: 'onChange',
     defaultValues: {
       titulo: '',
       tema: '',
@@ -351,6 +374,8 @@ export function ModalCrearExamen({
               <Input
                 id="tiempo"
                 type="number"
+                min={1}
+                step={1}
                 placeholder="60"
                 {...register('tiempo')}
               />
@@ -368,6 +393,8 @@ export function ModalCrearExamen({
               <Input
                 id="num_preguntas"
                 type="number"
+                min={1}
+                step={1}
                 placeholder="10"
                 {...register('num_preguntas')}
               />
@@ -450,6 +477,9 @@ export function ModalCrearExamen({
             <Input
               id="max_intentos"
               type="number"
+              min={0}
+              max={10}
+              step={1}
               placeholder="1"
               {...register('max_intentos')}
             />
@@ -483,6 +513,8 @@ export function ModalCrearExamen({
               <Input
                 id="max_preguntas"
                 type="number"
+                min={1}
+                step={1}
                 placeholder="20"
                 {...register('max_preguntas')}
               />
