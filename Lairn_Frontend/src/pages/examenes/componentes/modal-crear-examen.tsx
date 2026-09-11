@@ -113,6 +113,14 @@ const esquemaCrearExamen = z.object({
 
 type DatosCrearExamen = z.infer<typeof esquemaCrearExamen>
 
+// max_preguntas solo se usa (y se muestra) en modo Maestría, pero el modelo
+// de Django lo exige siempre >= 1 (MinValueValidator(1), default=20) — no
+// hay excepción para modo Fijo. Enviar 0 en ese caso lo viola y el backend
+// responde 400 con el mensaje crudo de Django ("Ensure this value is
+// greater than or equal to 1."). Se envía este mismo valor por defecto del
+// modelo cuando no aplica, así el backend nunca lo rechaza.
+const MAX_PREGUNTAS_POR_DEFECTO = 20
+
 interface ModalCrearExamenProps {
   abierta: boolean
   onCerrar: () => void
@@ -213,7 +221,7 @@ export function ModalCrearExamen({
         max_preguntas:
           datos.modo === 'maestria' && datos.max_preguntas
             ? Number(datos.max_preguntas)
-            : 0,
+            : MAX_PREGUNTAS_POR_DEFECTO,
         objetivos: Array.from(objetivosSeleccionados),
         peso_practica: incluirPractica ? Number(pesoPractica) : 0,
       })
