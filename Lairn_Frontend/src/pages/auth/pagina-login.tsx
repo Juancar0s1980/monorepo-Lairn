@@ -181,6 +181,50 @@ export default function PaginaLogin() {
             depender de la cascada de tokens.
             ═══════════════════════════════════════════════════════════ */}
         <div className="relative hidden lg:flex lg:w-1/2 flex-col justify-between overflow-hidden bg-gradient-to-br from-[#EDF4FA] to-[#E3EFFB] dark:from-[#0F1526] dark:to-[#161E36]">
+          {/* Textura de circuitos (solo modo oscuro, invisible en claro vía
+              text-transparent): refuerza el tema "IA" del panel. Un solo
+              tile de 220x220 con trazos ortogonales + nodos, repetido por
+              el <pattern> — no compite con el contenido porque queda a muy
+              baja opacidad y detrás (sin z-index, el contenido de marca
+              sí tiene z-10). */}
+          <svg
+            className="absolute inset-0 h-full w-full text-transparent dark:text-[#3A7BD5]"
+            aria-hidden="true"
+          >
+            <defs>
+              <pattern
+                id="circuito-login-izq"
+                width="220"
+                height="220"
+                patternUnits="userSpaceOnUse"
+              >
+                <g fill="none" stroke="currentColor" strokeWidth="1" opacity="0.4">
+                  <path d="M0 40 H60 V90 H140 V60 H220" />
+                  <path d="M180 0 V50 H220" />
+                  <path d="M20 220 V150 H90 V110" />
+                  <path d="M0 180 H40 V220" />
+                  <path d="M110 220 V190 H180 V150 H220" />
+                  <path d="M60 140 V90" />
+                  <path d="M140 90 H190 V140 H160 V180" />
+                  <path d="M0 100 H30 V130" />
+                </g>
+                <g fill="currentColor" opacity="0.55">
+                  <circle cx="60" cy="40" r="2.5" />
+                  <circle cx="140" cy="90" r="2.5" />
+                  <circle cx="180" cy="50" r="2.5" />
+                  <circle cx="90" cy="150" r="2.5" />
+                  <circle cx="180" cy="150" r="2.5" />
+                  <circle cx="20" cy="150" r="2.5" />
+                  <circle cx="190" cy="140" r="2.5" />
+                  <circle cx="60" cy="90" r="2.5" />
+                  <circle cx="160" cy="180" r="2.5" />
+                  <circle cx="30" cy="100" r="2.5" />
+                </g>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#circuito-login-izq)" />
+          </svg>
+
           {/* Contenido del branding */}
           <div className="relative z-10 flex flex-col h-full p-[clamp(1.25rem,4vh,2.5rem)] overflow-hidden">
             {/* Logo con badge "IA": recorte de la cara de la mascota (no un
