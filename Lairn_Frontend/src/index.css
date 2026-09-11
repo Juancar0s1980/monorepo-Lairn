@@ -199,55 +199,65 @@
   .font-heading {
     font-weight: 600;
     }
-  /* El navegador fuerza fondo blanco en campos autocompletados, ignorando
-     el tema — por eso un input se veía blanco fijo en modo oscuro tras
-     autocompletar. El truco del inset shadow es la única forma de
-     sobreescribirlo, con los tokens del tema para que el color sea
-     correcto en ambos modos.
-
-     DOS reglas separadas a propósito, no una lista combinada: Firefox no
-     entiende ":-webkit-autofill" (es un pseudo-selector de Chromium) y
-     Safari/versiones viejas no entienden ":autofill" (el estándar sin
-     prefijo) — un selector no reconocido dentro de una lista con comas
-     invalida TODA la regla en ese navegador, así que si se combinan en una
-     sola lista, cada navegador ignora el bloque completo por el selector
-     que no reconoce del otro. Separadas, cada navegador aplica la suya y
-     simplemente descarta la regla ajena que no entiende. */
-  input:-webkit-autofill,
-  input:-webkit-autofill:hover,
-  input:-webkit-autofill:focus,
-  input:-webkit-autofill:active {
-    -webkit-text-fill-color: var(--foreground);
-    -webkit-box-shadow: 0 0 0px 1000px var(--input) inset;
-    box-shadow: 0 0 0px 1000px var(--input) inset;
-    transition: background-color 9999s ease-in-out 0s;
-    }
-  input:autofill,
-  input:autofill:hover,
-  input:autofill:focus,
-  input:autofill:active {
-    -webkit-text-fill-color: var(--foreground);
-    box-shadow: 0 0 0px 1000px var(--input) inset;
-    transition: background-color 9999s ease-in-out 0s;
-    }
-  /* Chrome aplica este otro pseudo-selector (interno, sin prefijo -webkit)
-     al pasar el mouse sobre una sugerencia de la lista de autocompletado
-     nativa del navegador, ANTES de hacer clic — es un estado previo y
-     distinto de ":-webkit-autofill" (que solo se activa tras confirmar el
-     valor), por eso la regla de arriba no lo cubre y el input se veía
-     blanco brillante mientras se navegaba la lista con el mouse. Bloque
-     aparte por la misma razón que los de arriba: selector no estándar,
-     solo lo entiende Chromium. */
-  input:-internal-autofill-selected,
-  input:-internal-autofill-selected:hover,
-  input:-internal-autofill-selected:focus,
-  input:-internal-autofill-selected:active {
-    -webkit-text-fill-color: var(--foreground);
-    -webkit-box-shadow: 0 0 0px 1000px var(--input) inset;
-    box-shadow: 0 0 0px 1000px var(--input) inset;
-    transition: background-color 9999s ease-in-out 0s;
-    }
 }
+
+/* El navegador fuerza fondo blanco en campos autocompletados, ignorando el
+   tema — por eso un input se veía blanco fijo en modo oscuro tras
+   autocompletar. El truco del inset shadow es la única forma de
+   sobreescribirlo, con los tokens del tema para que el color sea correcto
+   en ambos modos.
+
+   A PROPÓSITO fuera de cualquier @layer: Tailwind v4 da a la capa
+   "utilities" prioridad sobre "base" SIN IMPORTAR la especificidad del
+   selector — y el anillo de foco de Input (focus-visible:ring-3, en
+   utilities) también usa box-shadow. Con esta regla dentro de @layer base
+   el input se veía bien recién autocompletado, pero apenas quedaba
+   enfocado (como al elegir una sugerencia del propio desplegable del
+   navegador) el box-shadow del anillo ganaba y volvía a tapar todo con el
+   fondo blanco del navegador. Un estilo SIN capa gana siempre sobre
+   cualquier estilo en capa, así que esta regla cubre el fondo pase lo que
+   pase con el foco.
+
+   DOS reglas separadas a propósito, no una lista combinada: Firefox no
+   entiende ":-webkit-autofill" (es un pseudo-selector de Chromium) y
+   Safari/versiones viejas no entienden ":autofill" (el estándar sin
+   prefijo) — un selector no reconocido dentro de una lista con comas
+   invalida TODA la regla en ese navegador, así que si se combinan en una
+   sola lista, cada navegador ignora el bloque completo por el selector que
+   no reconoce del otro. Separadas, cada navegador aplica la suya y
+   simplemente descarta la regla ajena que no entiende. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--foreground);
+  -webkit-box-shadow: 0 0 0px 1000px var(--input) inset;
+  box-shadow: 0 0 0px 1000px var(--input) inset;
+  transition: background-color 9999s ease-in-out 0s;
+  }
+input:autofill,
+input:autofill:hover,
+input:autofill:focus,
+input:autofill:active {
+  -webkit-text-fill-color: var(--foreground);
+  box-shadow: 0 0 0px 1000px var(--input) inset;
+  transition: background-color 9999s ease-in-out 0s;
+  }
+/* Chrome aplica este otro pseudo-selector (interno, sin prefijo -webkit) al
+   pasar el mouse sobre una sugerencia de la lista de autocompletado nativa
+   del navegador, ANTES de hacer clic — es un estado previo y distinto de
+   ":-webkit-autofill" (que solo se activa tras confirmar el valor). Bloque
+   aparte por la misma razón que los de arriba: selector no estándar, solo
+   lo entiende Chromium. */
+input:-internal-autofill-selected,
+input:-internal-autofill-selected:hover,
+input:-internal-autofill-selected:focus,
+input:-internal-autofill-selected:active {
+  -webkit-text-fill-color: var(--foreground);
+  -webkit-box-shadow: 0 0 0px 1000px var(--input) inset;
+  box-shadow: 0 0 0px 1000px var(--input) inset;
+  transition: background-color 9999s ease-in-out 0s;
+  }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
