@@ -37,7 +37,8 @@ export interface CardCursoDocenteProps {
   codigo: string
   totalInscritos: number
   totalExamenes: number
-  notaPromedio?: number
+  /** undefined = todavía no se cargó; null = cargado, pero sin exámenes presentados. */
+  notaPromedio?: number | null
   tasaAprobados?: number
   /** Ruta base para el link. Por defecto '/mis-cursos/{id}/examenes' */
   rutaBase?: string
@@ -189,9 +190,13 @@ export function CardCursoDocente({
                 <TrendingUp className="h-3.5 w-3.5" />
                 <span>
                   Promedio:{' '}
-                  <span className={`font-semibold ${colorNota(notaPromedio)}`}>
-                    {notaPromedio.toFixed(1)}
-                  </span>
+                  {notaPromedio === null ? (
+                    <span className="font-semibold">Sin datos</span>
+                  ) : (
+                    <span className={`font-semibold ${colorNota(notaPromedio)}`}>
+                      {notaPromedio.toFixed(1)}
+                    </span>
+                  )}
                 </span>
               </div>
             )}

@@ -39,8 +39,9 @@ function calcularStats(resumen: ResumenCursoDocente) {
     ...estudiantes.map((e) => e.examenes_presentados)
   )
 
-  // La tasa de aprobados cuenta estudiantes con nota promedio >= 3.0.
-  const aprobados = estudiantes.filter((e) => e.nota_promedio >= 3.0).length
+  // La tasa de aprobados cuenta estudiantes con nota promedio >= 3.0
+  // (null = todavía sin exámenes presentados, no cuenta como aprobado ni reprobado).
+  const aprobados = estudiantes.filter((e) => e.nota_promedio !== null && e.nota_promedio >= 3.0).length
   const tasaAprobados = Math.round((aprobados / estudiantes.length) * 100)
 
   return { totalExamenes, tasaAprobados }

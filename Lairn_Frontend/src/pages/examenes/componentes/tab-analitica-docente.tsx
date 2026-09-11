@@ -150,11 +150,17 @@ export function TabAnaliticaDocente({
                   <TrendingUp className="h-3.5 w-3.5" />
                   <span>
                     Promedio:{" "}
-                    <span
-                      className={`font-semibold ${colorNota(resumen.nota_promedio_curso)}`}
-                    >
-                      {resumen.nota_promedio_curso.toFixed(1)}
-                    </span>
+                    {resumen.nota_promedio_curso === null ? (
+                      <span className="font-semibold text-muted-foreground">
+                        Sin datos
+                      </span>
+                    ) : (
+                      <span
+                        className={`font-semibold ${colorNota(resumen.nota_promedio_curso)}`}
+                      >
+                        {resumen.nota_promedio_curso.toFixed(1)}
+                      </span>
+                    )}
                   </span>
                 </div>
                 <div className="hidden sm:block h-3 w-px bg-border" />
@@ -446,11 +452,17 @@ export function TabAnaliticaDocente({
                           </span>
                         </TableCell>
                         <TableCell className="text-center">
-                          <span
-                            className={`text-sm font-bold ${colorNota(est.nota_promedio)}`}
-                          >
-                            {est.nota_promedio.toFixed(1)}
-                          </span>
+                          {est.nota_promedio === null ? (
+                            <span className="text-sm font-bold text-muted-foreground">
+                              —
+                            </span>
+                          ) : (
+                            <span
+                              className={`text-sm font-bold ${colorNota(est.nota_promedio)}`}
+                            >
+                              {est.nota_promedio.toFixed(1)}
+                            </span>
+                          )}
                         </TableCell>
                         <TableCell className="text-center hidden md:table-cell">
                           <Badge
@@ -503,11 +515,15 @@ export function TabAnaliticaDocente({
                   <Card size="sm">
                     <CardContent className="p-3 text-center">
                       <p className="text-xs text-muted-foreground">Promedio</p>
-                      <p
-                        className={`text-lg font-bold ${colorNota(estudianteDetalle.nota_promedio)}`}
-                      >
-                        {estudianteDetalle.nota_promedio.toFixed(1)}
-                      </p>
+                      {estudianteDetalle.nota_promedio === null ? (
+                        <p className="text-lg font-bold text-muted-foreground">—</p>
+                      ) : (
+                        <p
+                          className={`text-lg font-bold ${colorNota(estudianteDetalle.nota_promedio)}`}
+                        >
+                          {estudianteDetalle.nota_promedio.toFixed(1)}
+                        </p>
+                      )}
                     </CardContent>
                   </Card>
                   <Card size="sm">

@@ -94,22 +94,30 @@ class VistaResumenCurso(APIView):
                 'nombre': f"{estudiante.first_name} {estudiante.first_last_name}",
                 'email': estudiante.email,
                 'examenes_presentados': resultados['examenes_presentados'] or 0,
-                'nota_promedio': round(resultados['nota_promedio'] or 1.0, 1),
+                # None (no 1.0, la nota mínima real) cuando el estudiante
+                # todavía no presenta ningún examen: antes se rellenaba con
+                # 1.0 y el frontend lo pintaba en rojo como "reprobado".
+                'nota_promedio': (
+                    round(resultados['nota_promedio'], 1)
+                    if resultados['nota_promedio'] is not None else None
+                ),
                 'aprobados': resultados['aprobados'] or 0,
                 'conceptos_debiles': debiles,
             })
 
-        estudiantes_data.sort(key=lambda x: x['nota_promedio'], reverse=True)
-
-        nota_general = (
-            sum(e['nota_promedio'] for e in estudiantes_data if e['examenes_presentados'] > 0) /
-            max(sum(1 for e in estudiantes_data if e['examenes_presentados'] > 0), 1)
+        # Los estudiantes sin exámenes presentados (nota_promedio None) van al
+        # final: no son "los de peor nota", simplemente no hay datos.
+        estudiantes_data.sort(
+            key=lambda x: (x['nota_promedio'] is None, -(x['nota_promedio'] or 0))
         )
+
+        con_examenes = [e['nota_promedio'] for e in estudiantes_data if e['examenes_presentados'] > 0]
+        nota_general = round(sum(con_examenes) / len(con_examenes), 1) if con_examenes else None
 
         return Response({
             'curso': curso.nombre,
             'codigo': curso.codigo,
             'total_inscritos': total_inscritos,
-            'nota_promedio_curso': round(nota_general, 1),
+            'nota_promedio_curso': nota_general,
             'estudiantes': estudiantes_data,
         })

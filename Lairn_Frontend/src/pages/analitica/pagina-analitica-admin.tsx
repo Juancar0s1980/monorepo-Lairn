@@ -58,7 +58,13 @@ export default function PaginaAnaliticaAdmin() {
         ])
         setResumen(resResumen.data)
         setCursos(
-          [...resCursos.data].sort((a, b) => a.nota_promedio - b.nota_promedio)
+          // Los cursos sin resultados (nota_promedio null) van al final: no
+          // son "los de peor nota", simplemente no hay datos que ordenar.
+          [...resCursos.data].sort((a, b) => {
+            if (a.nota_promedio === null) return 1
+            if (b.nota_promedio === null) return -1
+            return a.nota_promedio - b.nota_promedio
+          })
         )
       } catch {
         setError('No se pudo cargar la analítica del sistema')
@@ -181,17 +187,23 @@ export default function PaginaAnaliticaAdmin() {
                     {curso.total_examenes}
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant={
-                        curso.nota_promedio >= 4.0
-                          ? 'default'
-                          : curso.nota_promedio >= 3.0
-                            ? 'secondary'
-                            : 'destructive'
-                      }
-                    >
-                      {curso.nota_promedio.toFixed(1)}
-                    </Badge>
+                    {curso.nota_promedio === null ? (
+                      <Badge variant="outline" className="text-muted-foreground">
+                        Sin datos
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant={
+                          curso.nota_promedio >= 4.0
+                            ? 'default'
+                            : curso.nota_promedio >= 3.0
+                              ? 'secondary'
+                              : 'destructive'
+                        }
+                      >
+                        {curso.nota_promedio.toFixed(1)}
+                      </Badge>
+                    )}
                   </TableCell>
                   <TableCell className="hidden sm:table-cell text-muted-foreground">
                     {curso.tasa_aprobados}%
