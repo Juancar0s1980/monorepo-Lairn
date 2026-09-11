@@ -230,6 +230,23 @@
     box-shadow: 0 0 0px 1000px var(--input) inset;
     transition: background-color 9999s ease-in-out 0s;
     }
+  /* Chrome aplica este otro pseudo-selector (interno, sin prefijo -webkit)
+     al pasar el mouse sobre una sugerencia de la lista de autocompletado
+     nativa del navegador, ANTES de hacer clic — es un estado previo y
+     distinto de ":-webkit-autofill" (que solo se activa tras confirmar el
+     valor), por eso la regla de arriba no lo cubre y el input se veía
+     blanco brillante mientras se navegaba la lista con el mouse. Bloque
+     aparte por la misma razón que los de arriba: selector no estándar,
+     solo lo entiende Chromium. */
+  input:-internal-autofill-selected,
+  input:-internal-autofill-selected:hover,
+  input:-internal-autofill-selected:focus,
+  input:-internal-autofill-selected:active {
+    -webkit-text-fill-color: var(--foreground);
+    -webkit-box-shadow: 0 0 0px 1000px var(--input) inset;
+    box-shadow: 0 0 0px 1000px var(--input) inset;
+    transition: background-color 9999s ease-in-out 0s;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
