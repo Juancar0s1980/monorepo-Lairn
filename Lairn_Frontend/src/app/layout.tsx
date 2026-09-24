@@ -14,10 +14,20 @@ import { BrainCircuit, LogOut, Menu, User } from 'lucide-react'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { useState } from 'react'
+import { cn } from '@/lib/utils'
 import { SheetPerfil } from './componentes/sheet-perfil'
 
+// Entrada de navegación. El ítem "destacado" (Saber Pro) se pinta como píldora
+// institucional (beige/navy con acento dorado y punto naranja) para resaltar que
+// es un módulo propio, distinto de los cursos académicos regulares (HU-16.1).
+interface RutaNav {
+  label: string
+  ruta: string
+  destacado?: boolean
+}
+
 // Mapa de rutas visibles en la barra de navegación, filtradas por rol.
-const rutasPorRol: Record<string, { label: string; ruta: string }[]> = {
+const rutasPorRol: Record<string, RutaNav[]> = {
   Administrador: [
     { label: 'Início', ruta: '/' },
     { label: 'Usuarios', ruta: '/usuarios' },
@@ -29,10 +39,12 @@ const rutasPorRol: Record<string, { label: string; ruta: string }[]> = {
   Docente: [
     { label: 'Início', ruta: '/' },
     { label: 'Mis Cursos', ruta: '/mis-cursos' },
+    { label: 'Saber Pro', ruta: '/saber-pro', destacado: true },
   ],
   Estudiante: [
     { label: 'Início', ruta: '/' },
     { label: 'Mis Cursos', ruta: '/mis-cursos' },
+    { label: 'Saber Pro', ruta: '/saber-pro', destacado: true },
   ],
 }
 
@@ -63,6 +75,24 @@ export function Layout({ children }: { children: ReactNode }) {
           <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-7 rounded-full bg-card px-6 py-3.5 shadow-sm">
             {rutas.map((ruta) => {
               const activo = location.pathname === ruta.ruta || (ruta.ruta !== '/' && location.pathname.startsWith(ruta.ruta + '/'))
+              if (ruta.destacado) {
+                // Ítem destacado (Saber Pro): píldora institucional con punto naranja.
+                return (
+                  <Link
+                    key={ruta.ruta}
+                    to={ruta.ruta}
+                    className={cn(
+                      'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.08em] transition-colors duration-200',
+                      activo
+                        ? 'bg-[#1e3a5f] text-[#F3EDE1] dark:bg-[#E3C063] dark:text-[#172A45]'
+                        : 'bg-[#f3ede1] text-[#1e3a5f] ring-1 ring-[#c89b14]/40 hover:bg-[#ede6d8] dark:bg-[#243A5E] dark:text-[#F5EFE0] dark:ring-[#E3C063]/40 dark:hover:bg-[#1E3351]'
+                    )}
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#e8740e] dark:bg-[#F29A52]" aria-hidden="true" />
+                    {ruta.label}
+                  </Link>
+                )
+              }
               return (
                 <Link
                   key={ruta.ruta}
@@ -105,6 +135,25 @@ export function Layout({ children }: { children: ReactNode }) {
                 <nav className="flex flex-col gap-2 mt-8">
                   {rutas.map((ruta) => {
                     const activo = location.pathname === ruta.ruta || (ruta.ruta !== '/' && location.pathname.startsWith(ruta.ruta + '/'))
+                    if (ruta.destacado) {
+                      // Ítem destacado (Saber Pro): píldora institucional en el menú móvil.
+                      return (
+                        <Link
+                          key={ruta.ruta}
+                          to={ruta.ruta}
+                          onClick={() => setMenuAbierto(false)}
+                          className={cn(
+                            'inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all',
+                            activo
+                              ? 'bg-[#1e3a5f] text-[#F3EDE1] dark:bg-[#E3C063] dark:text-[#172A45]'
+                              : 'bg-[#f3ede1] text-[#1e3a5f] hover:bg-[#ede6d8] dark:bg-[#243A5E] dark:text-[#F5EFE0] dark:hover:bg-[#1E3351]'
+                          )}
+                        >
+                          <span className="h-1.5 w-1.5 rounded-full bg-[#e8740e] dark:bg-[#F29A52]" aria-hidden="true" />
+                          {ruta.label}
+                        </Link>
+                      )
+                    }
                     return (
                       <Link
                         key={ruta.ruta}

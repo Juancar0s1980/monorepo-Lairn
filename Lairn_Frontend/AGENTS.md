@@ -103,10 +103,10 @@ La sidebar en `src/app/layout.tsx` muestra navegación diferente por rol.
 
 ## Estructura de páginas (feature-based)
 
-Las páginas en `src/paginas/` están agrupadas por feature. Cuando un feature tiene vistas distintas por rol, se usa el patrón `pagina-{feature}-{rol}.tsx`. Los componentes compartidos del feature van en `componentes/` dentro de la carpeta del feature.
+Las páginas en `src/pages/` están agrupadas por feature. Cuando un feature tiene vistas distintas por rol, se usa el patrón `pagina-{feature}-{rol}.tsx`. Los componentes compartidos del feature van en `componentes/` dentro de la carpeta del feature.
 
 ```
-paginas/
+pages/
 ├── auth/                          ← login (compartido)
 ├── dashboard/                     ← pagina-dashboard-{admin,docente,estudiante}.tsx
 ├── usuarios/                      ← solo admin
@@ -153,14 +153,14 @@ Usar la constante `ROLES` de `src/tipos/usuario.ts` en vez de strings hardcoded.
 ## Estructura general
 
 - `src/app/` — enrutador y layout principal
-- `src/contextos/contexto-auth/` — proveedor de autenticación (exporta `ProveedorAuth` y `useAuth`)
-- `src/paginas/` — vistas por feature
-- `src/servicios/` — instancia Axios y servicios de API
-- `src/tipos/` — interfaces TypeScript y constante `ROLES`
+- `src/context/contexto-auth/` — proveedor de autenticación (exporta `ProveedorAuth` y `useAuth`)
+- `src/pages/` — vistas por feature
+- `src/services/` — instancia Axios y servicios de API
+- `src/types/` — interfaces TypeScript y constante `ROLES`
   - `src/types/usuario.ts` — roles y modelo de usuario
   - `src/types/auth.ts` — tipos de autenticación
   - `src/types/examen.ts` — tipos compartidos de exámenes (`Examen`, `SesionExamen`, `ResultadoExamen`)
-- `src/utilidades/` — helpers (rutas protegidas)
+- `src/utilities/` — helpers (rutas protegidas)
 - `src/components/ui/` — componentes Shadcn generados (no editar directamente)
 - `src/lib/utils.ts` — función `cn()` de Shadcn
 

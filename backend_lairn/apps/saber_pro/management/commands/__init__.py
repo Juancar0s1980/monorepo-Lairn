@@ -1,0 +1,1 @@
+"""Comandos de gestión de la app `saber_pro` (seed del catálogo de áreas)."""

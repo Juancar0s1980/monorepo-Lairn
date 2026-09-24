@@ -44,6 +44,8 @@ const PaginaRedesAdmin = lazy(() => import('@/pages/redes/pagina-redes-admin'))
 const PaginaEditorLaboratorioDocente = lazy(() => import('@/pages/laboratorios/pagina-editor-laboratorio-docente'))
 const PaginaResolverLaboratorioEstudiante = lazy(() => import('@/pages/laboratorios/pagina-resolver-laboratorio-estudiante'))
 const PaginaTemaEstudioEstudiante = lazy(() => import('@/pages/examenes/pagina-tema-estudio-estudiante'))
+const PaginaPanelSaberPro = lazy(() => import('@/pages/saber-pro/pagina-panel-saber-pro'))
+const PaginaGestionCursosSaberPro = lazy(() => import('@/pages/saber-pro/pagina-gestion-cursos-saber-pro'))
 
 // Fallback de carga mostrado mientras se descarga el chunk de una página.
 function CargandoPagina() {
@@ -152,6 +154,24 @@ function RutasPrivadas() {
             element={
               <RutaProtegida rolesPermitidos={[ROLES.ADMIN]}>
                 <PaginaRedesAdmin />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/saber-pro"
+            element={
+              <RutaProtegida rolesPermitidos={[ROLES.DOCENTE, ROLES.ESTUDIANTE]}>
+                <PaginaPanelSaberPro />
+              </RutaProtegida>
+            }
+          />
+          {/* HU-17: gestión de cursos Saber Pro, exclusiva del docente.
+              El estudiante no crea cursos: solo se inscribe por código (HU-18). */}
+          <Route
+            path="/saber-pro/cursos"
+            element={
+              <RutaProtegida rolesPermitidos={[ROLES.DOCENTE]}>
+                <PaginaGestionCursosSaberPro />
               </RutaProtegida>
             }
           />

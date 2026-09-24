@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'apps.moderacion.apps.ModeracionConfig',
     'apps.laboratorios.apps.LaboratoriosConfig',
     'apps.campo_estudio.apps.CampoEstudioConfig',
+    'apps.saber_pro.apps.SaberProConfig', #nuevo
 ]
 
 MIDDLEWARE = [
