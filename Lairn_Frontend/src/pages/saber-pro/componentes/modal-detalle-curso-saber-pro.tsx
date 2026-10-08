@@ -22,7 +22,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
-import { Loader2, Copy, Check, RefreshCw, Edit3, Users, Trash2, GraduationCap, ShieldAlert } from 'lucide-react'
+import { Loader2, Copy, Check, RefreshCw, Edit3, Users, Trash2, GraduationCap, ShieldAlert, UserMinus } from 'lucide-react'
 import { toast } from 'sonner'
 import type { AreaSaberPro, CursoSaberPro, EstudianteInscrito } from '@/types/saber-pro'
 import { paletaSaberPro } from '../utilidades'
@@ -60,6 +60,8 @@ export function ModalDetalleCursoSaberPro({
   const [refuerzo, setRefuerzo] = useState(false)
   const [confirmaRegenerar, setConfirmaRegenerar] = useState(false)
   const [confirmaEliminar, setConfirmaEliminar] = useState(false)
+  const [estudianteARetirar, setEstudianteARetirar] = useState<EstudianteInscrito | null>(null)
+  const [retirando, setRetirando] = useState(false)
 
   const {
     register,
@@ -184,6 +186,26 @@ export function ModalDetalleCursoSaberPro({
     }
   }
 
+  // Retira a un estudiante del curso: borra su inscripción, conservando su usuario e historial.
+  const retirarEstudiante = async () => {
+    if (!estudianteARetirar) return
+    setRetirando(true)
+    try {
+      await api.delete(
+        `/saber-pro/docente/cursos/${curso.id}/estudiantes/${estudianteARetirar.estudiante.id}/`
+      )
+      setEstudiantes((prev) => prev.filter((e) => e.id !== estudianteARetirar.id))
+      setEstudianteARetirar(null)
+      toast.success('Estudiante retirado del curso')
+      onCursoActualizado()
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { detalle?: string } } }
+      toast.error(axiosErr.response?.data?.detalle ?? 'No se pudo retirar al estudiante')
+    } finally {
+      setRetirando(false)
+    }
+  }
+
   return (
     <Dialog
       open={abierto}
@@ -194,7 +216,7 @@ export function ModalDetalleCursoSaberPro({
         }
       }}
     >
-      <DialogContent className="max-w-2xl gap-0! overflow-hidden p-0! sm:max-h-[90vh] sm:overflow-y-auto">
+      <DialogContent className="max-h-[85vh] max-w-[calc(100%-1.5rem)] gap-0! overflow-x-hidden overflow-y-auto p-0! sm:max-w-2xl">
         <div className={`p-6 pb-4 ${paletaSaberPro.superficie}`}>
           <DialogHeader className="gap-3">
             <div className="flex items-start justify-between gap-3">
@@ -235,6 +257,7 @@ export function ModalDetalleCursoSaberPro({
                   // Al cambiar de segmento se cortan los workflows de confirmación en curso.
                   setConfirmaRegenerar(false)
                   setConfirmaEliminar(false)
+                  setEstudianteARetirar(null)
                   setRefuerzo(false)
                   setSegmento(clave)
                 }}
@@ -258,18 +281,18 @@ export function ModalDetalleCursoSaberPro({
               <div
                 className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 ${paletaSaberPro.bandaAlterna} ${paletaSaberPro.borde}`}
               >
-                <div>
+                <div className="min-w-0">
                   <p className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${paletaSaberPro.apoyoTitulo}`}>
                     Código de acceso vigente
                   </p>
                   <p
-                    className={`font-mono text-2xl font-bold tracking-[0.3em] ${paletaSaberPro.titulo}`}
+                    className={`break-all font-mono text-2xl font-bold tracking-[0.3em] ${paletaSaberPro.titulo}`}
                     aria-label={`Código de acceso ${version.codigo}`}
                   >
                     {version.codigo}
                   </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex shrink-0 gap-2">
                   <Button
                     type="button"
                     size="sm"
@@ -436,6 +459,37 @@ export function ModalDetalleCursoSaberPro({
                 <Users className="h-4 w-4" />
                 Estudiantes inscritos ({estudiantes.length})
               </p>
+
+              {estudianteARetirar && (
+                <div
+                  className={`mt-4 flex flex-col gap-3 rounded-xl border border-amber-400/40 p-4 ${paletaSaberPro.bandaAlterna}`}
+                >
+                  <p className={`flex items-center gap-2 text-sm font-medium ${paletaSaberPro.titulo}`}>
+                    <ShieldAlert className="h-4 w-4 text-amber-500" />
+                    ¿Retirar a {estudianteARetirar.estudiante.nombre_completo} del curso?
+                  </p>
+                  <p className={`text-xs leading-relaxed ${paletaSaberPro.apoyo}`}>
+                    Se elimina su inscripción, pero conserva su usuario e historial;
+                    podrá volver a unirse con un código vigente.
+                  </p>
+                  <div className="flex justify-end gap-2">
+                    <Button type="button" variant="outline" size="sm" className={paletaSaberPro.botonNeutro} onClick={() => setEstudianteARetirar(null)}>
+                      Cancelar
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-9 border border-red-500 bg-red-600 text-white hover:bg-red-700"
+                      onClick={retirarEstudiante}
+                      disabled={retirando}
+                    >
+                      {retirando ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserMinus className="h-4 w-4" />}
+                      Sí, retirar
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {estudiantes.length === 0 ? (
                 <p className={`mt-4 rounded-xl border border-dashed p-6 text-center text-sm ${paletaSaberPro.borde} ${paletaSaberPro.apoyo}`}>
                   Aún no hay estudiantes inscritos. Comparte el código para que se unan (HU-18).
@@ -447,6 +501,7 @@ export function ModalDetalleCursoSaberPro({
                       <TableHead className={paletaSaberPro.titulo}>Estudiante</TableHead>
                       <TableHead className={paletaSaberPro.titulo}>Correo</TableHead>
                       <TableHead className={`text-right ${paletaSaberPro.titulo}`}>Fecha de ingreso</TableHead>
+                      <TableHead className={`text-right ${paletaSaberPro.titulo}`}>Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -462,6 +517,22 @@ export function ModalDetalleCursoSaberPro({
                             month: 'short',
                             year: 'numeric',
                           })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-8 border-red-400/40 text-red-600 hover:text-red-700 dark:text-red-300"
+                            onClick={() => {
+                              setConfirmaRegenerar(false)
+                              setConfirmaEliminar(false)
+                              setEstudianteARetirar(inscripcion)
+                            }}
+                          >
+                            <UserMinus className="h-3.5 w-3.5" />
+                            Retirar
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}

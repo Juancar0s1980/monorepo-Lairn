@@ -32,4 +32,7 @@ urlpatterns = [
 
     # Listado de estudiantes inscritos al curso Saber Pro del docente (HU-17.5).
     path('docente/cursos/<int:curso_id>/estudiantes/', VistaEstudiantesCursoSaberPro.as_view(), name='estudiantes_curso_saber_pro'),
+
+    # Retiro de un estudiante del curso Saber Pro (gestión de inscripciones).
+    path('docente/cursos/<int:curso_id>/estudiantes/<int:estudiante_id>/', VistaEstudiantesCursoSaberPro.as_view(), name='retirar_estudiante_curso_saber_pro'),
 ]
