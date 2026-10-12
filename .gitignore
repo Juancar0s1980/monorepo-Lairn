@@ -1,0 +1,4 @@
+# Directorios y artefactos locales de tooling
+.opencode/
+.postman/
+postman/

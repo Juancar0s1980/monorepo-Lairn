@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { CardCursoEstudiante } from "@/components/card-curso-estudiante";
 import { CardStat } from "@/components/card-stat";
 import { EncabezadoPagina } from "@/components/encabezado-pagina";
+import { TarjetaAccesoSaberPro } from "@/pages/saber-pro/componentes/tarjeta-acceso-saber-pro";
 import {
   Carousel,
   CarouselContent,
@@ -243,6 +244,14 @@ export default function PaginaDashboardEstudiante() {
           subtitulo={stats.totalExamenes > 0 ? "tu mejor resultado" : "sin datos aún"}
         />
       </div>
+
+      {/* ═══════════════════════════════════════════════════════════
+          SECCIÓN 2.5 — Acceso rápido al módulo Saber Pro (HU-16)
+          ═══════════════════════════════════════════════════════════ */}
+      <TarjetaAccesoSaberPro
+        texto="Únete con el código de tu docente a un curso de preparación y prepárate con simulacros y resultados detallados."
+        etiquetaAccion="Abrir módulo"
+      />
 
       {/* ═══════════════════════════════════════════════════════════
           SECCIÓN 3 — Mis Cursos
