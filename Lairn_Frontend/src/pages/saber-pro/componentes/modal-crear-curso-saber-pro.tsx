@@ -108,10 +108,10 @@ export function ModalCrearCursoSaberPro({
 
   return (
     <Dialog open={abierta} onOpenChange={(abre) => !abre && manejarCerrar()}>
-      <DialogContent className="max-w-md gap-0! overflow-hidden p-0!">
+      <DialogContent className="max-h-[85vh] max-w-[calc(100%-1.5rem)] gap-0! overflow-x-hidden overflow-y-auto p-0! sm:max-w-md">
         {/*
-          Encabezado sobre la superficie clara. Replica la estructura del
-          ModalProximamente del módulo: chip de accion + título institucional.
+          Encabezado sobre la superficie clara. Replica la estructura de los
+          modales institucionales del módulo: chip de accion + título.
         */}
         <div className={`p-6 pb-4 ${paletaSaberPro.superficie}`}>
           <DialogHeader className="gap-3">

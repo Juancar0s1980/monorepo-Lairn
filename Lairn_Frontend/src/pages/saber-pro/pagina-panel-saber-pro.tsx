@@ -6,11 +6,14 @@
 //   1. Hero institucional de marca (montserrat + sello) con las áreas de
 //      Saber Pro como contexto.
 //   2. Estado vacío (HU-16.3) cuando el usuario aún no tiene cursos Saber Pro:
-//      el docente es invitado a "Crear curso" y el estudiante a "Unirme con
-//      código". Esas acciones abren `ModalProximamente`, porque crear/unirse
-//      se implementa en HU-17/18.
-//   3. "Cómo funciona" (pasos según el rol) que le enseña al usuario a empezar.
-//   4. "Lo que puedes explorar": avances de las herramientas del módulo
+//      el docente es invitado a "Crear curso" (navega a /saber-pro/cursos,
+//      HU-17) y el estudiante a "Unirme con código" (abre el modal de
+//      inscripción por código, HU-18).
+//   3. "Mis cursos de preparación" cuando el usuario sí tiene cursos: el
+//      docente ve sus cursos con el código vigente (HU-17) y el estudiante los
+//      cursos a los que se unió con su fecha de ingreso (HU-18.3).
+//   4. "Cómo funciona" (pasos según el rol) que le enseña al usuario a empezar.
+//   5. "Lo que puedes explorar": avances de las herramientas del módulo
 //      (HU-19 a HU-24), todas marcadas como "Próximamente".
 //
 // El diseño es una PORTADA institucional propia, deliberadamente distinta al
@@ -26,7 +29,7 @@ import '@fontsource/montserrat/900.css'
 
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertCircle, GraduationCap, CheckCircle2, ArrowRight } from 'lucide-react'
+import { AlertCircle, GraduationCap, CheckCircle2, ArrowRight, Plus } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { usePanelSaberPro } from '@/hooks/use-panel-saber-pro'
@@ -35,7 +38,8 @@ import type { CursoSaberPro, FuncionalidadSaberPro } from '@/types/saber-pro'
 import { paletaSaberPro, AREAS_SABER_PRO, obtenerPasosInicio } from './utilidades'
 import { TarjetaFuncionalidad } from './componentes/tarjeta-funcionalidad'
 import { EstadoVacioSaberPro } from './componentes/estado-vacio-saber-pro'
-import { ModalProximamente } from './componentes/modal-proximamente'
+import { ModalUnirseCursoSaberPro } from './componentes/modal-unirse-curso-saber-pro'
+import { SeccionCursosEstudianteSaberPro } from './componentes/seccion-cursos-estudiante-saber-pro'
 
 function SkeletonPanel() {
   return (
@@ -247,10 +251,19 @@ function NotaAccesoLibre({ rol }: { rol: string }) {
 
 // Contenido visible cuando el usuario YA tiene cursos Saber Pro (HU-17/18).
 // Para el docente muestra sus cursos reales con el código vigente y un acceso
-// completo a la gestión (HU-17); para el estudiante el bloque se resuelve en HU-18.
-function SeccionMisCursosSaberPro({ rol }: { rol: string }) {
+// completo a la gestión (HU-17); para el estudiante, los cursos a los que se
+// unió con el código (HU-18.3) más la acción de unirse a otro curso (HU-18),
+// que debe seguir disponible aunque ya pertenezca a uno.
+function SeccionMisCursosSaberPro({
+  rol,
+  onUnirse,
+  claveLista,
+}: {
+  rol: string
+  onUnirse: () => void
+  claveLista: number
+}) {
   const navigate = useNavigate()
-  const { cursos, cargando } = useCursosSaberPro()
   const esDocente = rol === 'Docente'
 
   return (
@@ -271,11 +284,11 @@ function SeccionMisCursosSaberPro({ rol }: { rol: string }) {
               id="mis-cursos-saber-pro"
               className={`mt-0.5 text-xl font-bold ${paletaSaberPro.titulo}`}
             >
-              {esDocente ? 'Tus cursos Saber Pro' : 'Estás inscrito en los simulacros'}
+              {esDocente ? 'Tus cursos Saber Pro' : 'Tus cursos de preparación'}
             </h2>
           </div>
         </div>
-        {esDocente && (
+        {esDocente ? (
           <Button
             type="button"
             className={`h-10 gap-2 px-4 font-bold ${paletaSaberPro.botonAccion}`}
@@ -284,58 +297,85 @@ function SeccionMisCursosSaberPro({ rol }: { rol: string }) {
             Gestionar cursos
             <ArrowRight className="h-4 w-4" />
           </Button>
+        ) : (
+          <Button
+            type="button"
+            className={`h-10 gap-2 px-4 font-bold ${paletaSaberPro.botonAccion}`}
+            onClick={onUnirse}
+          >
+            Unirme con un código
+            <Plus className="h-4 w-4" />
+          </Button>
         )}
       </div>
 
       {esDocente ? (
-        cargando ? (
-          <div aria-busy="true" className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className={`h-24 animate-pulse rounded-2xl border ${paletaSaberPro.superficie} ${paletaSaberPro.borde}`} />
-            ))}
-          </div>
-        ) : (
-          <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {cursos.slice(0, 3).map((curso: CursoSaberPro) => (
-              <li
-                key={curso.id}
-                className={`flex items-center gap-3 rounded-2xl border p-4 ${paletaSaberPro.superficie} ${paletaSaberPro.borde}`}
-              >
-                <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${paletaSaberPro.chipGold}`}>
-                  <GraduationCap className="h-5 w-5" />
-                </span>
-                <div className="min-w-0">
-                  <p className={`truncate text-sm font-bold ${paletaSaberPro.titulo}`}>{curso.nombre}</p>
-                  <p className={`truncate text-xs ${paletaSaberPro.apoyo}`}>{curso.area.nombre}</p>
-                </div>
-                <Badge
-                  variant="outline"
-                  className={`ml-auto shrink-0 font-mono tracking-[0.18em] ${paletaSaberPro.badge}`}
-                >
-                  {curso.codigo}
-                </Badge>
-              </li>
-            ))}
-          </ul>
-        )
+        <ListaCursosDocente />
       ) : (
-        <p className={`mt-4 rounded-2xl border border-dashed p-5 text-sm leading-relaxed ${paletaSaberPro.borde} ${paletaSaberPro.texto}`}>
-          Tu listado de cursos de preparación aparecerá aquí al unirte con el
-          código que te comparte tu docente (HU-18). Pide el código vigente de su
-          curso Saber Pro.
-        </p>
+        <SeccionCursosEstudianteSaberPro key={claveLista} />
       )}
     </section>
   )
 }
 
-// Fila compacta para copiar el código de un curso desde el panel (HU-17.3).
+// Listado compacto de los cursos del docente dentro del panel (HU-17): fila con
+// nombre, área y código vigente, accesible desde "Gestionar cursos".
+function ListaCursosDocente() {
+  const { cursos, cargando } = useCursosSaberPro()
+
+  if (cargando) {
+    return (
+      <div aria-busy="true" className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className={`h-24 animate-pulse rounded-2xl border ${paletaSaberPro.superficie} ${paletaSaberPro.borde}`} />
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {cursos.slice(0, 3).map((curso: CursoSaberPro) => (
+        <li
+          key={curso.id}
+          className={`flex items-center gap-3 rounded-2xl border p-4 ${paletaSaberPro.superficie} ${paletaSaberPro.borde}`}
+        >
+          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${paletaSaberPro.chipGold}`}>
+            <GraduationCap className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <p className={`truncate text-sm font-bold ${paletaSaberPro.titulo}`}>{curso.nombre}</p>
+            <p className={`truncate text-xs ${paletaSaberPro.apoyo}`}>{curso.area.nombre}</p>
+          </div>
+          <Badge
+            variant="outline"
+            className={`ml-auto shrink-0 font-mono tracking-[0.18em] ${paletaSaberPro.badge}`}
+          >
+            {curso.codigo}
+          </Badge>
+        </li>
+      ))}
+    </ul>
+  )
+}
 
 export default function PaginaPanelSaberPro() {
-  const { panel, cargando, error } = usePanelSaberPro()
+  const { panel, cargando, error, recargar } = usePanelSaberPro()
   const navigate = useNavigate()
   const [modalAbierto, setModalAbierto] = useState(false)
   const esDocente = panel?.rol === 'Docente'
+  // Incrementa al inscribirse para remontar la lista del estudiante y que
+  // recargue los cursos (escasez de refresco cuando ya estaba en la vista).
+  const [claveLista, setClaveLista] = useState(0)
+
+  // Tras unirse exitosamente, refresca el panel: `tiene_cursos` pasa a true y
+  // se monta la sección de cursos del estudiante (HU-18.3); si ya estaba montada
+  // (se une a un segundo curso), la `claveLista` fuerza su recarga.
+  const onInscripcionExitosa = () => {
+    setModalAbierto(false)
+    setClaveLista((c) => c + 1)
+    void recargar()
+  }
 
   return (
     <div className={`relative overflow-hidden rounded-2xl ${paletaSaberPro.banda}`}>
@@ -358,14 +398,18 @@ export default function PaginaPanelSaberPro() {
           <>
             <HeroPanel />
             {panel.tiene_cursos ? (
-              <SeccionMisCursosSaberPro rol={panel.rol} />
+              <SeccionMisCursosSaberPro
+                rol={panel.rol}
+                onUnirse={() => setModalAbierto(true)}
+                claveLista={claveLista}
+              />
             ) : (
               <>
                 <EstadoVacioSaberPro
                   accion={panel.accion_vacia}
                   onAccion={
                     // HU-17: el docente salta directo a la gestión de cursos;
-                    // HU-18: el estudiante aún ve el "secretamente" mientras se implementa.
+                    // HU-18: el estudiante abre el modal de inscripción por código.
                     esDocente
                       ? () => navigate('/saber-pro/cursos')
                       : () => setModalAbierto(true)
@@ -380,11 +424,11 @@ export default function PaginaPanelSaberPro() {
         )}
       </div>
 
-      {/* HU-18: la inscripción por código del estudiante llega en su entrega */}
-      <ModalProximamente
-        accion={panel?.accion_vacia ?? null}
-        abierto={modalAbierto}
+      {/* HU-18: inscripción del estudiante por código de acceso */}
+      <ModalUnirseCursoSaberPro
+        abierta={modalAbierto}
         onCerrar={() => setModalAbierto(false)}
+        onInscripcionExitosa={onInscripcionExitosa}
       />
     </div>
   )

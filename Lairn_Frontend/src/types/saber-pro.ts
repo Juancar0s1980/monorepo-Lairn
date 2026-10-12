@@ -66,3 +66,16 @@ export interface CodigoRegenerado {
   codigo: string
   codigo_anterior: string
 }
+
+// ---------------------------------------------------------------------------
+// Contratos de la HU-18 (inscripción del estudiante por código). Reflejan las
+// respuestas de /saber-pro/estudiante/unirse/ y /saber-pro/estudiante/cursos/.
+// Una inscripción une al estudiante autenticado con el curso resuelto por el
+// código de acceso y conserva la fecha de ingreso (HU-18.3).
+// ---------------------------------------------------------------------------
+
+export interface InscripcionCursoSaberPro {
+  id: number
+  curso: CursoSaberPro
+  fecha: string
+}

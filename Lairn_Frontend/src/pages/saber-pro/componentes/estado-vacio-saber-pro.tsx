@@ -1,12 +1,12 @@
 // Estado vacío del panel de Saber Pro (HU-16.3).
 //
 // Se muestra cuando el usuario aún no tiene cursos Saber Pro (`tiene_cursos:
-// false`, hasta HU-17/18 el módulo no los persiste). Presenta una invitación
-// clara según el rol —"Crear curso" para el docente, "Unirme con código" para
-// el estudiante— para que el usuario sepa cómo empezar a usar el módulo. La
-// acción abre `ModalProximamente` porque crear/unirse se implementa en HU-17 y
-// HU-18; el diseño respeta la identidad institucional (lucro beige, acentos
-// navy/dorado/naranja) y es consistente en claro y oscuro.
+// false`). Presenta una invitación clara según el rol —"Crear curso" para el
+// docente (navega a /saber-pro/cursos, HU-17) y "Unirme con código" para el
+// estudiante (abre el modal de inscripción por código, HU-18)— para que el
+// usuario sepa cómo empezar a usar el módulo. El diseño respeta la identidad
+// institucional (fondo beige, acentos navy/dorado/naranja) y es consistente en
+// claro y oscuro.
 
 import { Button } from '@/components/ui/button'
 import { ArrowRight, BookMarked, KeyRound, ShieldCheck } from 'lucide-react'
@@ -76,9 +76,6 @@ export function EstadoVacioSaberPro({ accion, onAccion }: EstadoVacioSaberProPro
               {accion?.etiqueta_accion ?? 'Comenzar'}
               <ArrowRight className="h-4 w-4" />
             </Button>
-            {!esDocente && (
-              <p className={`text-xs ${paletaSaberPro.apoyo}`}>Disponible en la próxima entrega del módulo.</p>
-            )}
           </div>
 
           {/* Nota de confianza: el código siempre lo asigna el sistema, nunca el docente */}
