@@ -188,9 +188,11 @@ function SeccionPasos({ rol }: { rol: string }) {
 function SeccionFuncionalidades({
   rol,
   funcionalidades,
+  onAccionPorClave,
 }: {
   rol: string
   funcionalidades: FuncionalidadSaberPro[]
+  onAccionPorClave?: (clave: string) => void
 }) {
   if (funcionalidades.length === 0) return null
   return (
@@ -211,7 +213,11 @@ function SeccionFuncionalidades({
       </div>
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {funcionalidades.map((funcionalidad) => (
-          <TarjetaFuncionalidad key={funcionalidad.clave} funcionalidad={funcionalidad} />
+          <TarjetaFuncionalidad
+            key={funcionalidad.clave}
+            funcionalidad={funcionalidad}
+            onAccion={onAccionPorClave ? () => onAccionPorClave(funcionalidad.clave) : undefined}
+          />
         ))}
       </div>
     </section>
@@ -377,6 +383,14 @@ export default function PaginaPanelSaberPro() {
     void recargar()
   }
 
+  // Navegación de las herramientas del panel que ya están disponibles. Por ahora
+  // solo el banco de contenido (HU-20); las demás siguen "Próximamente".
+  const manejarAccionFuncionalidad = (clave: string) => {
+    if (clave === 'banco_contenido') {
+      navigate('/saber-pro/banco')
+    }
+  }
+
   return (
     <div className={`relative overflow-hidden rounded-2xl ${paletaSaberPro.banda}`}>
       {/* Halos decorativos de la portada institucional */}
@@ -418,7 +432,11 @@ export default function PaginaPanelSaberPro() {
                 <SeccionPasos rol={panel.rol} />
               </>
             )}
-            <SeccionFuncionalidades rol={panel.rol} funcionalidades={panel.funcionalidades} />
+            <SeccionFuncionalidades
+              rol={panel.rol}
+              funcionalidades={panel.funcionalidades}
+              onAccionPorClave={manejarAccionFuncionalidad}
+            />
             <NotaAccesoLibre rol={panel.rol} />
           </>
         )}

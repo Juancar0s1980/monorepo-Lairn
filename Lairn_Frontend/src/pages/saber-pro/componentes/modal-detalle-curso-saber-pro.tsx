@@ -25,7 +25,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { Loader2, Copy, Check, RefreshCw, Edit3, Users, Trash2, GraduationCap, ShieldAlert, UserMinus } from 'lucide-react'
 import { toast } from 'sonner'
 import type { AreaSaberPro, CursoSaberPro, EstudianteInscrito } from '@/types/saber-pro'
-import { paletaSaberPro } from '../utilidades'
+import { paletaSaberPro, selectContenidoAncho, selectItemLargo, selectTriggerLargo } from '../utilidades'
 
 // Esquema de edición: área, nombre y descripción son editables (HU-17.4).
 const esquemaEditarCurso = z.object({
@@ -410,12 +410,12 @@ export function ModalDetalleCursoSaberPro({
                       value={field.value}
                       onValueChange={field.onChange}
                     >
-                      <SelectTrigger className="w-full bg-white dark:bg-[#243A5E]">
+                      <SelectTrigger className={selectTriggerLargo}>
                         <SelectValue placeholder="Selecciona el área" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent alignItemWithTrigger={false} className={selectContenidoAncho}>
                         {areas.map((a) => (
-                          <SelectItem key={a.id} value={String(a.id)}>
+                          <SelectItem key={a.id} value={String(a.id)} className={selectItemLargo}>
                             {a.nombre}
                           </SelectItem>
                         ))}

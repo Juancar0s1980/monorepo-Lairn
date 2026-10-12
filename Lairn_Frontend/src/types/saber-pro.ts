@@ -79,3 +79,130 @@ export interface InscripcionCursoSaberPro {
   curso: CursoSaberPro
   fecha: string
 }
+
+// ---------------------------------------------------------------------------
+// Contratos de la HU-20 (banco de contenido generado con IA). Reflejan
+// /docente/areas/{id}/criterios/, /docente/cursos/{id}/contenido/ y las
+// acciones de generar, editar, aprobar y descartar contenido.
+//
+// La forma del contenido depende de la estructura del area: seleccion multiple
+// con competencia/afirmacion/evidencia (areas estructuradas), seleccion multiple
+// con una de las 7 partes de Ingles, o consigna de escritura (Comunicacion
+// Escrita). Campos del backend en snake_case.
+// ---------------------------------------------------------------------------
+
+// Parte del examen de Ingles (1 a 7): define la tarea, la cantidad de opciones
+// y la forma del bloque que se genera. La parte 1 es de relacionar: 8 palabras
+// (A-H) para `descripciones` (5). `preguntas` es la cantidad de preguntas del
+// bloque completo del examen y `texto_comun` indica si las partes 4 a 7
+// comparten un texto base en `contexto`.
+export interface ParteInglesSaberPro {
+  numero: number
+  nombre: string
+  peso: number
+  opciones: number
+  descripciones: number
+  preguntas: number
+  texto_comun: boolean
+  descripcion: string
+}
+
+// Evidencia del catalogo anidada dentro de su afirmacion.
+export interface EvidenciaCatalogoSaberPro {
+  id: number
+  nombre: string
+}
+
+// Afirmacion del catalogo con sus evidencias (puede no tener ninguna).
+export interface AfirmacionCatalogoSaberPro {
+  id: number
+  nombre: string
+  evidencias: EvidenciaCatalogoSaberPro[]
+}
+
+// Competencia del catalogo con sus afirmaciones anidadas.
+export interface CompetenciaCatalogoSaberPro {
+  id: number
+  nombre: string
+  afirmaciones: AfirmacionCatalogoSaberPro[]
+}
+
+// Respuesta de GET /saber-pro/docente/areas/{id}/criterios/ (HU-20.1).
+// `tipo_estructura` decide que bloque usar en el formulario de generacion.
+export interface CriteriosAreaSaberPro {
+  area: AreaSaberPro
+  tipo_estructura: 'competencias' | 'partes' | 'consigna'
+  competencias: CompetenciaCatalogoSaberPro[]
+  partes: ParteInglesSaberPro[]
+}
+
+// Referencia minima a un criterio del banco (competencia, afirmacion o evidencia).
+export interface ReferenciaCriterio {
+  id: number
+  nombre: string
+}
+
+// Par de la tarea de relacionar (parte 1 de Ingles): une una descripcion con
+// una de las 8 palabras del listado A-H. Solo la parte 1 usa `relaciones`.
+export interface RelacionContenidoSaberPro {
+  descripcion: string
+  respuesta: string
+}
+
+// Pregunta de una parte 2 a 7 de Ingles: el bloque completo del examen guarda
+// todas sus preguntas en `preguntas`; cada una con su enunciado, opciones y
+// respuesta. Las partes 4 a 7 comparten un texto base en `contexto` y las 2 y 3
+// son preguntas autocontenidas.
+export interface PreguntaContenidoSaberPro {
+  enunciado: string
+  opciones: string[]
+  respuesta_correcta: string
+}
+
+// Pieza del banco de contenido (pregunta de seleccion multiple o consigna).
+// Las referencias a criterios son null cuando el area no las usa; `parte` solo
+// aplica a Ingles: cuando es 1, `relaciones` lleva las 5 descripciones, y las
+// partes 2 a 7 llevan `preguntas` (el bloque completo del examen).
+export interface ContenidoBancoSaberPro {
+  id: number
+  area: AreaSaberPro
+  tipo: 'seleccion_multiple' | 'consigna_escrita'
+  estado: 'pendiente' | 'aprobado'
+  competencia: ReferenciaCriterio | null
+  afirmacion: ReferenciaCriterio | null
+  evidencia: ReferenciaCriterio | null
+  parte: number | null
+  tema: string
+  contexto: string
+  enunciado: string
+  opciones: string[]
+  respuesta_correcta: string
+  relaciones: RelacionContenidoSaberPro[]
+  preguntas: PreguntaContenidoSaberPro[]
+  creado_en: string
+  actualizado_en: string
+  aprobado_en: string | null
+}
+
+// Payload de POST /saber-pro/docente/cursos/{id}/contenido/generar/.
+// Solo se envia el bloque de criterios que corresponde a la estructura del area.
+// En Ingles no se envia `cantidad`: la parte completa se genera como un solo
+// bloque y su cantidad de preguntas la define el backend (el examen real).
+export interface DatosGenerarContenidoSaberPro {
+  competencia_id?: number
+  afirmacion_id?: number
+  evidencia_id?: number
+  parte?: number
+  cantidad?: number
+}
+
+// Payload de PUT /saber-pro/docente/contenido/{id}/ (edicion de contenido pendiente).
+export interface DatosEditarContenidoSaberPro {
+  enunciado: string
+  opciones?: string[]
+  respuesta_correcta?: string
+  relaciones?: RelacionContenidoSaberPro[]
+  preguntas?: PreguntaContenidoSaberPro[]
+  contexto?: string
+  tema?: string
+}
