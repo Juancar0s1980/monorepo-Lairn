@@ -48,6 +48,25 @@ export const paletaSaberPro = {
   fuenteHero: "font-['Montserrat'] font-black",
 } as const
 
+// El Select de Shadcn (base-ui) no se adapta solo a textos largos. Tres capas
+// recortan el contenido por defecto:
+//   1. el trigger es de una sola línea (`h-8` + `whitespace-nowrap` y el valor
+//      con `line-clamp-1`), así que el criterio elegido no se puede leer;
+//   2. el popup hereda el ancho del trigger (`w-(--anchor-width)`);
+//   3. cada opción usa `whitespace-nowrap` + `shrink-0`.
+// Estos tokens permiten leer el texto completo: `selectTriggerLargo` deja que el
+// trigger crezca en varias líneas (y con él su tarjeta/modal), `selectContenidoAncho`
+// ensancha el popup hasta el borde de la pantalla y `selectItemLargo` hace que las
+// opciones hagan salto de línea en vez de cortarse. `selectTriggerAncho` es la
+// variante de una sola línea para campos cortos.
+export const selectContenidoAncho = 'w-auto! min-w-(--anchor-width) max-w-[calc(100vw-2rem)]'
+export const selectItemLargo = '[&>div]:whitespace-normal [&>div]:shrink [&>div]:break-words'
+export const selectTriggerAncho = 'w-full min-w-0 bg-white dark:bg-[#243A5E]'
+export const selectTriggerLargo =
+  'w-full min-w-0 h-auto! min-h-8! items-start! py-2 whitespace-normal bg-white dark:bg-[#243A5E] ' +
+  '*:data-[slot=select-value]:line-clamp-none! *:data-[slot=select-value]:whitespace-normal ' +
+  '*:data-[slot=select-value]:break-words'
+
 // Áreas de Saber Pro que un docente puede indicar al crear su curso (HU-17).
 // Se muestran como chips de contexto en el hero del panel (HU-16).
 export const AREAS_SABER_PRO = [

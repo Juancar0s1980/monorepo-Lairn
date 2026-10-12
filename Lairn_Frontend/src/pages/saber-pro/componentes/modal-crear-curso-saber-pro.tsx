@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2, BookMarked, Hash, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import type { AreaSaberPro, CursoSaberPro } from '@/types/saber-pro'
-import { paletaSaberPro } from '../utilidades'
+import { paletaSaberPro, selectContenidoAncho, selectItemLargo, selectTriggerLargo } from '../utilidades'
 
 // Esquema de validación de Zod: área obligatoria, nombre obligatorio (<= 100).
 const esquemaCrearCursoSaberPro = z.object({
@@ -150,12 +150,12 @@ export function ModalCrearCursoSaberPro({
                   value={field.value}
                   onValueChange={field.onChange}
                 >
-                  <SelectTrigger className="w-full bg-white dark:bg-[#243A5E]">
+                  <SelectTrigger className={selectTriggerLargo}>
                     <SelectValue placeholder="Selecciona el área" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent alignItemWithTrigger={false} className={selectContenidoAncho}>
                     {areas.map((area) => (
-                      <SelectItem key={area.id} value={String(area.id)}>
+                      <SelectItem key={area.id} value={String(area.id)} className={selectItemLargo}>
                         {area.nombre}
                       </SelectItem>
                     ))}

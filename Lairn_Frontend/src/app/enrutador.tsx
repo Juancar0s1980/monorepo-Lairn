@@ -46,6 +46,7 @@ const PaginaResolverLaboratorioEstudiante = lazy(() => import('@/pages/laborator
 const PaginaTemaEstudioEstudiante = lazy(() => import('@/pages/examenes/pagina-tema-estudio-estudiante'))
 const PaginaPanelSaberPro = lazy(() => import('@/pages/saber-pro/pagina-panel-saber-pro'))
 const PaginaGestionCursosSaberPro = lazy(() => import('@/pages/saber-pro/pagina-gestion-cursos-saber-pro'))
+const PaginaBancoContenidoSaberPro = lazy(() => import('@/pages/saber-pro/pagina-banco-contenido-saber-pro'))
 
 // Fallback de carga mostrado mientras se descarga el chunk de una página.
 function CargandoPagina() {
@@ -172,6 +173,15 @@ function RutasPrivadas() {
             element={
               <RutaProtegida rolesPermitidos={[ROLES.DOCENTE]}>
                 <PaginaGestionCursosSaberPro />
+              </RutaProtegida>
+            }
+          />
+          {/* HU-20: banco de contenido generado con IA, exclusivo del docente. */}
+          <Route
+            path="/saber-pro/banco"
+            element={
+              <RutaProtegida rolesPermitidos={[ROLES.DOCENTE]}>
+                <PaginaBancoContenidoSaberPro />
               </RutaProtegida>
             }
           />

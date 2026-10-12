@@ -34,7 +34,7 @@ _FUNCIONALIDADES_DOCENTE = [
         'clave': 'banco_contenido',
         'titulo': 'Banco de contenido con IA',
         'descripcion': 'Genera, revisa y aprueba preguntas y consignas con apoyo de IA para el área de tus cursos (HU-20).',
-        'disponible': False,
+        'disponible': True,
     },
     {
         'clave': 'analitica',
