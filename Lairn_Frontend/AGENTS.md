@@ -56,6 +56,20 @@ Endpoints backend usados:
 - `GET /examenes/cursos/{id}/estudiantes/` → estudiantes de un curso
 - `DELETE /examenes/cursos/{id}/estudiantes/{estId}/` → eliminar estudiante de curso
 
+### Evaluación Académica (`/academico`, solo Administrador)
+- `GET /evaluacion/programas/` → programas activos
+- `POST /evaluacion/programas/` → crear programa
+- `PATCH /evaluacion/programas/{id}/` → actualizar; `{"activo": false, "estado_revision": "inactivo"}` desactiva (borrado lógico, HU-01.8)
+- `GET /evaluacion/programas/{id}/semestres/` → semestres de la malla
+- `GET /evaluacion/programas/{id}/asignaturas/` → asignaturas de la malla
+- `GET /evaluacion/programas/{id}/competencias/` → competencias del programa
+- `POST /evaluacion/programas/{id}/competencias/` → crear competencia `{nombre, tipo: 'transversal'|'especifica', descripcion}`
+- `GET /evaluacion/programas/{id}/resultados/` → resultados de aprendizaje DCE
+- `GET /evaluacion/programas/{id}/momentos/` → momentos de evaluación
+- `GET /evaluacion/programas/{id}/tablero/` → resumen del programa
+- `GET /evaluacion/cargues/` → cargues documentales
+- `POST /evaluacion/integracion/importar-json/` → `{datos, modo: 'simulacro'|'real'}`
+
 ### Motor Adaptativo (rendir examen)
 - `POST /motor-adaptativo/iniciar/` → `{ examen_id }` → inicia sesión de examen, devuelve primera pregunta
 - `POST /motor-adaptativo/{sesion_id}/responder/` → `{ respuesta, tiempo_segundos }` → envía respuesta, devuelve siguiente pregunta o resultado final

@@ -31,6 +31,7 @@ const rutasPorRol: Record<string, RutaNav[]> = {
   Administrador: [
     { label: 'Início', ruta: '/' },
     { label: 'Usuarios', ruta: '/usuarios' },
+    { label: 'Académico', ruta: '/academico' },
     { label: 'Exámenes', ruta: '/examenes' },
     { label: 'Analítica', ruta: '/analitica' },
     { label: 'Redes', ruta: '/redes' },
