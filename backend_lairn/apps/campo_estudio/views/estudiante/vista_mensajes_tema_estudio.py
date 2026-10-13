@@ -20,6 +20,7 @@ from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiResp
 from drf_spectacular.openapi import OpenApiTypes
 from rest_framework import serializers as drf_serializers
 from core.permissions.permisos_rol import EsEstudiante
+from core.throttling import ThrottleIA
 from apps.examenes.models import Inscripcion
 from apps.campo_estudio.models import TemaEstudio, MensajeTemaEstudio
 from apps.campo_estudio.serializers import SerializadorMensajeTemaEstudio
@@ -51,6 +52,7 @@ MAX_MENSAJES_HISTORIAL = 20
 )
 class VistaMensajesTemaEstudio(APIView):
     permission_classes = [EsEstudiante]
+    throttle_classes = [ThrottleIA]
 
     def _obtener_tema_con_acceso(self, request, tema_id):
         """Devuelve el tema si es visible para el estudiante, o (None, Response) con el motivo."""

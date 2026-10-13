@@ -31,7 +31,7 @@ import {
   Target,
   Zap,
 } from "lucide-react";
-import { colorNota, colorAprobados, coloresIntentos } from "../utilidades";
+import { colorNota, colorAprobados, coloresIntentos, porcentajeAprobados } from "../utilidades";
 import { CumplimientoObjetivosDocente } from "./cumplimiento-objetivos-docente";
 import { EvolucionCursoDocente } from "./evolucion-curso-docente";
 import { MejoraIntentosDocente } from "./mejora-intentos-docente";
@@ -150,11 +150,17 @@ export function TabAnaliticaDocente({
                   <TrendingUp className="h-3.5 w-3.5" />
                   <span>
                     Promedio:{" "}
-                    <span
-                      className={`font-semibold ${colorNota(resumen.nota_promedio_curso)}`}
-                    >
-                      {resumen.nota_promedio_curso.toFixed(1)}
-                    </span>
+                    {resumen.nota_promedio_curso === null ? (
+                      <span className="font-semibold text-muted-foreground">
+                        Sin datos
+                      </span>
+                    ) : (
+                      <span
+                        className={`font-semibold ${colorNota(resumen.nota_promedio_curso)}`}
+                      >
+                        {resumen.nota_promedio_curso.toFixed(1)}
+                      </span>
+                    )}
                   </span>
                 </div>
                 <div className="hidden sm:block h-3 w-px bg-border" />
@@ -446,22 +452,23 @@ export function TabAnaliticaDocente({
                           </span>
                         </TableCell>
                         <TableCell className="text-center">
-                          <span
-                            className={`text-sm font-bold ${colorNota(est.nota_promedio)}`}
-                          >
-                            {est.nota_promedio.toFixed(1)}
-                          </span>
+                          {est.nota_promedio === null ? (
+                            <span className="text-sm font-bold text-muted-foreground">
+                              —
+                            </span>
+                          ) : (
+                            <span
+                              className={`text-sm font-bold ${colorNota(est.nota_promedio)}`}
+                            >
+                              {est.nota_promedio.toFixed(1)}
+                            </span>
+                          )}
                         </TableCell>
                         <TableCell className="text-center hidden md:table-cell">
                           <Badge
                             variant="outline"
                             className={`text-xs ${colorAprobados(
-                              est.examenes_presentados > 0
-                                ? Math.round(
-                                    (est.aprobados / est.examenes_presentados) *
-                                      100,
-                                  )
-                                : 0,
+                              porcentajeAprobados(est.aprobados, est.examenes_presentados),
                             )}`}
                           >
                             {est.aprobados}/{est.examenes_presentados}
@@ -482,7 +489,12 @@ export function TabAnaliticaDocente({
         onOpenChange={(open) => !open && setEstudianteDetalle(null)}
       >
         <SheetContent side="right">
-          {estudianteDetalle && (
+          {estudianteDetalle && (() => {
+            const porcentajeAprobadosDetalle = porcentajeAprobados(
+              estudianteDetalle.aprobados,
+              estudianteDetalle.examenes_presentados,
+            );
+            return (
             <>
               <SheetHeader>
                 <SheetTitle>{estudianteDetalle.nombre}</SheetTitle>
@@ -503,11 +515,15 @@ export function TabAnaliticaDocente({
                   <Card size="sm">
                     <CardContent className="p-3 text-center">
                       <p className="text-xs text-muted-foreground">Promedio</p>
-                      <p
-                        className={`text-lg font-bold ${colorNota(estudianteDetalle.nota_promedio)}`}
-                      >
-                        {estudianteDetalle.nota_promedio.toFixed(1)}
-                      </p>
+                      {estudianteDetalle.nota_promedio === null ? (
+                        <p className="text-lg font-bold text-muted-foreground">—</p>
+                      ) : (
+                        <p
+                          className={`text-lg font-bold ${colorNota(estudianteDetalle.nota_promedio)}`}
+                        >
+                          {estudianteDetalle.nota_promedio.toFixed(1)}
+                        </p>
+                      )}
                     </CardContent>
                   </Card>
                   <Card size="sm">
@@ -529,38 +545,19 @@ export function TabAnaliticaDocente({
                         Tasa de aprobación
                       </span>
                       <span className="font-medium">
-                        {Math.round(
-                          (estudianteDetalle.aprobados /
-                            estudianteDetalle.examenes_presentados) *
-                            100,
-                        )}
-                        %
+                        {porcentajeAprobadosDetalle}%
                       </span>
                     </div>
                     <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all duration-700 ${
-                          Math.round(
-                            (estudianteDetalle.aprobados /
-                              estudianteDetalle.examenes_presentados) *
-                              100,
-                          ) >= 80
-                            ? "bg-emerald-500"
-                            : Math.round(
-                                  (estudianteDetalle.aprobados /
-                                    estudianteDetalle.examenes_presentados) *
-                                    100,
-                                ) >= 60
-                              ? "bg-amber-500"
-                              : "bg-red-500"
+                          porcentajeAprobadosDetalle >= 80
+                            ? "bg-success"
+                            : porcentajeAprobadosDetalle >= 60
+                              ? "bg-warning"
+                              : "bg-destructive"
                         }`}
-                        style={{
-                          width: `${Math.round(
-                            (estudianteDetalle.aprobados /
-                              estudianteDetalle.examenes_presentados) *
-                              100,
-                          )}%`,
-                        }}
+                        style={{ width: `${porcentajeAprobadosDetalle}%` }}
                       />
                     </div>
                   </div>
@@ -575,11 +572,7 @@ export function TabAnaliticaDocente({
                     <div className="flex flex-wrap gap-1.5">
                       {estudianteDetalle.conceptos_debiles.map(
                         (concepto, i) => (
-                          <Badge
-                            key={i}
-                            variant="outline"
-                            className="text-xs bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800"
-                          >
+                          <Badge key={i} variant="warning" className="text-xs">
                             {concepto}
                           </Badge>
                         ),
@@ -593,7 +586,8 @@ export function TabAnaliticaDocente({
                 </div>
               </div>
             </>
-          )}
+            );
+          })()}
         </SheetContent>
       </Sheet>
     </div>

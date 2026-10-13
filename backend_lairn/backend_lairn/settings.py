@@ -24,7 +24,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
-ALLOWED_HOSTS = [config("ALLOWED_HOSTS")]
+# Antes: ALLOWED_HOSTS = [config("ALLOWED_HOSTS")] — envolvía TODO el valor
+# de la variable en una lista de un solo elemento. Con un único host (o "*")
+# funcionaba por casualidad, pero "midominio.com,www.midominio.com" (el caso
+# normal en producción) se guardaba como UN string con coma, que Django
+# nunca hace match contra ningún Host real — todas las requests habrían
+# fallado con 400 "Invalid HTTP_HOST header" apenas alguien lo desplegara con
+# más de un host. Ahora se separa por comas y se recortan espacios.
+ALLOWED_HOSTS = [h.strip() for h in config("ALLOWED_HOSTS").split(",") if h.strip()]
 OPENAI_API_KEY = config("OPENAI_API_KEY", default="")
 XAI_API_KEY = config("XAI_API_KEY", default="")
 GROQ_API_KEY = config("GROQ_API_KEY", default="")
@@ -47,6 +54,20 @@ ML_SERVICE_URL = config("ML_SERVICE_URL", default="")
 # URL del microservicio ejecutor (sandbox de codigo para preguntas de laboratorio).
 # En docker-compose se inyecta como http://ejecutor:8003
 EJECUTOR_SERVICE_URL = config("EJECUTOR_SERVICE_URL", default="")
+
+# Envío de correos (recuperación de contraseña). RESEND_API_KEY vacía (el
+# caso normal en desarrollo, donde nadie tiene una cuenta de Resend a mano)
+# usa el backend de consola: el correo se imprime en los logs del contenedor
+# en vez de enviarse de verdad, así que el flujo se puede probar completo sin
+# depender de un servicio externo. Ver core/email/enviar_email.py.
+RESEND_API_KEY = config("RESEND_API_KEY", default="")
+# Solo se usa cuando RESEND_API_KEY está vacía (enviar_email() llama a la API
+# de Resend directo, sin pasar por send_mail(), cuando sí hay key).
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="Lairn <onboarding@resend.dev>")
+# URL pública del frontend, usada para construir el link de restablecimiento
+# de contraseña que se envía por correo (ej. https://lairn.app).
+FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:5173")
 
 
 # Application definition
@@ -131,6 +152,12 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ),
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    # Límite aplicado solo a las ~11 vistas que llaman a un proveedor de IA
+    # (Groq/OpenAI/Gemini) vía `throttle_classes = [ThrottleIA]` — son las
+    # únicas con costo real por request. Ver core/throttling/throttle_ia.py.
+    'DEFAULT_THROTTLE_RATES': {
+        'ia': '10/min',
+    },
 }
 
 SPECTACULAR_SETTINGS = {
@@ -187,6 +214,28 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
+
+
+# Endurecimiento de producción — gateado por `not DEBUG` a propósito: en
+# local (DEBUG=True) no se activa nada de esto, así que no rompe el flujo de
+# desarrollo (HTTP plano, sin certificado). El día que se despliegue con
+# DEBUG=False, estas protecciones quedan encendidas automáticamente sin que
+# nadie tenga que acordarse de configurarlas a mano — es justo lo que
+# `manage.py check --deploy` señalaba como faltante (W004, W008, W011, W016).
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 año, el valor estándar recomendado por Django.
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    # Si el despliegue real queda detrás de un proxy/balanceador (nginx,
+    # Railway, etc.) que termina TLS y reenvía por HTTP interno, Django ve la
+    # request como no-segura y SECURE_SSL_REDIRECT la redirige en loop. Esta
+    # línea le dice que confíe en el header que ponen esos proxies — pero
+    # SOLO tiene sentido si el proxy real siempre lo setea (nunca confiar en
+    # esto si el backend está expuesto directo a internet).
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 # Static files (CSS, JavaScript, Images)

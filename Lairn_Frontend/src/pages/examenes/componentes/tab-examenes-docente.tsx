@@ -55,6 +55,14 @@ import { ModalCrearExamen } from './modal-crear-examen'
 import { dificultadConfig } from '../utilidades'
 import type { Examen } from '@/types/examen'
 
+// Entero positivo (>= mínimo), como los IntegerField con MinValueValidator
+// del backend — se valida acá también para que el error aparezca al
+// instante en el formulario, en vez de solo tras el PATCH.
+function esEnteroPositivo(valor: string, minimo: number): boolean {
+  const num = Number(valor)
+  return Number.isInteger(num) && num >= minimo
+}
+
 // Esquema de validación para editar examen.
 // Replica las reglas del modal de creación: tipos string en inputs y coerción a number al enviar.
 const esquemaEditarExamen = z
@@ -71,6 +79,14 @@ const esquemaEditarExamen = z
     retroalimentacion: z.boolean(),
     es_guiado: z.boolean(),
   })
+  .refine((datos) => esEnteroPositivo(datos.tiempo, 1), {
+    message: 'Tiempo debe ser un número entero de al menos 1 minuto',
+    path: ['tiempo'],
+  })
+  .refine((datos) => esEnteroPositivo(datos.num_preguntas, 1), {
+    message: 'N° Preguntas debe ser un número entero de al menos 1',
+    path: ['num_preguntas'],
+  })
   .refine(
     (datos) => {
       if (datos.max_intentos && datos.max_intentos !== '') {
@@ -82,6 +98,18 @@ const esquemaEditarExamen = z
     {
       message: 'Max. Intentos debe ser entre 0 (ilimitado) y 10',
       path: ['max_intentos'],
+    }
+  )
+  .refine(
+    (datos) => {
+      if (datos.modo === 'maestria' && datos.max_preguntas) {
+        return esEnteroPositivo(datos.max_preguntas, 1)
+      }
+      return true
+    },
+    {
+      message: 'Max. Preguntas debe ser un número entero de al menos 1',
+      path: ['max_preguntas'],
     }
   )
   .refine(
@@ -103,6 +131,14 @@ const esquemaEditarExamen = z
   )
 
 type DatosEditarExamen = z.infer<typeof esquemaEditarExamen>
+
+// max_preguntas solo se usa (y se muestra) en modo Maestría, pero el modelo
+// de Django lo exige siempre >= 1 (MinValueValidator(1), default=20) — no
+// hay excepción para modo Fijo. Enviar 0 en ese caso lo viola y el backend
+// responde 400 con el mensaje crudo de Django ("Ensure this value is
+// greater than or equal to 1."). Se envía este mismo valor por defecto del
+// modelo cuando no aplica, así el backend nunca lo rechaza.
+const MAX_PREGUNTAS_POR_DEFECTO = 20
 
 // Convierte un ISO (respuesta del backend) al formato que espera <input type="datetime-local">.
 function isoAFechaLocal(iso: string | null | undefined): string {
@@ -149,6 +185,7 @@ export function TabExamenesDocente({
     formState: { errors },
   } = useForm<DatosEditarExamen>({
     resolver: zodResolver(esquemaEditarExamen),
+    mode: 'onChange',
     defaultValues: {
       titulo: '',
       tema: '',
@@ -219,7 +256,7 @@ export function TabExamenesDocente({
         max_preguntas:
           datos.modo === 'maestria' && datos.max_preguntas
             ? Number(datos.max_preguntas)
-            : 0,
+            : MAX_PREGUNTAS_POR_DEFECTO,
       }
 
       const { data } = await api.patch<Examen>(
@@ -507,7 +544,7 @@ export function TabExamenesDocente({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="tiempo">Tiempo (min) *</Label>
-                  <Input id="tiempo" type="number" {...register('tiempo')} />
+                  <Input id="tiempo" type="number" min={1} step={1} {...register('tiempo')} />
                   {errors.tiempo && (
                     <p className="text-xs text-destructive">{errors.tiempo.message}</p>
                   )}
@@ -517,6 +554,8 @@ export function TabExamenesDocente({
                   <Input
                     id="num_preguntas"
                     type="number"
+                    min={1}
+                    step={1}
                     {...register('num_preguntas')}
                   />
                   {errors.num_preguntas && (
@@ -590,6 +629,9 @@ export function TabExamenesDocente({
                 <Input
                   id="max_intentos"
                   type="number"
+                  min={0}
+                  max={10}
+                  step={1}
                   placeholder="0"
                   {...register('max_intentos')}
                 />
@@ -618,6 +660,8 @@ export function TabExamenesDocente({
                   <Input
                     id="max_preguntas"
                     type="number"
+                    min={1}
+                    step={1}
                     {...register('max_preguntas')}
                   />
                   {errors.max_preguntas && (

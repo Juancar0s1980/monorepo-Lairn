@@ -10,9 +10,9 @@ import { useNavigate } from 'react-router-dom'
 import api from '@/services/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Code2, Loader2 } from 'lucide-react'
+import { Code2, Loader2, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
-import type { Laboratorio } from '@/types/laboratorio'
+import type { LaboratorioEstudiante } from '@/types/laboratorio'
 
 interface TabLaboratoriosEstudianteProps {
   cursoId: string
@@ -20,14 +20,14 @@ interface TabLaboratoriosEstudianteProps {
 
 export function TabLaboratoriosEstudiante({ cursoId }: TabLaboratoriosEstudianteProps) {
   const navigate = useNavigate()
-  const [laboratorios, setLaboratorios] = useState<Laboratorio[]>([])
+  const [laboratorios, setLaboratorios] = useState<LaboratorioEstudiante[]>([])
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
     const controlador = new AbortController()
     const cargar = async () => {
       try {
-        const { data } = await api.get<Laboratorio[]>(
+        const { data } = await api.get<LaboratorioEstudiante[]>(
           `/laboratorios/mis-cursos/${cursoId}/laboratorios/`,
           { signal: controlador.signal }
         )
@@ -66,25 +66,42 @@ export function TabLaboratoriosEstudiante({ cursoId }: TabLaboratoriosEstudiante
 
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {laboratorios.map((lab) => (
-        <Card
-          key={lab.id}
-          className="cursor-pointer overflow-hidden transition-colors hover:border-primary/40"
-          onClick={() => navigate(`/mis-cursos/${cursoId}/laboratorios/${lab.id}`)}
-        >
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm line-clamp-1">{lab.titulo}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <p className="line-clamp-2 text-xs text-muted-foreground">
-              {lab.instrucciones || 'Sin instrucciones adicionales'}
-            </p>
-            <Badge variant="outline" className="text-xs">
-              {lab.total_preguntas} pregunta{lab.total_preguntas === 1 ? '' : 's'}
-            </Badge>
-          </CardContent>
-        </Card>
-      ))}
+      {laboratorios.map((lab) => {
+        const completado = lab.total_preguntas > 0 && lab.preguntas_respondidas >= lab.total_preguntas
+        const empezado = lab.preguntas_respondidas > 0
+
+        return (
+          <Card
+            key={lab.id}
+            className="cursor-pointer overflow-hidden transition-colors hover:border-primary/40"
+            onClick={() => navigate(`/mis-cursos/${cursoId}/laboratorios/${lab.id}`)}
+          >
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm line-clamp-1">{lab.titulo}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="line-clamp-2 text-xs text-muted-foreground">
+                {lab.instrucciones || 'Sin instrucciones adicionales'}
+              </p>
+              <div className="flex items-center justify-between gap-2">
+                <Badge variant="outline" className="text-xs">
+                  {lab.total_preguntas} pregunta{lab.total_preguntas === 1 ? '' : 's'}
+                </Badge>
+                {completado ? (
+                  <Badge variant="success" className="gap-1 text-xs">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Completado
+                  </Badge>
+                ) : empezado ? (
+                  <span className="text-xs text-muted-foreground">
+                    {lab.preguntas_respondidas}/{lab.total_preguntas} resueltas
+                  </span>
+                ) : null}
+              </div>
+            </CardContent>
+          </Card>
+        )
+      })}
     </div>
   )
 }

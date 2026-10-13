@@ -19,7 +19,7 @@ export interface CursoConStats {
   codigo: string
   descripcion: string
   totalInscritos: number
-  notaPromedio: number | undefined
+  notaPromedio: number | null | undefined
   totalExamenes: number
   tasaAprobados: number | undefined
 }
@@ -116,7 +116,7 @@ export function useDashboardDocente(): DatosDashboardDocente {
           (acc, c) => acc + c.totalInscritos,
           0
         )
-        const cursosConPromedio = cursos.filter((c) => c.notaPromedio !== undefined && c.notaPromedio > 0)
+        const cursosConPromedio = cursos.filter((c) => c.notaPromedio != null && c.notaPromedio > 0)
         const promedioGeneral =
           cursosConPromedio.length > 0
             ? cursosConPromedio.reduce((acc, c) => acc + (c.notaPromedio ?? 0), 0) /

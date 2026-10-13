@@ -56,7 +56,15 @@ class VistaCursosAdmin(APIView):
                 'docente': f"{curso.docente.first_name} {curso.docente.first_last_name}".strip(),
                 'total_inscritos': Inscripcion.objects.filter(curso=curso).count(),
                 'total_examenes': Examen.objects.filter(curso=curso).count(),
-                'nota_promedio': round(resultados['nota_promedio'] or 1.0, 1),
+                # None (no confundir con 1.0, la nota mínima real) cuando el
+                # curso todavía no tiene ningún resultado: antes se rellenaba
+                # con 1.0 y el frontend lo pintaba en rojo como "reprobado",
+                # dando la falsa impresión de que un curso sin exámenes
+                # presentados tenía la peor nota posible.
+                'nota_promedio': (
+                    round(resultados['nota_promedio'], 1)
+                    if resultados['nota_promedio'] is not None else None
+                ),
                 'tasa_aprobados': tasa_aprobados,
             })
 

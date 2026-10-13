@@ -123,7 +123,8 @@ export interface EstudianteResumen {
   nombre: string
   email: string
   examenes_presentados: number
-  nota_promedio: number
+  /** null cuando el estudiante todavía no presenta ningún examen. */
+  nota_promedio: number | null
   aprobados: number
   conceptos_debiles: string[]
 }
@@ -133,7 +134,8 @@ export interface ResumenCursoDocente {
   curso: string
   codigo: string
   total_inscritos: number
-  nota_promedio_curso: number
+  /** null cuando ningún estudiante del curso ha presentado un examen aún. */
+  nota_promedio_curso: number | null
   tasa_aprobacion?: string
   estudiantes: EstudianteResumen[]
 }
@@ -208,6 +210,7 @@ export interface CursoRendimientoAdmin {
   docente: string
   total_inscritos: number
   total_examenes: number
-  nota_promedio: number
+  /** null cuando el curso todavía no tiene ningún resultado registrado. */
+  nota_promedio: number | null
   tasa_aprobados: number
 }

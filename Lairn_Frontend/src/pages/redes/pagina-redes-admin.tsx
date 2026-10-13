@@ -78,18 +78,18 @@ function BarraNiveles({ resumen }: { resumen: ResumenNiveles }) {
     <div className="space-y-2">
       <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted">
         <div className="h-full bg-destructive" style={{ width: `${w(d.debil)}%` }} />
-        <div className="h-full bg-amber-500" style={{ width: `${w(d.desarrollo)}%` }} />
-        <div className="h-full bg-emerald-500" style={{ width: `${w(d.dominado)}%` }} />
+        <div className="h-full bg-warning" style={{ width: `${w(d.desarrollo)}%` }} />
+        <div className="h-full bg-success" style={{ width: `${w(d.dominado)}%` }} />
       </div>
       <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full bg-destructive" /> Débil: {d.debil}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-amber-500" /> En desarrollo: {d.desarrollo}
+          <span className="h-2 w-2 rounded-full bg-warning" /> En desarrollo: {d.desarrollo}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-emerald-500" /> Dominado: {d.dominado}
+          <span className="h-2 w-2 rounded-full bg-success" /> Dominado: {d.dominado}
         </span>
       </div>
     </div>
@@ -207,7 +207,7 @@ export default function PaginaRedesAdmin() {
         <h3 className="text-lg font-semibold">Estado de los modelos</h3>
 
         {!mlDisponible && (
-          <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
+          <div className="flex items-center gap-2 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
             <AlertCircle className="h-4 w-4 shrink-0" />
             El microservicio de ML no está disponible. Se muestran solo los resultados agregados.
           </div>
