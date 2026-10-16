@@ -2,3 +2,7 @@
 .opencode/
 .postman/
 postman/
+
+# Variables de entorno locales para docker-compose (ej. FRONTEND_PORT,
+# cuando un puerto por defecto choca con otro proyecto en esta máquina).
+.env

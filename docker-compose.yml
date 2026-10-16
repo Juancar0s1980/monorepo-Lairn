@@ -77,7 +77,10 @@ services:
         VITE_API_URL: /api
     restart: always
     ports:
-      - "5173:80"
+      # FRONTEND_PORT es opcional: por defecto 5173. Se puede sobreescribir
+      # en un .env local (no commiteado) si ese puerto choca con otro
+      # proyecto en la máquina — mismo criterio que el remapeo de "ml" abajo.
+      - "${FRONTEND_PORT:-5173}:80"
     depends_on:
       - web
 
