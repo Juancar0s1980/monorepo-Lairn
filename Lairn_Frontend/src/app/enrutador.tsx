@@ -196,9 +196,6 @@ function RutasPrivadas() {
               </RutaProtegida>
             }
           />
-              </RutaProtegida>
-            }
-          />
           <Route
             path="/mis-cursos"
             element={
