@@ -87,6 +87,7 @@ INSTALLED_APPS = [
     'apps.laboratorios.apps.LaboratoriosConfig',
     'apps.campo_estudio.apps.CampoEstudioConfig',
     'apps.saber_pro.apps.SaberProConfig', #nuevo
+    'apps.evaluacion_resultados.apps.EvaluacionResultadosConfig',
 ]
 
 MIDDLEWARE = [

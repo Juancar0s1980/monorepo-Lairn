@@ -43,6 +43,7 @@ const PaginaExamenesAdmin = lazy(() => import('@/pages/examenes/pagina-examenes-
 const PaginaAnaliticaAdmin = lazy(() => import('@/pages/analitica/pagina-analitica-admin'))
 const PaginaModeracionAdmin = lazy(() => import('@/pages/moderacion/pagina-moderacion-admin'))
 const PaginaRedesAdmin = lazy(() => import('@/pages/redes/pagina-redes-admin'))
+const PaginaAcademicoAdmin = lazy(() => import('@/pages/academico/pagina-academico'))
 const PaginaEditorLaboratorioDocente = lazy(() => import('@/pages/laboratorios/pagina-editor-laboratorio-docente'))
 const PaginaResolverLaboratorioEstudiante = lazy(() => import('@/pages/laboratorios/pagina-resolver-laboratorio-estudiante'))
 const PaginaTemaEstudioEstudiante = lazy(() => import('@/pages/examenes/pagina-tema-estudio-estudiante'))
@@ -184,6 +185,17 @@ function RutasPrivadas() {
             element={
               <RutaProtegida rolesPermitidos={[ROLES.DOCENTE]}>
                 <PaginaBancoContenidoSaberPro />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/academico"
+            element={
+              <RutaProtegida rolesPermitidos={[ROLES.ADMIN]}>
+                <PaginaAcademicoAdmin />
+              </RutaProtegida>
+            }
+          />
               </RutaProtegida>
             }
           />
