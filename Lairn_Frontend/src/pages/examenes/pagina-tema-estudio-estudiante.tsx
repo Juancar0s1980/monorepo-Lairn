@@ -14,6 +14,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '@/services/api'
 import { EncabezadoGradiente } from '@/components/encabezado-gradiente'
+import { ContenidoIA } from '@/components/contenido-ia'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
@@ -110,7 +111,7 @@ export default function PaginaTemaEstudioEstudiante() {
       {/* Contenido del tema aprobado por el docente */}
       <Card>
         <CardContent className="space-y-4">
-          <p className="whitespace-pre-line text-sm leading-relaxed">{tema.contenido}</p>
+          <ContenidoIA texto={tema.contenido} />
           {tema.laboratorio_practica_id && (
             <Button
               variant="outline"
@@ -141,13 +142,13 @@ export default function PaginaTemaEstudioEstudiante() {
           {mensajes.map((m) => (
             <div key={m.id} className={`flex ${m.rol === 'estudiante' ? 'justify-end' : 'justify-start'}`}>
               <div
-                className={`max-w-[80%] rounded-lg px-3 py-2 text-sm whitespace-pre-line ${
+                className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
                   m.rol === 'estudiante'
-                    ? 'bg-primary text-primary-foreground'
+                    ? 'bg-primary text-primary-foreground whitespace-pre-line'
                     : 'bg-muted text-foreground'
                 }`}
               >
-                {m.contenido}
+                {m.rol === 'estudiante' ? m.contenido : <ContenidoIA texto={m.contenido} />}
               </div>
             </div>
           ))}
