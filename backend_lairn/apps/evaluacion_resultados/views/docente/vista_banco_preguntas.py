@@ -18,7 +18,6 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import generics
 from rest_framework.response import Response
-from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from apps.evaluacion_resultados.models import (
@@ -41,6 +40,7 @@ from apps.evaluacion_resultados.services.agente_preguntas_banco import (
     generar_preguntas,
 )
 from core.permissions.permisos_rol import EsDocente
+from core.throttling import ThrottleIA
 
 
 def asignaturas_del_docente(usuario):
@@ -53,13 +53,6 @@ def preguntas_del_docente(usuario):
     return PreguntaBanco.objects.filter(
         asignatura__in=asignaturas_del_docente(usuario),
     ).select_related('asignatura', 'resultado__competencia', 'competencia_transversal')
-
-
-class LimiteGeneracionIA(UserRateThrottle):
-    """Cada generación consume el proveedor de IA (costo y cuota)."""
-
-    scope = 'banco_generar'
-    rate = '10/min'
 
 
 class VistaMisAsignaturas(APIView):
@@ -88,7 +81,10 @@ class VistaMisAsignaturas(APIView):
 
 class VistaGenerarPreguntas(APIView):
     permission_classes = [EsDocente]
-    throttle_classes = [LimiteGeneracionIA]
+    # Límite compartido de IA del proyecto (DEFAULT_THROTTLE_RATES['ia']).
+    # ScopedRateThrottle solo actúa si la vista declara `throttle_scope`.
+    throttle_classes = [ThrottleIA]
+    throttle_scope = 'ia'
 
     def post(self, request):
         serial = SerializadorGenerarPreguntas(data=request.data)
