@@ -12,6 +12,8 @@ hay nada que "ejecutar" en una respuesta de texto libre.
 
 import json
 
+import openai
+
 from backend_lairn.ia_client import obtener_cliente_ia
 
 MAX_INTENTOS = 2
@@ -60,20 +62,20 @@ Formato de salida (únicamente estas claves):
 
     ultimo_error = None
     for _ in range(MAX_INTENTOS):
-        respuesta = client.chat.completions.create(
-            model=modelo,
-            response_format={'type': 'json_object'},
-            messages=[{'role': 'user', 'content': mensaje}],
-            **{kwarg_max_tokens: 1500},
-        )
         try:
+            respuesta = client.chat.completions.create(
+                model=modelo,
+                response_format={'type': 'json_object'},
+                messages=[{'role': 'user', 'content': mensaje}],
+                **{kwarg_max_tokens: 1500},
+            )
             datos = json.loads(respuesta.choices[0].message.content)
             _validar_borrador(datos)
             return {
                 'enunciado': str(datos['enunciado']).strip(),
                 'criterios_ia': str(datos['criterios_ia']).strip(),
             }
-        except (json.JSONDecodeError, ValueError, TypeError) as e:
+        except (json.JSONDecodeError, ValueError, TypeError, openai.APIError) as e:
             ultimo_error = e
 
     raise ValueError(f'La IA no produjo una pregunta de respuesta abierta válida tras {MAX_INTENTOS} intentos: {ultimo_error}')
@@ -117,13 +119,13 @@ Formato de salida (únicamente estas claves):
 
     ultimo_error = None
     for _ in range(MAX_INTENTOS):
-        respuesta = client.chat.completions.create(
-            model=modelo,
-            response_format={'type': 'json_object'},
-            messages=[{'role': 'user', 'content': mensaje}],
-            **{kwarg_max_tokens: 1000 + 600 * cantidad_preguntas},
-        )
         try:
+            respuesta = client.chat.completions.create(
+                model=modelo,
+                response_format={'type': 'json_object'},
+                messages=[{'role': 'user', 'content': mensaje}],
+                **{kwarg_max_tokens: 1000 + 600 * cantidad_preguntas},
+            )
             datos = json.loads(respuesta.choices[0].message.content)
             if not isinstance(datos, dict):
                 raise ValueError('la respuesta no es un objeto JSON')
@@ -142,7 +144,7 @@ Formato de salida (únicamente estas claves):
                     for p in preguntas
                 ],
             }
-        except (json.JSONDecodeError, ValueError, TypeError) as e:
+        except (json.JSONDecodeError, ValueError, TypeError, openai.APIError) as e:
             ultimo_error = e
 
     raise ValueError(f'La IA no produjo un laboratorio válido tras {MAX_INTENTOS} intentos: {ultimo_error}')

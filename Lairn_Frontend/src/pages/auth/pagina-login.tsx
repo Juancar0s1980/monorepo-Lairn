@@ -12,7 +12,7 @@
 // Al enviar exitosamente, redirige al dashboard (/).
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/contexto-auth/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -168,23 +168,78 @@ export default function PaginaLogin() {
             Look claro/académico: la mascota robot es el único elemento
             gráfico, sobre un halo suave — sin paneles de datos flotando.
 
-            IMPORTANTE: este panel usa colores FIJOS (no tokens de tema como
-            bg-card/text-foreground), a propósito — es contenido de marca,
-            igual que el panel oscuro original (antes hardcodeado en
-            from-[#16233A]...) NO reaccionaba al toggle claro/oscuro. Si acá
-            se usan tokens reactivos, en modo oscuro el panel hereda los
-            colores oscuros del resto de la app y el resultado se ve roto
-            (fue justo el bug reportado: mascota y panel ilegibles en dark).
+            IMPORTANTE: este panel usa colores FIJOS por par claro/oscuro
+            (hex literales + variante dark:, no tokens reactivos como
+            bg-card/text-foreground) a propósito — es contenido de marca. La
+            mascota (mascota-robot.tsx) YA usa colores fijos propios (cuerpo
+            blanco, visor oscuro) por lo que se ve bien sobre cualquier fondo
+            sin tocarla; lo que antes rompía en oscuro era el CHROME de este
+            panel (cards, texto, halo) heredando tokens reactivos sin un
+            dark: explícito. Cada color de acá abajo tiene su par dark:
+            elegido a mano con los mismos valores que usa el tema oscuro
+            global (ver .dark en index.css), así queda consistente sin
+            depender de la cascada de tokens.
             ═══════════════════════════════════════════════════════════ */}
-        <div className="relative hidden lg:flex lg:w-[55%] flex-col justify-between overflow-hidden bg-gradient-to-br from-[#EDF4FA] to-[#E3EFFB]">
+        <div className="relative hidden lg:flex lg:w-1/2 flex-col justify-between overflow-hidden bg-gradient-to-br from-[#EDF4FA] to-[#E3EFFB] dark:from-[#0F1526] dark:to-[#161E36]">
+          {/* Textura de circuitos (solo modo oscuro, invisible en claro vía
+              text-transparent): refuerza el tema "IA" del panel. Un solo
+              tile de 220x220 con trazos ortogonales + nodos, repetido por
+              el <pattern> — no compite con el contenido porque queda a muy
+              baja opacidad y detrás (sin z-index, el contenido de marca
+              sí tiene z-10). */}
+          <svg
+            className="absolute inset-0 h-full w-full text-transparent dark:text-[#3A7BD5]"
+            aria-hidden="true"
+          >
+            <defs>
+              <pattern
+                id="circuito-login-izq"
+                width="220"
+                height="220"
+                patternUnits="userSpaceOnUse"
+              >
+                <g fill="none" stroke="currentColor" strokeWidth="1" opacity="0.4">
+                  <path d="M0 40 H60 V90 H140 V60 H220" />
+                  <path d="M180 0 V50 H220" />
+                  <path d="M20 220 V150 H90 V110" />
+                  <path d="M0 180 H40 V220" />
+                  <path d="M110 220 V190 H180 V150 H220" />
+                  <path d="M60 140 V90" />
+                  <path d="M140 90 H190 V140 H160 V180" />
+                  <path d="M0 100 H30 V130" />
+                </g>
+                <g fill="currentColor" opacity="0.55">
+                  <circle cx="60" cy="40" r="2.5" />
+                  <circle cx="140" cy="90" r="2.5" />
+                  <circle cx="180" cy="50" r="2.5" />
+                  <circle cx="90" cy="150" r="2.5" />
+                  <circle cx="180" cy="150" r="2.5" />
+                  <circle cx="20" cy="150" r="2.5" />
+                  <circle cx="190" cy="140" r="2.5" />
+                  <circle cx="60" cy="90" r="2.5" />
+                  <circle cx="160" cy="180" r="2.5" />
+                  <circle cx="30" cy="100" r="2.5" />
+                </g>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#circuito-login-izq)" />
+          </svg>
+
           {/* Contenido del branding */}
           <div className="relative z-10 flex flex-col h-full p-[clamp(1.25rem,4vh,2.5rem)] overflow-hidden">
-            {/* Logo con badge "IA" */}
+            {/* Logo con badge "IA": recorte de la cara de la mascota (no un
+                ícono aparte) para que el badge y la ilustración grande de
+                abajo se lean como el mismo personaje. El wrapper interior
+                recorta con overflow-hidden; el offset -top/-left está
+                calculado para centrar la cabeza del SVG (mascota-robot.tsx,
+                viewBox 200x240) dentro del recuadro. */}
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#DCE7F0] bg-white shadow-sm">
-                <BrainCircuit className="h-5 w-5 text-[#2B7CD3]" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#DCE7F0] bg-white shadow-sm dark:border-[#3C4C82] dark:bg-[#161E36]">
+                <div className="relative h-[26px] w-[26px] overflow-hidden">
+                  <MascotaRobot className="absolute -top-px -left-[5px] h-[46px] w-auto" />
+                </div>
               </div>
-              <span className="rounded-full bg-[#2B7CD3] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+              <span className="rounded-full bg-[#2B7CD3] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white dark:bg-[#2563EB]">
                 IA
               </span>
             </div>
@@ -195,29 +250,29 @@ export default function PaginaLogin() {
                 altas — un tamaño acotado siempre cabe. */}
             <div className="relative my-1 flex flex-1 items-center justify-center min-h-0">
               <div
-                className="animate-pulse-halo absolute h-44 w-44 rounded-full bg-radial from-[#E3EFFB] to-transparent"
+                className="animate-pulse-halo absolute h-44 w-44 rounded-full bg-radial from-[#E3EFFB] to-transparent dark:from-[#1A2340]"
                 aria-hidden="true"
               />
               <MascotaRobot
-                className="animate-float-mascota relative h-[clamp(9rem,18vh,13rem)] w-auto -rotate-6"
+                className="animate-float-mascota relative h-[clamp(9rem,18vh,13rem)] w-auto"
               />
             </div>
 
             {/* Título y descripción */}
             <div className="space-y-[clamp(0.5rem,2vh,1rem)]">
-              <div className="flex items-center gap-2 text-[#2B7CD3]">
+              <div className="flex items-center gap-2 text-[#2B7CD3] dark:text-[#8FBBEF]">
                 <GraduationCap className="h-4 w-4 shrink-0" />
                 <span className="text-xs font-semibold uppercase tracking-widest">
                   Corporación Universitaria Autónoma del Cauca
                 </span>
               </div>
 
-              <h2 className="font-heading text-[clamp(1.5rem,4.5vh,2.5rem)] leading-[1.15] text-[#14212E] tracking-tight text-balance">
+              <h2 className="font-heading text-[clamp(1.5rem,4.5vh,2.5rem)] leading-[1.15] text-[#14212E] dark:text-[#EAF0FB] tracking-tight text-balance">
                 Transforma tu experiencia{" "}
-                <span className="text-[#2B7CD3]">universitaria</span>
+                <span className="text-[#2B7CD3] dark:text-[#8FBBEF]">universitaria</span>
               </h2>
 
-              <p className="font-accent text-[clamp(0.8125rem,1.8vh,1rem)] text-[#5A6B7C] max-w-sm leading-relaxed">
+              <p className="font-accent text-[clamp(0.8125rem,1.8vh,1rem)] text-[#5A6B7C] dark:text-[#8FA3C7] max-w-sm leading-relaxed">
                 Plataforma de aprendizaje adaptativo potenciada por inteligencia
                 artificial, diseñada para tu éxito académico.
               </p>
@@ -228,16 +283,16 @@ export default function PaginaLogin() {
               {features.map((feature) => (
                 <div
                   key={feature.titulo}
-                  className="group flex items-start gap-3.5 rounded-xl border border-[#DCE7F0] bg-white p-[clamp(0.5rem,1.4vh,0.875rem)] shadow-sm transition-all duration-200 hover:border-[#2B7CD3]/30 hover:shadow-md"
+                  className="group flex items-start gap-3.5 rounded-xl border border-[#DCE7F0] bg-white p-[clamp(0.5rem,1.4vh,0.875rem)] shadow-sm transition-all duration-200 hover:border-[#2B7CD3]/30 hover:shadow-md dark:border-[#3C4C82] dark:bg-[#161E36] dark:hover:border-[#8FBBEF]/30"
                 >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#E3EFFB]">
-                    <feature.icon className="h-4 w-4 text-[#2B7CD3]" />
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#E3EFFB] dark:bg-[#1D2745]">
+                    <feature.icon className="h-4 w-4 text-[#2B7CD3] dark:text-[#8FBBEF]" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-sm font-semibold text-[#14212E]">
+                    <h3 className="text-sm font-semibold text-[#14212E] dark:text-[#EAF0FB]">
                       {feature.titulo}
                     </h3>
-                    <p className="text-xs text-[#5A6B7C] leading-relaxed mt-0.5 [@media(max-height:700px)]:hidden">
+                    <p className="text-xs text-[#5A6B7C] dark:text-[#8FA3C7] leading-relaxed mt-0.5 [@media(max-height:700px)]:hidden">
                       {feature.descripcion}
                     </p>
                   </div>
@@ -246,7 +301,7 @@ export default function PaginaLogin() {
             </div>
 
             {/* Stats en la parte inferior */}
-            <div className="mt-[clamp(0.75rem,3vh,1.75rem)] flex items-center gap-5 text-xs text-[#5A6B7C] [@media(max-height:640px)]:hidden">
+            <div className="mt-[clamp(0.75rem,3vh,1.75rem)] flex items-center gap-5 text-xs text-[#5A6B7C] dark:text-[#8FA3C7] [@media(max-height:640px)]:hidden">
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#3EA97B] opacity-75" />
@@ -254,9 +309,9 @@ export default function PaginaLogin() {
                 </span>
                 Sistema activo
               </div>
-              <div className="h-3 w-px bg-[#DCE7F0]" />
+              <div className="h-3 w-px bg-[#DCE7F0] dark:bg-[#3C4C82]" />
               <div>+2,500 estudiantes</div>
-              <div className="h-3 w-px bg-[#DCE7F0]" />
+              <div className="h-3 w-px bg-[#DCE7F0] dark:bg-[#3C4C82]" />
               <div>4.8★ valoración</div>
             </div>
           </div>
@@ -265,19 +320,23 @@ export default function PaginaLogin() {
         {/* ═══════════════════════════════════════════════════════════
             PANEL DERECHO - Formulario de login/registro
             ═══════════════════════════════════════════════════════════ */}
-        <div className="relative flex h-full w-full items-center justify-center overflow-hidden px-6 py-[clamp(0.75rem,3vh,2rem)] sm:px-8 lg:w-[45%]">
+        <div className="relative flex h-full w-full overflow-y-auto px-6 py-8 sm:px-8 lg:w-1/2">
           {/* Fondo sutil con gradiente en móvil */}
           <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.02] to-transparent lg:from-transparent" />
 
-          <div className="relative w-full max-w-sm space-y-[clamp(0.75rem,2.5vh,1.5rem)]">
+          {/* m-auto (no items-center/justify-center en el padre): centra el
+              formulario cuando cabe, y cuando no (registro, viewport bajo)
+              permite hacer scroll desde arriba en vez de recortar el tope
+              del contenido — el bug clásico de centrar con overflow. */}
+          <div className="relative m-auto w-full max-w-sm space-y-5">
             {/* Mascota + logo visibles solo en móvil (robot al 60% del tamaño desktop) */}
             <div className="text-center space-y-[clamp(0.375rem,1.2vh,0.75rem)] lg:hidden">
               <div className="relative mx-auto flex h-[clamp(13.5rem,24vh,17rem)] items-center justify-center">
                 <div
-                  className="animate-pulse-halo absolute h-32 w-32 rounded-full bg-radial from-[#E3EFFB] to-transparent"
+                  className="animate-pulse-halo absolute h-32 w-32 rounded-full bg-radial from-[#E3EFFB] to-transparent dark:from-[#1A2340]"
                   aria-hidden="true"
                 />
-                <MascotaRobot className="animate-float-mascota relative h-full w-auto -rotate-6" />
+                <MascotaRobot className="animate-float-mascota relative h-full w-auto" />
               </div>
               <p className="text-xs text-muted-foreground">
                 Aprendizaje adaptativo con inteligencia artificial
@@ -300,12 +359,12 @@ export default function PaginaLogin() {
             <form
               key={modo}
               onSubmit={manejarSubmit}
-              className="space-y-[clamp(0.625rem,1.8vh,1rem)] animate-in fade-in slide-in-from-bottom-3 duration-300"
+              className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-300"
             >
               {/* Campos de nombre y apellido (solo en modo registro) */}
               {!esLogin && (
                 <>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <Label
                         htmlFor="firstName"
@@ -348,7 +407,7 @@ export default function PaginaLogin() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <Label
                         htmlFor="secondName"
@@ -412,9 +471,19 @@ export default function PaginaLogin() {
 
               {/* Campo de contraseña con toggle de visibilidad */}
               <div className="space-y-1.5">
-                <Label htmlFor="password" className="text-sm font-medium">
-                  Contraseña
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password" className="text-sm font-medium">
+                    Contraseña
+                  </Label>
+                  {esLogin && (
+                    <Link
+                      to="/recuperar-contrasena"
+                      className="text-xs font-medium text-primary hover:text-primary-hover dark:hover:text-primary/80 transition-colors"
+                    >
+                      ¿Olvidaste tu contraseña?
+                    </Link>
+                  )}
+                </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
                   <Input

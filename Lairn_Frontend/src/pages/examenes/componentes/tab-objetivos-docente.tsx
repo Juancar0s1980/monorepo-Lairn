@@ -268,7 +268,7 @@ export function TabObjetivosDocente({ cursoId }: TabObjetivosDocenteProps) {
                     <Button
                       size="icon-sm"
                       variant="ghost"
-                      className="shrink-0 text-emerald-600"
+                      className="shrink-0 text-success"
                       onClick={guardarEdicion}
                       disabled={guardandoEdicion}
                     >

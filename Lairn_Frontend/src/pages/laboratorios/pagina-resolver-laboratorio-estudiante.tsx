@@ -31,7 +31,7 @@ import { EncabezadoGradiente } from '@/components/encabezado-gradiente'
 import { EditorCodigo } from '@/components/editor-codigo'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Textarea } from '@/components/ui/textarea'
+import { EditorLatex } from '@/components/editor-latex'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ArrowLeft, Check, CheckCircle2, Clock, Code2, FlaskConical, Loader2, Mic, NotebookPen, Play, Send, Square, Target, Trophy, XCircle } from 'lucide-react'
@@ -423,9 +423,9 @@ export default function PaginaResolverLaboratorioEstudiante() {
                   i === indiceActivo
                     ? 'border-primary bg-primary/10 text-primary'
                     : completa
-                      ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-400'
+                      ? 'border-success/40 bg-success/10 text-success hover:bg-success/20'
                       : parcial
-                        ? 'border-amber-500/40 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 dark:text-amber-400'
+                        ? 'border-warning/40 bg-warning/10 text-warning hover:bg-warning/20'
                         : 'border-border text-muted-foreground hover:bg-muted'
                 }`}
               >
@@ -638,11 +638,10 @@ export default function PaginaResolverLaboratorioEstudiante() {
                 )}
               </div>
             ) : (
-              <Textarea
+              <EditorLatex
                 rows={12}
-                placeholder="Escribe tu respuesta aquí..."
                 value={respuestas[pregunta.id] ?? ''}
-                onChange={(e) => actualizarRespuestaTexto(pregunta.id, e.target.value)}
+                onChange={(texto) => actualizarRespuestaTexto(pregunta.id, texto)}
               />
             )}
 
@@ -661,7 +660,7 @@ export default function PaginaResolverLaboratorioEstudiante() {
                   <div key={r.caso_test_id} className="space-y-1 rounded-lg border p-3 text-xs">
                     <div className="flex items-center gap-1.5 font-medium">
                       {r.paso ? (
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                        <CheckCircle2 className="h-3.5 w-3.5 text-success" />
                       ) : (
                         <XCircle className="h-3.5 w-3.5 text-destructive" />
                       )}
@@ -695,7 +694,7 @@ export default function PaginaResolverLaboratorioEstudiante() {
                 {esVisual && resultadoEnvio.respuesta_correcta !== null && resultadoEnvio.respuesta_correcta !== undefined && (
                   <div className="flex items-center gap-2 rounded-lg border p-3 text-xs">
                     {resultadoEnvio.puntaje === 100 ? (
-                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
                     ) : (
                       <XCircle className="h-4 w-4 shrink-0 text-destructive" />
                     )}
@@ -710,7 +709,7 @@ export default function PaginaResolverLaboratorioEstudiante() {
                 {esPronunciacion && resultadoEnvio.transcripcion !== null && resultadoEnvio.transcripcion !== undefined && (
                   <div className="flex items-center gap-2 rounded-lg border p-3 text-xs">
                     {resultadoEnvio.puntaje >= 80 ? (
-                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
                     ) : (
                       <XCircle className="h-4 w-4 shrink-0 text-destructive" />
                     )}
@@ -732,7 +731,7 @@ export default function PaginaResolverLaboratorioEstudiante() {
                   <div key={r.caso_test_id} className="space-y-1 rounded-lg border p-3 text-xs">
                     <div className="flex items-center gap-1.5 font-medium">
                       {r.paso ? (
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                        <CheckCircle2 className="h-3.5 w-3.5 text-success" />
                       ) : (
                         <XCircle className="h-3.5 w-3.5 text-destructive" />
                       )}

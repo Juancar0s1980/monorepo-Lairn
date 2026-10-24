@@ -75,29 +75,26 @@ const dificultadConfig: Record<
 > = {
   1: {
     label: 'Básico',
-    clase:
-      'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800',
+    clase: 'bg-success/10 text-success border-success/20',
     icono: SignalLow,
   },
   2: {
     label: 'Intermedio',
-    clase:
-      'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800',
+    clase: 'bg-warning/10 text-warning border-warning/20',
     icono: SignalMedium,
   },
   3: {
     label: 'Avanzado',
-    clase:
-      'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800',
+    clase: 'bg-destructive/10 text-destructive border-destructive/20',
     icono: SignalHigh,
   },
 }
 
 // Devuelve el color de la nota según su valor.
 function colorNota(nota: number): string {
-  if (nota >= 4.0) return 'text-emerald-600 dark:text-emerald-400'
-  if (nota >= 3.0) return 'text-amber-600 dark:text-amber-400'
-  return 'text-red-600 dark:text-red-400'
+  if (nota >= 4.0) return 'text-success'
+  if (nota >= 3.0) return 'text-warning'
+  return 'text-destructive'
 }
 
 export function CardExamen({
@@ -237,9 +234,9 @@ export function CardExamen({
           {tieneIntentos && (
             <>
               {aprobado ? (
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                <CheckCircle2 className="h-3.5 w-3.5 text-success" />
               ) : (
-                <XCircle className="h-3.5 w-3.5 text-red-500" />
+                <XCircle className="h-3.5 w-3.5 text-destructive" />
               )}
               <span className="text-muted-foreground">Última nota:</span>
               <span className={`font-medium ${colorNota(ultimaNota!)}`}>

@@ -19,7 +19,7 @@ const variantes = {
   accent: 'bg-accent/15 text-accent',
   primary: 'bg-primary/10 text-primary',
   destructivo: 'bg-destructive/10 text-destructive',
-  exito: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+  exito: 'bg-success/10 text-success',
 }
 
 export function CardStat({ titulo, valor, icono: Icono, subtitulo, variante = 'accent' }: CardStatProps) {

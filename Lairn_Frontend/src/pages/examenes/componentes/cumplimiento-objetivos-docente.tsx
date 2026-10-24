@@ -49,10 +49,10 @@ interface RespuestaCumplimiento {
 }
 
 // Configuración visual por estado del objetivo.
-const estadoConfig: Record<EstadoObjetivo, { label: string; badge: 'default' | 'secondary' | 'destructive' | 'outline'; barra: string }> = {
-  cumplido: { label: 'Cumplido', badge: 'default', barra: 'bg-emerald-500' },
-  en_proceso: { label: 'En proceso', badge: 'secondary', barra: 'bg-amber-500' },
-  no_cumplido: { label: 'No cumplido', badge: 'destructive', barra: 'bg-red-500' },
+const estadoConfig: Record<EstadoObjetivo, { label: string; badge: 'success' | 'warning' | 'destructive' | 'outline'; barra: string }> = {
+  cumplido: { label: 'Cumplido', badge: 'success', barra: 'bg-success' },
+  en_proceso: { label: 'En proceso', badge: 'warning', barra: 'bg-warning' },
+  no_cumplido: { label: 'No cumplido', badge: 'destructive', barra: 'bg-destructive' },
   sin_datos: { label: 'Sin datos', badge: 'outline', barra: 'bg-muted-foreground/30' },
 }
 

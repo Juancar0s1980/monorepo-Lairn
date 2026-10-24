@@ -7,6 +7,8 @@ from apps.users.views.vista_cerrar_sesion import VistaCerrarSesion
 from apps.users.views.vista_lista_usuarios import VistaListaUsuarios
 from apps.users.views.vista_detalle_usuario_admin import VistaDetalleUsuarioAdmin
 from apps.users.views.vista_lista_roles import VistaListaRoles
+from apps.users.views.vista_solicitar_recuperacion import VistaSolicitarRecuperacion
+from apps.users.views.vista_restablecer_contrasena import VistaRestablecerContrasena
 
 urlpatterns = [
     path('registrar/', VistaRegistrar.as_view(), name='registrar'),
@@ -14,6 +16,8 @@ urlpatterns = [
     path('mis-datos/', VistaMisDatos.as_view(), name='mis-datos'),
     path('cerrar-sesion/', VistaCerrarSesion.as_view(), name='cerrar-sesion'),
     path('token/actualizar/', TokenRefreshView.as_view(), name='token-actualizar'),
+    path('recuperar-contrasena/', VistaSolicitarRecuperacion.as_view(), name='recuperar-contrasena'),
+    path('restablecer-contrasena/', VistaRestablecerContrasena.as_view(), name='restablecer-contrasena'),
 
     # Rutas accedidas por el rol Administrador (gestión de usuarios y roles).
     path('administracion/usuarios/', VistaListaUsuarios.as_view(), name='lista-usuarios'),

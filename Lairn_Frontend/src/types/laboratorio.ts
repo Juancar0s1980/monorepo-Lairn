@@ -20,7 +20,7 @@ export const OPCIONES_LENGUAJE: Array<{ value: LenguajeCodigo; label: string }> 
   { value: 'sql', label: 'SQL' },
 ]
 
-// GET /laboratorios/cursos/{curso_id}/laboratorios/ (colección, ambos roles)
+// GET /laboratorios/cursos/{curso_id}/laboratorios/ (colección, campos base compartidos)
 export interface Laboratorio {
   id: number
   titulo: string
@@ -31,6 +31,20 @@ export interface Laboratorio {
   total_preguntas: number
   tema_estudio: number | null
   examen: number | null
+}
+
+// GET /laboratorios/mis-cursos/{curso_id}/laboratorios/ (estudiante): suma
+// cuántas preguntas de este laboratorio ya respondió el estudiante autenticado.
+export interface LaboratorioEstudiante extends Laboratorio {
+  preguntas_respondidas: number
+}
+
+// GET /laboratorios/cursos/{curso_id}/laboratorios/ (docente): suma actividad
+// agregada del grupo — cuántas entregas en total y el puntaje promedio (0-100,
+// null si todavía no hay ninguna entrega).
+export interface LaboratorioDocente extends Laboratorio {
+  total_entregas: number
+  promedio_puntaje: number | null
 }
 
 // Caso de test completo (docente): incluye salida esperada y si es público. Solo aplica a tipo=codigo.

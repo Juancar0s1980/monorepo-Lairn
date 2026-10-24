@@ -122,12 +122,26 @@ export default function PaginaExamenesAdmin() {
                   <p className="text-xs text-muted-foreground">{examen.tema}</p>
                 </TableCell>
                 <TableCell>
-                  <p>{examen.curso.nombre}</p>
-                  <p className="text-xs text-muted-foreground">{examen.curso.codigo}</p>
+                  <button
+                    type="button"
+                    onClick={() => setBusqueda(examen.curso.nombre)}
+                    className="text-left hover:text-primary transition-colors"
+                    title={`Filtrar por el curso "${examen.curso.nombre}"`}
+                  >
+                    <p>{examen.curso.nombre}</p>
+                    <p className="text-xs text-muted-foreground">{examen.curso.codigo}</p>
+                  </button>
                 </TableCell>
                 <TableCell className="hidden md:table-cell text-muted-foreground">
-                  <p>{examen.docente.nombre}</p>
-                  <p className="text-xs">{examen.docente.email}</p>
+                  <button
+                    type="button"
+                    onClick={() => setBusqueda(examen.docente.nombre)}
+                    className="text-left hover:text-primary transition-colors"
+                    title={`Filtrar por el docente ${examen.docente.nombre}`}
+                  >
+                    <p>{examen.docente.nombre}</p>
+                    <p className="text-xs">{examen.docente.email}</p>
+                  </button>
                 </TableCell>
                 <TableCell>
                   <Badge variant={examen.modo === 'maestria' ? 'default' : 'outline'}>

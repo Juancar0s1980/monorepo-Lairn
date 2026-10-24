@@ -58,7 +58,7 @@ export function CardIntento({
           <span
             className={`rounded-full px-2 py-0.5 text-xs font-medium ${
               aprobado
-                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                ? 'bg-success/10 text-success'
                 : 'bg-destructive/10 text-destructive'
             }`}
           >

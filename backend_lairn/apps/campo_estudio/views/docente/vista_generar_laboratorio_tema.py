@@ -21,6 +21,7 @@ from rest_framework import status
 from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
 from drf_spectacular.openapi import OpenApiTypes
 from core.permissions.permisos_rol import EsDocente
+from core.throttling import ThrottleIA
 from apps.campo_estudio.models import TemaEstudio
 from apps.laboratorios.models import Laboratorio, Pregunta
 from apps.laboratorios.serializers import SerializadorLaboratorioDetalleDocente
@@ -45,6 +46,7 @@ from apps.laboratorios.services.agente_respuesta_libre import generar_borrador_r
 )
 class VistaGenerarLaboratorioTema(APIView):
     permission_classes = [EsDocente]
+    throttle_classes = [ThrottleIA]
 
     def post(self, request, tema_id):
         try:

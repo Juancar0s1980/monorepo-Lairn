@@ -17,6 +17,7 @@ from rest_framework import status, serializers as drf_serializers
 from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter, inline_serializer
 from drf_spectacular.openapi import OpenApiTypes
 from core.permissions.permisos_rol import EsDocente
+from core.throttling import ThrottleIA
 from apps.examenes.models import Curso, ObjetivoCurso
 from apps.motor_adaptativo.services.agente_ia import sugerir_objetivos
 
@@ -45,6 +46,7 @@ from apps.motor_adaptativo.services.agente_ia import sugerir_objetivos
 )
 class VistaSugerirObjetivos(APIView):
     permission_classes = [EsDocente]
+    throttle_classes = [ThrottleIA]
 
     # Genera borradores de objetivos para el curso del docente autenticado.
     def post(self, request, curso_id):

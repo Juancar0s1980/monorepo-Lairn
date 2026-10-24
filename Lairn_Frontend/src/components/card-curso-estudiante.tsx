@@ -57,16 +57,16 @@ function obtenerInicial(nombre: string): string {
 
 // Devuelve el color de la nota según su valor.
 function colorNota(nota: number): string {
-  if (nota >= 4.0) return 'text-emerald-600 dark:text-emerald-400'
-  if (nota >= 3.0) return 'text-amber-600 dark:text-amber-400'
-  return 'text-red-600 dark:text-red-400'
+  if (nota >= 4.0) return 'text-success'
+  if (nota >= 3.0) return 'text-warning'
+  return 'text-destructive'
 }
 
 // Devuelve el color de la barra de progreso.
 function colorBarra(porcentaje: number): string {
-  if (porcentaje >= 80) return 'bg-emerald-500'
-  if (porcentaje >= 60) return 'bg-amber-500'
-  return 'bg-red-500'
+  if (porcentaje >= 80) return 'bg-success'
+  if (porcentaje >= 60) return 'bg-warning'
+  return 'bg-destructive'
 }
 
 export function CardCursoEstudiante({
@@ -79,9 +79,13 @@ export function CardCursoEstudiante({
   notaPromedio,
   rutaBase,
 }: CardCursoEstudianteProps) {
+  // Math.min: examenesRendidos puede superar totalExamenes si un examen fue
+  // eliminado o desactivado después de que el estudiante lo presentó (los
+  // intentos históricos quedan, pero ya no cuenta como examen "disponible").
+  // Sin el tope, la barra de progreso mostraba porcentajes como 150%.
   const porcentaje =
     totalExamenes > 0
-      ? Math.round((examenesRendidos / totalExamenes) * 100)
+      ? Math.min(100, Math.round((examenesRendidos / totalExamenes) * 100))
       : 0
   const tieneDatos = examenesRendidos > 0
   const destino = rutaBase

@@ -37,7 +37,8 @@ export interface CardCursoDocenteProps {
   codigo: string
   totalInscritos: number
   totalExamenes: number
-  notaPromedio?: number
+  /** undefined = todavía no se cargó; null = cargado, pero sin exámenes presentados. */
+  notaPromedio?: number | null
   tasaAprobados?: number
   /** Ruta base para el link. Por defecto '/mis-cursos/{id}/examenes' */
   rutaBase?: string
@@ -69,16 +70,16 @@ function obtenerInicial(nombre: string): string {
 
 // Devuelve el color de la nota según su valor.
 function colorNota(nota: number): string {
-  if (nota >= 4.0) return 'text-emerald-600 dark:text-emerald-400'
-  if (nota >= 3.0) return 'text-amber-600 dark:text-amber-400'
-  return 'text-red-600 dark:text-red-400'
+  if (nota >= 4.0) return 'text-success'
+  if (nota >= 3.0) return 'text-warning'
+  return 'text-destructive'
 }
 
 // Devuelve el color de la barra de progreso.
 function colorBarra(porcentaje: number): string {
-  if (porcentaje >= 80) return 'bg-emerald-500'
-  if (porcentaje >= 60) return 'bg-amber-500'
-  return 'bg-red-500'
+  if (porcentaje >= 80) return 'bg-success'
+  if (porcentaje >= 60) return 'bg-warning'
+  return 'bg-destructive'
 }
 
 export function CardCursoDocente({
@@ -157,7 +158,7 @@ export function CardCursoDocente({
               {descripcion || 'Sin descripción'}
             </p>
             {!planAulaCargado && (
-              <Badge variant="outline" className="border-amber-500/40 text-amber-600 dark:text-amber-400">
+              <Badge variant="warning">
                 Plan de aula pendiente
               </Badge>
             )}
@@ -189,9 +190,13 @@ export function CardCursoDocente({
                 <TrendingUp className="h-3.5 w-3.5" />
                 <span>
                   Promedio:{' '}
-                  <span className={`font-semibold ${colorNota(notaPromedio)}`}>
-                    {notaPromedio.toFixed(1)}
-                  </span>
+                  {notaPromedio === null ? (
+                    <span className="font-semibold">Sin datos</span>
+                  ) : (
+                    <span className={`font-semibold ${colorNota(notaPromedio)}`}>
+                      {notaPromedio.toFixed(1)}
+                    </span>
+                  )}
                 </span>
               </div>
             )}

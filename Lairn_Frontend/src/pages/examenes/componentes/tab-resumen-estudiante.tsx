@@ -23,6 +23,7 @@ import {
 import { PieChart, Pie, Cell } from "recharts";
 import type { MiConocimiento } from "@/types/analitica";
 import type { StatsCurso } from "@/hooks/use-examenes-curso";
+import { colorNota } from "../utilidades";
 
 // Formatea una fecha ISO a formato legible.
 function formatearFecha(fecha: string | null): string {
@@ -32,13 +33,6 @@ function formatearFecha(fecha: string | null): string {
     month: "short",
     year: "numeric",
   });
-}
-
-// Devuelve el color de la nota según su valor.
-function colorNota(nota: number): string {
-  if (nota >= 4.0) return "text-emerald-600 dark:text-emerald-400";
-  if (nota >= 3.0) return "text-amber-600 dark:text-amber-400";
-  return "text-red-600 dark:text-red-400";
 }
 
 // Colores para los niveles de dominio.

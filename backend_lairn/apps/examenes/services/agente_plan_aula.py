@@ -26,6 +26,7 @@ con `ObjetivoCurso.descripcion` (máx 200 caracteres).
 
 import json
 
+import openai
 from pypdf import PdfReader
 
 from backend_lairn.ia_client import obtener_cliente_ia
@@ -121,13 +122,13 @@ Tu única salida debe ser un objeto JSON válido, sin texto adicional:
 
     ultimo_error = None
     for _ in range(2):
-        respuesta = client.chat.completions.create(
-            model=modelo,
-            response_format={'type': 'json_object'},
-            messages=[{'role': 'user', 'content': mensaje}],
-            **{kwarg_max_tokens: 3000},
-        )
         try:
+            respuesta = client.chat.completions.create(
+                model=modelo,
+                response_format={'type': 'json_object'},
+                messages=[{'role': 'user', 'content': mensaje}],
+                **{kwarg_max_tokens: 3000},
+            )
             datos = json.loads(respuesta.choices[0].message.content)
             objetivos = datos.get('objetivos')
             if not isinstance(objetivos, list) or not objetivos:
@@ -137,7 +138,7 @@ Tu única salida debe ser un objeto JSON válido, sin texto adicional:
                 raise ValueError('todos los objetivos vinieron vacíos')
             # Recorte defensivo: respeta el límite del modelo ObjetivoCurso (200 chars).
             return [o[:200] for o in objetivos]
-        except (json.JSONDecodeError, ValueError) as e:
+        except (json.JSONDecodeError, ValueError, openai.APIError) as e:
             ultimo_error = e
 
     raise ValueError(f'La IA no pudo extraer objetivos válidos del plan de aula tras 2 intentos: {ultimo_error}')

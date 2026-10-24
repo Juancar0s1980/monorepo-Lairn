@@ -32,6 +32,7 @@ from rest_framework import status, serializers as drf_serializers
 from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter, inline_serializer
 from drf_spectacular.openapi import OpenApiTypes
 from core.permissions.permisos_rol import EsDocente
+from core.throttling import ThrottleIA
 from apps.examenes.models import Curso
 from apps.laboratorios.serializers import SerializadorSugerirLaboratorioLibre
 from apps.laboratorios.services.agente_codigo import generar_laboratorio_libre
@@ -63,6 +64,7 @@ from apps.laboratorios.services.verificador_casos import verificar_casos
 )
 class VistaSugerirLaboratorioLibre(APIView):
     permission_classes = [EsDocente]
+    throttle_classes = [ThrottleIA]
 
     def post(self, request, curso_id):
         try:

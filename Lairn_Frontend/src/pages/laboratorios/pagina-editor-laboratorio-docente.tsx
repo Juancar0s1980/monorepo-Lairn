@@ -638,7 +638,7 @@ export default function PaginaEditorLaboratorioDocente() {
                               {v.opciones.map((op, oi) => (
                                 <p
                                   key={oi}
-                                  className={oi === v.respuesta_correcta ? 'font-semibold text-emerald-600' : 'text-muted-foreground'}
+                                  className={oi === v.respuesta_correcta ? 'font-semibold text-success' : 'text-muted-foreground'}
                                 >
                                   {String.fromCharCode(65 + oi)}. {op}
                                 </p>
@@ -977,7 +977,7 @@ export default function PaginaEditorLaboratorioDocente() {
 
           <div className="max-h-[50vh] space-y-2 overflow-y-auto">
             {objetivosSinGenerar.length > 0 && (
-              <p className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400">
+              <p className="rounded-lg border border-warning/20 bg-warning/10 p-2 text-xs text-warning">
                 No se pudo generar una pregunta verificable para: {objetivosSinGenerar.join('; ')}
               </p>
             )}
@@ -1027,7 +1027,7 @@ export default function PaginaEditorLaboratorioDocente() {
                             {s.variantes[0].opciones.map((op, oi) => (
                               <p
                                 key={oi}
-                                className={oi === s.variantes![0].respuesta_correcta ? 'font-semibold text-emerald-600' : 'text-muted-foreground'}
+                                className={oi === s.variantes![0].respuesta_correcta ? 'font-semibold text-success' : 'text-muted-foreground'}
                               >
                                 {String.fromCharCode(65 + oi)}. {op}
                               </p>

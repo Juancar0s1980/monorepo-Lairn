@@ -6,6 +6,7 @@ from rest_framework import status
 from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter, inline_serializer, OpenApiExample
 from drf_spectacular.openapi import OpenApiTypes
 from core.permissions.permisos_rol import EsEstudiante
+from core.throttling import ThrottleIA
 from apps.motor_adaptativo.models import SesionExamen, ModeloConocimiento
 from apps.motor_adaptativo.serializers import SerializadorResponder
 from apps.motor_adaptativo.services.agente_ia import generar_pregunta
@@ -123,6 +124,7 @@ _RESPUESTA_RESPONDER = inline_serializer(
 )
 class VistaResponder(APIView):
     permission_classes = [EsEstudiante]
+    throttle_classes = [ThrottleIA]
 
     def post(self, request, sesion_id):
         serializador = SerializadorResponder(data=request.data)

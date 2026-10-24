@@ -276,7 +276,7 @@ export function TabCampoEstudioDocente({ cursoId, habilitado: habilitadoInicial 
                     <Button
                       size="icon-sm"
                       variant="ghost"
-                      className="text-emerald-600 hover:text-emerald-700"
+                      className="text-success hover:text-success/80"
                       title="Aprobar"
                       onClick={() => aprobarTema(tema.id)}
                       disabled={aprobandoId === tema.id}
@@ -320,7 +320,7 @@ export function TabCampoEstudioDocente({ cursoId, habilitado: habilitadoInicial 
                     <p className="line-clamp-2 text-xs text-muted-foreground">{tema.contenido}</p>
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
-                    <Badge variant="outline" className="text-emerald-600 border-emerald-600/30">
+                    <Badge variant="success">
                       Aprobado
                     </Badge>
                     <Button

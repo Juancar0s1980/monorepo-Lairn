@@ -13,12 +13,13 @@ cada objetivo del curso, del tipo pedido.
   `agente_respuesta_libre.generar_borrador_respuesta_libre`. Sin casos de
   test que verificar (no hay nada que ejecutar en un ensayo).
 - `tipo="problema_visual"`: usa
-  `agente_problema_visual.generar_variantes_problema_visual` (texto con
-  Groq, diagramas con Hugging Face). Genera un enunciado genérico + 5
-  variantes (cada una con su propio diagrama y sus 4 opciones de respuesta),
-  todo viaja en el borrador con las imágenes en base64 (nunca se guardan en
-  disco hasta que el docente acepta el borrador — ver
-  `SerializadorPreguntaDocente`).
+  `agente_problema_visual.generar_variantes_problema_visual` — la IA de texto
+  (`obtener_cliente_ia()`) elige el estilo de diagrama (ruta, circuito o
+  tanque/compuerta de fluidos) y los valores, y el backend dibuja el SVG por
+  código. Genera un enunciado genérico + 5 variantes (cada una con su propio
+  diagrama y sus 4 opciones de respuesta), todo viaja en el borrador con las
+  imágenes en base64 (nunca se guardan en disco hasta que el docente acepta
+  el borrador — ver `SerializadorPreguntaDocente`).
 
 Importante: NO guarda nada. El docente acepta/descarta cada borrador en la
 UI y los aceptados se crean con el POST normal de `/preguntas/`.
@@ -36,6 +37,7 @@ from rest_framework import status, serializers as drf_serializers
 from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter, inline_serializer
 from drf_spectacular.openapi import OpenApiTypes
 from core.permissions.permisos_rol import EsDocente
+from core.throttling import ThrottleIA
 from apps.laboratorios.models import Laboratorio
 from apps.laboratorios.services.agente_codigo import generar_borrador_pregunta
 from apps.laboratorios.services.agente_respuesta_libre import generar_borrador_respuesta_libre
@@ -68,6 +70,7 @@ from apps.laboratorios.services.verificador_casos import verificar_casos
 )
 class VistaSugerirPreguntas(APIView):
     permission_classes = [EsDocente]
+    throttle_classes = [ThrottleIA]
 
     def post(self, request, laboratorio_id):
         try:
