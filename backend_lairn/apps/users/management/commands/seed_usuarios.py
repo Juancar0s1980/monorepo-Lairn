@@ -19,6 +19,16 @@ class Command(BaseCommand):
                 'is_staff': True,
             },
             {
+                'first_name': 'Coordinador',
+                'second_name': '',
+                'first_last_name': 'Academico',
+                'second_last_name': '',
+                'email': 'coordinador@pseudotutor.com',
+                'password': 'Coordinador1234*',
+                'rol': 'Coordinador',
+                'is_staff': False,
+            },
+            {
                 'first_name': 'Docente',
                 'second_name': '',
                 'first_last_name': 'Prueba',

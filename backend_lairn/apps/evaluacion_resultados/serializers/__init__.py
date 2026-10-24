@@ -102,12 +102,14 @@ class SerializadorSemestre(serializers.ModelSerializer):
 class SerializadorAsignatura(serializers.ModelSerializer):
     # Nombre legible del semestre para la tabla (evita otro GET en frontend).
     semestre_numero = serializers.IntegerField(source='semestre.numero', read_only=True, allow_null=True)
+    # Curso Lairn (y su docente) que implementa la asignatura: da acceso al banco de preguntas.
+    curso_vinculado_nombre = serializers.SerializerMethodField()
 
     class Meta:
         model = AsignaturaMalla
         fields = [
             'id', 'codigo', 'nombre', 'creditos', 'intensidad_horaria',
-            'tipo', 'semestre', 'semestre_numero', 'curso_vinculado', 'origen', 'external_id',
+            'tipo', 'semestre', 'semestre_numero', 'curso_vinculado', 'curso_vinculado_nombre', 'origen', 'external_id',
             'estado_revision', 'activo', 'creado_en',
         ]
         read_only_fields = ['origen', 'external_id', 'creado_en']
@@ -122,6 +124,12 @@ class SerializadorAsignatura(serializers.ModelSerializer):
         if qs.exists():
             raise serializers.ValidationError('Ya existe una asignatura con ese código.')
         return codigo
+
+    def get_curso_vinculado_nombre(self, obj):
+        curso = obj.curso_vinculado
+        if curso is None:
+            return None
+        return f'{curso.nombre} — {curso.docente.first_name} {curso.docente.first_last_name}'.strip()
 
     def validate_creditos(self, valor: int) -> int:
         if valor is None or valor < 0 or valor > 20:

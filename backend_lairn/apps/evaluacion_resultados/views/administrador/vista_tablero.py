@@ -10,11 +10,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.evaluacion_resultados.models import ProgramaAcademico
-from core.permissions.permisos_rol import EsAdministrador
+from core.permissions.permisos_rol import EsGestorAcademico
 
 
 class VistaTableroPrograma(APIView):
-    permission_classes = [EsAdministrador]
+    permission_classes = [EsGestorAcademico]
 
     def get(self, request, programa_id):
         programa = get_object_or_404(ProgramaAcademico, pk=programa_id)

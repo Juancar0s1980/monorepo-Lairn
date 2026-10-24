@@ -504,7 +504,7 @@ export function TabExamenesDocente({
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label htmlFor="tiempo">Tiempo (min) *</Label>
                   <Input id="tiempo" type="number" {...register('tiempo')} />
@@ -527,7 +527,7 @@ export function TabExamenesDocente({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label>Dificultad *</Label>
                   <Controller
@@ -628,7 +628,7 @@ export function TabExamenesDocente({
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="flex items-center justify-between rounded-lg border p-3">
                   <div className="space-y-0.5">
                     <Label>Retroalimentación</Label>

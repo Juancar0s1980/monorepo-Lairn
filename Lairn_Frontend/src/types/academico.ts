@@ -55,6 +55,8 @@ export interface AsignaturaMalla {
   // Número legible del semestre (lo envía el backend para no hacer join).
   semestre_numero?: number | null
   curso_vinculado: number | null
+  // "Curso — Docente" legible; null si no hay docente asignado.
+  curso_vinculado_nombre: string | null
   origen: Origen
   external_id: string | null
   estado_revision: EstadoRevision
@@ -180,12 +182,42 @@ export interface CorreccionPropuesta {
 }
 
 // Resumen de una importación JSON NOVA (HU-03).
+// Qué hará (simulacro) o hizo (real) la importación con cada registro.
+export type AccionImportacion = 'crear' | 'actualizar' | 'sin_cambios' | 'omitir' | 'rechazar'
+
+export interface RegistroImportacion {
+  entidad: 'programa' | 'asignatura' | 'usuario'
+  clave: string
+  nombre: string
+  accion: AccionImportacion
+  motivo: string
+}
+
+// Respuesta de /evaluacion/integracion/importar-url/ e importar-json/.
 export interface ResumenImportacion {
   registro_id: number
   modo: 'simulacro' | 'real'
+  origen: string
+  // SHA-256 de los datos validados: se reenvía al confirmar para garantizar
+  // que se importa exactamente lo que se revisó.
+  huella: string
   total_recibidos: number
   creados: number
   actualizados: number
+  sin_cambios: number
   omitidos: number
+  rechazados: number
   errores: string[]
+  registros: RegistroImportacion[]
+  registros_truncados: boolean
+}
+
+// Curso Lairn que la coordinación puede vincular a una asignatura
+// (GET /evaluacion/cursos/). Da al docente acceso al banco de preguntas.
+export interface CursoVinculable {
+  id: number
+  nombre: string
+  codigo: string
+  docente: string
+  docente_email: string
 }

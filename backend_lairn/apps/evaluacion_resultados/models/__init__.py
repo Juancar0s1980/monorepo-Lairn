@@ -5,6 +5,7 @@ Re-exporta todo para importar corto:
   from apps.evaluacion_resultados.models import ProgramaAcademico
 """
 
+from .modelo_banco import OpcionesEstadoPregunta, OpcionesOrigenPregunta, PreguntaBanco
 from .modelo_base import ModeloTrazable, OpcionesEstadoRevision, OpcionesOrigen
 from .modelo_dce import Competencia, OpcionesTipoCompetencia, ResultadoAprendizaje
 from .modelo_malla import AsignaturaMalla, OpcionesTipoAsignatura, SemestrePrograma
@@ -38,4 +39,7 @@ __all__ = [
     'OpcionesTipoDocumento',
     'OpcionesEstadoCargue',
     'RegistroSincronizacion',
+    'PreguntaBanco',
+    'OpcionesEstadoPregunta',
+    'OpcionesOrigenPregunta',
 ]

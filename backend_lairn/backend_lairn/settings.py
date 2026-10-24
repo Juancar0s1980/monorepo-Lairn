@@ -48,6 +48,15 @@ ML_SERVICE_URL = config("ML_SERVICE_URL", default="")
 # En docker-compose se inyecta como http://ejecutor:8003
 EJECUTOR_SERVICE_URL = config("EJECUTOR_SERVICE_URL", default="")
 
+# Importacion de programas desde URL JSON (evaluacion_resultados).
+# Lista separada por comas de hosts autorizados (ej. "api.uniautonoma.edu.co").
+# Vacio = cualquier host publico; las IP privadas/loopback se bloquean siempre.
+IMPORTACION_JSON_HOSTS_PERMITIDOS = [
+    h.strip().lower()
+    for h in config("IMPORTACION_JSON_HOSTS_PERMITIDOS", default="").split(",")
+    if h.strip()
+]
+
 
 # Application definition
 

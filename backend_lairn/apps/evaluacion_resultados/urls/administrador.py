@@ -1,5 +1,9 @@
 """
-Rutas de administración de `evaluacion_resultados` (solo Administrador).
+Rutas de administración de `evaluacion_resultados`.
+
+Permisos: programas = lectura Coordinador / escritura Administrador;
+malla, competencias, RA, momentos y tablero = Administrador o Coordinador;
+cargues documentales e integración = solo Administrador.
 
 Montadas en `api/evaluacion/` (ver `backend_lairn/urls.py`).
 Convención: el padre va en el path (`programas/<id>/...`) y la vista
@@ -11,6 +15,7 @@ from django.urls import path
 from apps.evaluacion_resultados.views.administrador import (
     VistaAprobarCargue,
     VistaCargarDocumento,
+    VistaCursosVinculables,
     VistaDetalleAsignatura,
     VistaDetalleCargue,
     VistaDetalleCompetencia,
@@ -20,6 +25,7 @@ from apps.evaluacion_resultados.views.administrador import (
     VistaDetalleSemestre,
     VistaDetalleVinculo,
     VistaImportarJson,
+    VistaImportarUrl,
     VistaListaCargues,
     VistaListaCrearAsignaturas,
     VistaListaCrearCompetencias,
@@ -49,11 +55,13 @@ urlpatterns = [
     path('resultados/<int:pk>/', VistaDetalleResultado.as_view(), name='ev_resultado_detalle'),
     path('momentos/<int:momento_id>/vinculos/', VistaVincularResultadoMomento.as_view(), name='ev_vinculos'),
     path('vinculos/<int:pk>/', VistaDetalleVinculo.as_view(), name='ev_vinculo_detalle'),
+    path('cursos/', VistaCursosVinculables.as_view(), name='ev_cursos_vinculables'),
     path('cargues/', VistaListaCargues.as_view(), name='ev_cargues'),
     path('cargues/subir/', VistaCargarDocumento.as_view(), name='ev_cargue_subir'),
     path('cargues/<int:pk>/', VistaDetalleCargue.as_view(), name='ev_cargue_detalle'),
     path('cargues/<int:cargue_id>/aprobar/', VistaAprobarCargue.as_view(), name='ev_cargue_aprobar'),
     path('integracion/importar-json/', VistaImportarJson.as_view(), name='ev_importar_json'),
+    path('integracion/importar-url/', VistaImportarUrl.as_view(), name='ev_importar_url'),
     path('integracion/registros/', VistaListaRegistros.as_view(), name='ev_registros'),
     path('integracion/sincronizar/', VistaSincronizarNova.as_view(), name='ev_sincronizar'),
 ]

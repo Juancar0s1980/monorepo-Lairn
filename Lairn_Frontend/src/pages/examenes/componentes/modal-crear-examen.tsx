@@ -342,7 +342,7 @@ export function ModalCrearExamen({
           )}
 
           {/* Fila: tiempo y número de preguntas */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <div className="flex items-center gap-1.5">
                 <Label htmlFor="tiempo">Tiempo (min) *</Label>
@@ -380,7 +380,7 @@ export function ModalCrearExamen({
           </div>
 
           {/* Fila: dificultad y modo */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <div className="flex items-center gap-1.5">
                 <Label>Dificultad *</Label>
@@ -495,7 +495,7 @@ export function ModalCrearExamen({
           )}
 
           {/* Fila: switches */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">
                 <div className="flex items-center gap-1.5">

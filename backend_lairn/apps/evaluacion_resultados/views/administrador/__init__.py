@@ -22,8 +22,14 @@ from .vista_cargue_documental import (
     VistaDetalleCargue,
     VistaListaCargues,
 )
-from .vista_integracion_nova import VistaImportarJson, VistaListaRegistros, VistaSincronizarNova
+from .vista_integracion_nova import (
+    VistaImportarJson,
+    VistaImportarUrl,
+    VistaListaRegistros,
+    VistaSincronizarNova,
+)
 from .vista_tablero import VistaTableroPrograma
+from .vista_cursos_vinculables import VistaCursosVinculables
 
 __all__ = [
     'VistaDetalleAsignatura',
@@ -45,7 +51,9 @@ __all__ = [
     'VistaDetalleCargue',
     'VistaListaCargues',
     'VistaImportarJson',
+    'VistaImportarUrl',
     'VistaListaRegistros',
     'VistaSincronizarNova',
     'VistaTableroPrograma',
+    'VistaCursosVinculables',
 ]

@@ -1,6 +1,8 @@
 // Constante con los tres roles del sistema (case-sensitive, deben coincidir con el backend).
 export const ROLES = {
   ADMIN: 'Administrador',
+  // Gestiona la estructura curricular (HU-01.3 a HU-02.3); no crea programas ni importa datos.
+  COORDINADOR: 'Coordinador',
   DOCENTE: 'Docente',
   ESTUDIANTE: 'Estudiante',
 } as const

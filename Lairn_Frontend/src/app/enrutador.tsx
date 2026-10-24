@@ -48,6 +48,7 @@ const PaginaTemaEstudioEstudiante = lazy(() => import('@/pages/examenes/pagina-t
 const PaginaPanelSaberPro = lazy(() => import('@/pages/saber-pro/pagina-panel-saber-pro'))
 const PaginaGestionCursosSaberPro = lazy(() => import('@/pages/saber-pro/pagina-gestion-cursos-saber-pro'))
 const PaginaBancoContenidoSaberPro = lazy(() => import('@/pages/saber-pro/pagina-banco-contenido-saber-pro'))
+const PaginaBancoPreguntasDocente = lazy(() => import('@/pages/banco-preguntas/pagina-banco-preguntas-docente'))
 
 // Fallback de carga mostrado mientras se descarga el chunk de una página.
 function CargandoPagina() {
@@ -72,6 +73,8 @@ function PaginaDashboardPorRol() {
   const { rol } = useAuth()
 
   if (rol === ROLES.ADMIN) return <PaginaDashboardAdmin />
+  // El Coordinador aún no tiene tablero propio: su espacio de trabajo es /academico.
+  if (rol === ROLES.COORDINADOR) return <Navigate to="/academico" replace />
   if (rol === ROLES.DOCENTE) return <PaginaDashboardDocente />
   if (rol === ROLES.ESTUDIANTE) return <PaginaDashboardEstudiante />
   return <Navigate to="/iniciar-sesion" replace />
@@ -186,14 +189,20 @@ function RutasPrivadas() {
               </RutaProtegida>
             }
           />
+          {/* Módulo 2 (HU-04/05): banco de preguntas por RA, exclusivo del docente. */}
           <Route
-            path="/academico"
+            path="/banco-preguntas"
             element={
-              <RutaProtegida rolesPermitidos={[ROLES.ADMIN]}>
-                <PaginaAcademicoAdmin />
+              <RutaProtegida rolesPermitidos={[ROLES.DOCENTE]}>
+                <PaginaBancoPreguntasDocente />
               </RutaProtegida>
             }
           />
+          <Route
+            path="/academico"
+            element={
+              <RutaProtegida rolesPermitidos={[ROLES.ADMIN, ROLES.COORDINADOR]}>
+                <PaginaAcademicoAdmin />
               </RutaProtegida>
             }
           />

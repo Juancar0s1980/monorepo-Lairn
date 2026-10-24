@@ -1,4 +1,4 @@
-from rest_framework.permissions import BasePermission
+from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 
 class EsAdministrador(BasePermission):
@@ -29,3 +29,29 @@ class EsEstudiante(BasePermission):
             request.user.role and
             request.user.role.name == 'Estudiante'
         )
+
+
+class EsCoordinador(BasePermission):
+    def has_permission(self, request, view):
+        return bool(
+            request.user and
+            request.user.is_authenticated and
+            request.user.role and
+            request.user.role.name == 'Coordinador'
+        )
+
+
+class EsGestorAcademico(BasePermission):
+    """Administrador o Coordinador: estructura curricular (HU-01.3 a HU-02.3)."""
+
+    def has_permission(self, request, view):
+        return EsAdministrador().has_permission(request, view) or EsCoordinador().has_permission(request, view)
+
+
+class EsAdministradorOLecturaCoordinador(BasePermission):
+    """El Coordinador consulta (HU-01.3); solo el Administrador crea o edita (HU-01.1/01.2)."""
+
+    def has_permission(self, request, view):
+        if request.method in SAFE_METHODS:
+            return EsGestorAcademico().has_permission(request, view)
+        return EsAdministrador().has_permission(request, view)

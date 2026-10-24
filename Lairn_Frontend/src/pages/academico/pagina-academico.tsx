@@ -1,11 +1,12 @@
-// Módulo 1 — Configuración e Información Académica (solo Administrador).
+// Módulo 1 — Configuración e Información Académica (Administrador y Coordinador;
+// el Coordinador no crea/edita programas ni ve la pestaña Importar).
 //
-// Vista `/academico` con 5 pestañas con CRUD completo:
+// Vista `/academico` con 5 pestañas:
 //   1. Programas     — crear / editar / desactivar (borrado lógico HU-01.8)
 //   2. Malla         — semestres + asignaturas (crear / editar / eliminar)
 //   3. Competencias  — competencias + resultados DCE (crear / editar / eliminar)
 //   4. Momentos      — momentos de evaluación + vínculos a RA (CRUD + vincular)
-//   5. Integración   — importar JSON NOVA + subir PDF + aprobar cargues
+//   5. Importar      — asistente de importación (URL/archivo/pegado) + PDF con IA
 //
 // Arquitectura: la lógica vive en useAcademico() y cada pestaña/modal es un
 // componente en ./componentes. Esta página solo orquesta layout + tabs.
@@ -58,23 +59,30 @@ export default function PaginaAcademico() {
             Configuración Académica
           </h1>
           <p className="text-muted-foreground text-sm">
-            Módulo 1 — Programas, malla curricular, competencias, resultados de aprendizaje y
-            momentos de evaluación. Carga manual, documento + IA o API NOVA. Todo con CRUD completo.
+            Gestiona los programas académicos, su malla curricular, competencias, resultados de
+            aprendizaje y momentos de evaluación.{' '}
+            {ac.esAdmin
+              ? 'Puedes registrarlos uno a uno o importarlos desde el sistema institucional.'
+              : 'Los programas los registra la administración; tú organizas su estructura curricular.'}
           </p>
         </div>
       </div>
 
       {/* Selector de programa activo */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+        <CardHeader className="flex flex-col gap-3 space-y-0 pb-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle className="text-base">Programa activo</CardTitle>
             <CardDescription>
               Elige el programa para ver su malla, competencias y momentos
             </CardDescription>
           </div>
-          <Select value={ac.programaId} onValueChange={(v) => ac.setProgramaId(v ?? '')}>
-            <SelectTrigger className="w-[320px]">
+          <Select
+            value={ac.programaId}
+            onValueChange={(v) => ac.setProgramaId(v ?? '')}
+            items={ac.programas.map((p) => ({ value: String(p.id), label: `${p.codigo} — ${p.nombre}` }))}
+          >
+            <SelectTrigger className="w-full sm:w-[320px]" aria-label="Programa activo">
               <SelectValue placeholder="Selecciona un programa" />
             </SelectTrigger>
             <SelectContent>
@@ -89,7 +97,10 @@ export default function PaginaAcademico() {
       </Card>
 
       <Tabs defaultValue="programas" className="space-y-4">
-        <TabsList className="grid grid-cols-5 bg-muted">
+        {/* En móvil las pestañas se desplazan horizontalmente en vez de comprimirse */}
+        <TabsList
+          className={`flex w-full justify-start overflow-x-auto overflow-y-hidden bg-muted sm:grid sm:overflow-visible ${ac.esAdmin ? 'sm:grid-cols-5' : 'sm:grid-cols-4'}`}
+        >
           <TabsTrigger value="programas" className="gap-1.5">
             <Landmark className="h-3.5 w-3.5" />
             Programas
@@ -106,10 +117,13 @@ export default function PaginaAcademico() {
             <ListChecks className="h-3.5 w-3.5" />
             Momentos
           </TabsTrigger>
-          <TabsTrigger value="integracion" className="gap-1.5">
-            <RefreshCw className="h-3.5 w-3.5" />
-            Integración
-          </TabsTrigger>
+          {/* Importar datos institucionales es exclusivo del Administrador (HU-03) */}
+          {ac.esAdmin && (
+            <TabsTrigger value="integracion" className="gap-1.5">
+              <RefreshCw className="h-3.5 w-3.5" />
+              Importar
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="programas" className="space-y-4">
@@ -128,20 +142,24 @@ export default function PaginaAcademico() {
           <TabMomentos ac={ac} />
         </TabsContent>
 
-        <TabsContent value="integracion" className="space-y-4">
-          <TabIntegracion ac={ac} />
-        </TabsContent>
+        {ac.esAdmin && (
+          <TabsContent value="integracion" className="space-y-4">
+            <TabIntegracion ac={ac} />
+          </TabsContent>
+        )}
       </Tabs>
 
       <ModalesAcademico ac={ac} />
 
-      {/* Link de navegación auxiliar */}
-      <p className="text-xs text-muted-foreground">
-        ¿Volver al inicio?{' '}
-        <Link to="/" className="text-primary hover:underline">
-          Ir al dashboard
-        </Link>
-      </p>
+      {/* Link de navegación auxiliar (el Coordinador no tiene dashboard propio) */}
+      {ac.esAdmin && (
+        <p className="text-xs text-muted-foreground">
+          ¿Volver al inicio?{' '}
+          <Link to="/" className="text-primary hover:underline">
+            Ir al dashboard
+          </Link>
+        </p>
+      )}
     </div>
   )
 }

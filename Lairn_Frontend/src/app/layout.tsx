@@ -3,7 +3,7 @@
 //   - Header sticky con logo, navegación por rol, email del usuario,
 //     toggle de tema oscuro/claro y botón de cerrar sesión.
 //   - Área main que renderiza el contenido hijo (la página actual).
-// La navegación se adapta según el rol del usuario (Administrador, Docente, Estudiante).
+// La navegación se adapta según el rol del usuario (Administrador, Coordinador, Docente, Estudiante).
 
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@/context/contexto-auth/use-auth'
@@ -37,9 +37,11 @@ const rutasPorRol: Record<string, RutaNav[]> = {
     { label: 'Redes', ruta: '/redes' },
     { label: 'Moderación', ruta: '/moderacion' },
   ],
+  Coordinador: [{ label: 'Académico', ruta: '/academico' }],
   Docente: [
     { label: 'Início', ruta: '/' },
     { label: 'Mis Cursos', ruta: '/mis-cursos' },
+    { label: 'Banco de preguntas', ruta: '/banco-preguntas' },
     { label: 'Saber Pro', ruta: '/saber-pro', destacado: true },
   ],
   Estudiante: [

@@ -24,6 +24,18 @@ import { Loader2, Pencil, Plus, Trash2, Unlink } from 'lucide-react'
 import type { AsignaturaMalla } from '@/types/academico'
 import type { Academico } from '../use-academico'
 
+// Etiquetas visibles de los selectores con valores internos.
+const TIPOS_ASIGNATURA = [
+  { value: 'obligatoria', label: 'Obligatoria' },
+  { value: 'electiva', label: 'Electiva' },
+  { value: 'optativa', label: 'Optativa' },
+  { value: 'practica', label: 'Práctica / Laboratorio' },
+]
+const TIPOS_COMPETENCIA = [
+  { value: 'especifica', label: 'Específica' },
+  { value: 'transversal', label: 'Transversal' },
+]
+
 export function ModalesAcademico({ ac }: { ac: Academico }) {
   return (
     <>
@@ -39,18 +51,18 @@ export function ModalesAcademico({ ac }: { ac: Academico }) {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-foreground">Código</label>
-                <Input
+                <label htmlFor="campo-academico-1" className="text-xs font-medium text-foreground">Código <span className="text-destructive" aria-hidden="true">*</span></label>
+                <Input id="campo-academico-1"
                   placeholder="ISW-2026"
                   value={ac.formPrograma.codigo}
                   onChange={(e) => ac.setFormPrograma({ ...ac.formPrograma, codigo: e.target.value })}
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-foreground">Duración (semestres)</label>
-                <Input
+                <label htmlFor="campo-academico-2" className="text-xs font-medium text-foreground">Duración (semestres) <span className="text-destructive" aria-hidden="true">*</span></label>
+                <Input id="campo-academico-2"
                   type="number"
                   min={1}
                   max={14}
@@ -62,23 +74,23 @@ export function ModalesAcademico({ ac }: { ac: Academico }) {
               </div>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground">Nombre</label>
-              <Input
+              <label htmlFor="campo-academico-3" className="text-xs font-medium text-foreground">Nombre <span className="text-destructive" aria-hidden="true">*</span></label>
+              <Input id="campo-academico-3"
                 placeholder="Ingeniería de Software y Computación"
                 value={ac.formPrograma.nombre}
                 onChange={(e) => ac.setFormPrograma({ ...ac.formPrograma, nombre: e.target.value })}
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-foreground">Modalidad</label>
+                <label htmlFor="campo-academico-4" className="text-xs font-medium text-foreground">Modalidad</label>
                 <Select
                   value={ac.formPrograma.modalidad}
                   onValueChange={(v) =>
                     ac.setFormPrograma({ ...ac.formPrograma, modalidad: v ?? 'Presencial' })
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="campo-academico-4" className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -90,16 +102,16 @@ export function ModalesAcademico({ ac }: { ac: Academico }) {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-foreground">Sede</label>
-                <Input
+                <label htmlFor="campo-academico-5" className="text-xs font-medium text-foreground">Sede</label>
+                <Input id="campo-academico-5"
                   value={ac.formPrograma.sede}
                   onChange={(e) => ac.setFormPrograma({ ...ac.formPrograma, sede: e.target.value })}
                 />
               </div>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground">Fecha de vigencia (opcional)</label>
-              <Input
+              <label htmlFor="campo-academico-6" className="text-xs font-medium text-foreground">Fecha de vigencia (opcional)</label>
+              <Input id="campo-academico-6"
                 type="date"
                 value={ac.formPrograma.fecha_vigencia}
                 onChange={(e) =>
@@ -135,8 +147,8 @@ export function ModalesAcademico({ ac }: { ac: Academico }) {
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground">Número</label>
-              <Input
+              <label htmlFor="campo-academico-7" className="text-xs font-medium text-foreground">Número <span className="text-destructive" aria-hidden="true">*</span></label>
+              <Input id="campo-academico-7"
                 type="number"
                 min={1}
                 max={14}
@@ -145,8 +157,8 @@ export function ModalesAcademico({ ac }: { ac: Academico }) {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground">Nombre (opcional)</label>
-              <Input
+              <label htmlFor="campo-academico-8" className="text-xs font-medium text-foreground">Nombre (opcional)</label>
+              <Input id="campo-academico-8"
                 placeholder="Cuarto semestre"
                 value={ac.formSemestre.nombre}
                 onChange={(e) => ac.setFormSemestre({ ...ac.formSemestre, nombre: e.target.value })}
@@ -170,22 +182,25 @@ export function ModalesAcademico({ ac }: { ac: Academico }) {
         <DialogContent className="sm:max-w-[480px]">
           <DialogHeader>
             <DialogTitle>{ac.editandoAsignatura ? 'Editar asignatura' : 'Nueva asignatura'}</DialogTitle>
-            <DialogDescription>Código único institucional + ubicación en la malla</DialogDescription>
+            <DialogDescription>
+              Registra la asignatura con su código institucional y ubícala en un semestre de la malla.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-foreground">Código</label>
-                <Input
+                <label htmlFor="campo-academico-9" className="text-xs font-medium text-foreground">Código <span className="text-destructive" aria-hidden="true">*</span></label>
+                <Input id="campo-academico-9"
                   placeholder="ISW-301"
                   value={ac.formAsignatura.codigo}
                   onChange={(e) => ac.setFormAsignatura({ ...ac.formAsignatura, codigo: e.target.value })}
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-foreground">Tipo</label>
+                <label htmlFor="campo-academico-10" className="text-xs font-medium text-foreground">Tipo</label>
                 <Select
                   value={ac.formAsignatura.tipo}
+                  items={TIPOS_ASIGNATURA}
                   onValueChange={(v) =>
                     ac.setFormAsignatura({
                       ...ac.formAsignatura,
@@ -193,7 +208,7 @@ export function ModalesAcademico({ ac }: { ac: Academico }) {
                     })
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="campo-academico-10" className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -206,17 +221,47 @@ export function ModalesAcademico({ ac }: { ac: Academico }) {
               </div>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground">Nombre</label>
-              <Input
+              <label htmlFor="campo-academico-11" className="text-xs font-medium text-foreground">Nombre <span className="text-destructive" aria-hidden="true">*</span></label>
+              <Input id="campo-academico-11"
                 placeholder="Programación orientada a objetos"
                 value={ac.formAsignatura.nombre}
                 onChange={(e) => ac.setFormAsignatura({ ...ac.formAsignatura, nombre: e.target.value })}
               />
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            {/* Docente que dicta la asignatura: su curso Lairn queda vinculado y así
+                accede al banco de preguntas de esta asignatura (HU-04 / HU-05). */}
+            <div className="space-y-1.5">
+              <label htmlFor="campo-asignatura-docente" className="text-xs font-medium text-foreground">
+                Docente (curso en Lairn)
+              </label>
+              <Select
+                value={ac.formAsignatura.curso_vinculado || 'sin-docente'}
+                onValueChange={(v) => ac.setFormAsignatura({ ...ac.formAsignatura, curso_vinculado: v ?? '' })}
+                items={[
+                  { value: 'sin-docente', label: 'Sin docente asignado' },
+                  ...ac.cursosVinculables.map((c) => ({ value: String(c.id), label: `${c.nombre} — ${c.docente}` })),
+                ]}
+              >
+                <SelectTrigger id="campo-asignatura-docente" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sin-docente">Sin docente asignado</SelectItem>
+                  {ac.cursosVinculables.map((c) => (
+                    <SelectItem key={c.id} value={String(c.id)}>
+                      {c.nombre} — {c.docente} ({c.docente_email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                El docente podrá generar y validar preguntas de esta asignatura en su banco.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-foreground">Créditos</label>
-                <Input
+                <label htmlFor="campo-academico-12" className="text-xs font-medium text-foreground">Créditos</label>
+                <Input id="campo-academico-12"
                   type="number"
                   min={0}
                   max={20}
@@ -227,8 +272,8 @@ export function ModalesAcademico({ ac }: { ac: Academico }) {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-foreground">Horas/sem</label>
-                <Input
+                <label htmlFor="campo-academico-13" className="text-xs font-medium text-foreground">Horas por semana</label>
+                <Input id="campo-academico-13"
                   type="number"
                   min={0}
                   value={ac.formAsignatura.intensidad_horaria}
@@ -240,13 +285,20 @@ export function ModalesAcademico({ ac }: { ac: Academico }) {
                   }
                 />
               </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-foreground">Semestre</label>
+              <div className="col-span-2 space-y-1.5 sm:col-span-1">
+                <label htmlFor="campo-academico-14" className="text-xs font-medium text-foreground">Semestre</label>
                 <Select
                   value={ac.formAsignatura.semestre}
+                  items={[
+                    { value: 'sin-ubicar', label: 'Sin ubicar' },
+                    ...ac.semestres.map((s) => ({
+                      value: String(s.id),
+                      label: `S${s.numero} — ${s.nombre || `Semestre ${s.numero}`}`,
+                    })),
+                  ]}
                   onValueChange={(v) => ac.setFormAsignatura({ ...ac.formAsignatura, semestre: v ?? '' })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="campo-academico-14" className="w-full">
                     <SelectValue placeholder="Sin ubicar" />
                   </SelectTrigger>
                   <SelectContent>
@@ -278,21 +330,25 @@ export function ModalesAcademico({ ac }: { ac: Academico }) {
         <DialogContent className="sm:max-w-[480px]">
           <DialogHeader>
             <DialogTitle>{ac.editandoCompetencia ? 'Editar competencia' : 'Nueva competencia'}</DialogTitle>
-            <DialogDescription>Creación manual en el programa activo (HU-01.6)</DialogDescription>
+            <DialogDescription>
+              Habilidad que el programa evalúa. Las transversales aplican a varias asignaturas; las
+              específicas, a la disciplina.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground">Nombre</label>
-              <Input
+              <label htmlFor="campo-academico-15" className="text-xs font-medium text-foreground">Nombre <span className="text-destructive" aria-hidden="true">*</span></label>
+              <Input id="campo-academico-15"
                 placeholder="Diseño de software"
                 value={ac.formCompetencia.nombre}
                 onChange={(e) => ac.setFormCompetencia({ ...ac.formCompetencia, nombre: e.target.value })}
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground">Tipo</label>
+              <label htmlFor="campo-academico-16" className="text-xs font-medium text-foreground">Tipo</label>
               <Select
                 value={ac.formCompetencia.tipo}
+                items={TIPOS_COMPETENCIA}
                 onValueChange={(v) =>
                   ac.setFormCompetencia({
                     ...ac.formCompetencia,
@@ -302,7 +358,7 @@ export function ModalesAcademico({ ac }: { ac: Academico }) {
                   })
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger id="campo-academico-16" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -312,8 +368,8 @@ export function ModalesAcademico({ ac }: { ac: Academico }) {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground">Descripción (opcional)</label>
-              <Textarea
+              <label htmlFor="campo-academico-17" className="text-xs font-medium text-foreground">Descripción (opcional)</label>
+              <Textarea id="campo-academico-17"
                 placeholder="Describe la competencia..."
                 value={ac.formCompetencia.descripcion}
                 onChange={(e) => ac.setFormCompetencia({ ...ac.formCompetencia, descripcion: e.target.value })}
@@ -338,21 +394,22 @@ export function ModalesAcademico({ ac }: { ac: Academico }) {
         <DialogContent className="sm:max-w-[520px]">
           <DialogHeader>
             <DialogTitle>
-              {ac.editandoResultado ? 'Editar resultado (DCE)' : 'Nuevo resultado (DCE)'}
+              {ac.editandoResultado ? 'Editar resultado de aprendizaje' : 'Nuevo resultado de aprendizaje'}
             </DialogTitle>
             <DialogDescription>
-              Competencia + asignatura del mismo programa, afirmación en infinitivo
+              Indica qué debe lograr el estudiante, cómo se evidencia y con qué tarea se comprueba.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-foreground">Competencia</label>
+                <label htmlFor="campo-academico-18" className="text-xs font-medium text-foreground">Competencia <span className="text-destructive" aria-hidden="true">*</span></label>
                 <Select
                   value={ac.formResultado.competencia}
+                  items={ac.competencias.map((c) => ({ value: String(c.id), label: c.nombre }))}
                   onValueChange={(v) => ac.setFormResultado({ ...ac.formResultado, competencia: v ?? '' })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="campo-academico-18" className="w-full">
                     <SelectValue placeholder="Selecciona" />
                   </SelectTrigger>
                   <SelectContent>
@@ -363,14 +420,20 @@ export function ModalesAcademico({ ac }: { ac: Academico }) {
                     ))}
                   </SelectContent>
                 </Select>
+                {!ac.competencias.length && (
+                  <p className="text-xs text-muted-foreground">
+                    Este programa no tiene competencias: crea una primero.
+                  </p>
+                )}
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-foreground">Asignatura</label>
+                <label htmlFor="campo-academico-19" className="text-xs font-medium text-foreground">Asignatura <span className="text-destructive" aria-hidden="true">*</span></label>
                 <Select
                   value={ac.formResultado.asignatura}
+                  items={ac.asignaturas.map((a) => ({ value: String(a.id), label: `${a.codigo} — ${a.nombre}` }))}
                   onValueChange={(v) => ac.setFormResultado({ ...ac.formResultado, asignatura: v ?? '' })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="campo-academico-19" className="w-full">
                     <SelectValue placeholder="Selecciona" />
                   </SelectTrigger>
                   <SelectContent>
@@ -381,19 +444,28 @@ export function ModalesAcademico({ ac }: { ac: Academico }) {
                     ))}
                   </SelectContent>
                 </Select>
+                {!ac.asignaturas.length && (
+                  <p className="text-xs text-muted-foreground">
+                    Este programa no tiene asignaturas: agrégalas en la pestaña Malla.
+                  </p>
+                )}
               </div>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground">Afirmación (qué se infiere)</label>
-              <Textarea
+              <label htmlFor="campo-academico-20" className="text-xs font-medium text-foreground">Afirmación (qué se infiere) <span className="text-destructive" aria-hidden="true">*</span></label>
+              <Textarea id="campo-academico-20"
                 placeholder="Diseñar componentes de software aplicando patrones..."
+                aria-describedby="ayuda-afirmacion"
                 value={ac.formResultado.descripcion}
                 onChange={(e) => ac.setFormResultado({ ...ac.formResultado, descripcion: e.target.value })}
               />
+              <p id="ayuda-afirmacion" className="text-xs text-muted-foreground">
+                Escríbela en infinitivo: lo que el estudiante debe ser capaz de hacer.
+              </p>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground">Evidencia observable</label>
-              <Textarea
+              <label htmlFor="campo-academico-21" className="text-xs font-medium text-foreground">Evidencia observable</label>
+              <Textarea id="campo-academico-21"
                 placeholder="El estudiante entrega un diagrama y código que..."
                 value={ac.formResultado.evidencia_observable}
                 onChange={(e) =>
@@ -402,8 +474,8 @@ export function ModalesAcademico({ ac }: { ac: Academico }) {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground">Tarea sugerida</label>
-              <Textarea
+              <label htmlFor="campo-academico-22" className="text-xs font-medium text-foreground">Tarea sugerida</label>
+              <Textarea id="campo-academico-22"
                 placeholder="A partir de un caso, construir..."
                 value={ac.formResultado.tarea_sugerida}
                 onChange={(e) => ac.setFormResultado({ ...ac.formResultado, tarea_sugerida: e.target.value })}
@@ -432,10 +504,10 @@ export function ModalesAcademico({ ac }: { ac: Academico }) {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-foreground">Semestre referencia</label>
-                <Input
+                <label htmlFor="campo-academico-23" className="text-xs font-medium text-foreground">Semestre referencia</label>
+                <Input id="campo-academico-23"
                   type="number"
                   min={1}
                   max={14}
@@ -446,8 +518,8 @@ export function ModalesAcademico({ ac }: { ac: Academico }) {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-foreground">Periodo (opcional)</label>
-                <Input
+                <label htmlFor="campo-academico-24" className="text-xs font-medium text-foreground">Periodo (opcional)</label>
+                <Input id="campo-academico-24"
                   placeholder="2026-1"
                   value={ac.formMomento.periodo}
                   onChange={(e) => ac.setFormMomento({ ...ac.formMomento, periodo: e.target.value })}
@@ -455,16 +527,16 @@ export function ModalesAcademico({ ac }: { ac: Academico }) {
               </div>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground">Nombre</label>
-              <Input
+              <label htmlFor="campo-academico-25" className="text-xs font-medium text-foreground">Nombre <span className="text-destructive" aria-hidden="true">*</span></label>
+              <Input id="campo-academico-25"
                 placeholder="Momento 1 - Cuarto semestre"
                 value={ac.formMomento.nombre}
                 onChange={(e) => ac.setFormMomento({ ...ac.formMomento, nombre: e.target.value })}
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground">Descripción (opcional)</label>
-              <Textarea
+              <label htmlFor="campo-academico-26" className="text-xs font-medium text-foreground">Descripción (opcional)</label>
+              <Textarea id="campo-academico-26"
                 value={ac.formMomento.descripcion}
                 onChange={(e) => ac.setFormMomento({ ...ac.formMomento, descripcion: e.target.value })}
               />
@@ -505,9 +577,10 @@ export function ModalesAcademico({ ac }: { ac: Academico }) {
               <div className="flex gap-2">
                 <Select
                   value={ac.formVinculo.resultado}
+                  items={ac.resultados.map((ra) => ({ value: String(ra.id), label: ra.descripcion.slice(0, 70) }))}
                   onValueChange={(v) => ac.setFormVinculo({ ...ac.formVinculo, resultado: v ?? '' })}
                 >
-                  <SelectTrigger className="flex-1">
+                  <SelectTrigger className="min-w-0 flex-1">
                     <SelectValue placeholder="Selecciona un RA para vincular" />
                   </SelectTrigger>
                   <SelectContent>

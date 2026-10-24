@@ -232,6 +232,7 @@ export function DialogoRevisionCargue({ ac }: { ac: Academico }) {
                   </label>
                   <Select
                     value={programaDestino}
+                    items={ac.programas.map((p) => ({ value: String(p.id), label: `${p.codigo} — ${p.nombre}` }))}
                     onValueChange={(v) => setProgramaDestino(v ?? '')}
                     disabled={crearNuevo}
                   >
@@ -252,7 +253,11 @@ export function DialogoRevisionCargue({ ac }: { ac: Academico }) {
                   <label className="text-xs font-medium text-foreground">
                     Asignatura destino (obligatoria)
                   </label>
-                  <Select value={asignaturaDestino} onValueChange={(v) => setAsignaturaDestino(v ?? '')}>
+                  <Select
+                    value={asignaturaDestino}
+                    onValueChange={(v) => setAsignaturaDestino(v ?? '')}
+                    items={asignaturasDestino.map((a) => ({ value: String(a.id), label: `${a.codigo} — ${a.nombre}` }))}
+                  >
                     <SelectTrigger>
                       <SelectValue
                         placeholder={
