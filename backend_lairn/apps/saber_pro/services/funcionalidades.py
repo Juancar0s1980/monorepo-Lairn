@@ -28,7 +28,7 @@ _FUNCIONALIDADES_DOCENTE = [
         'clave': 'simulacros',
         'titulo': 'Simulacros',
         'descripcion': 'Crea simulacros dentro de tus cursos Saber Pro eligiendo competencias, afirmaciones y distribución de preguntas (HU-19).',
-        'disponible': False,
+        'disponible': True,
     },
     {
         'clave': 'banco_contenido',
@@ -55,8 +55,8 @@ _FUNCIONALIDADES_ESTUDIANTE = [
     {
         'clave': 'simulacros',
         'titulo': 'Simulacros',
-        'descripcion': 'Presenta los simulacros de tus cursos de preparación, con temporizador y condiciones controladas (HU-21).',
-        'disponible': False,
+        'descripcion': 'Consulta los simulacros activos de tus cursos de preparación; la presentación con temporizador y condiciones controladas llega en la HU-21.',
+        'disponible': True,
     },
     {
         'clave': 'desempeno',

@@ -26,6 +26,9 @@ class SerializadorEvidenciaCatalogo(serializers.Serializer):
 class SerializadorAfirmacionCatalogo(serializers.Serializer):
     id = serializers.IntegerField()
     nombre = serializers.CharField()
+    peso = serializers.IntegerField(
+        help_text='Peso porcentual oficial de la afirmación o de su competencia.',
+    )
     evidencias = SerializadorEvidenciaCatalogo(many=True)
 
 
@@ -33,6 +36,9 @@ class SerializadorAfirmacionCatalogo(serializers.Serializer):
 class SerializadorCompetenciaCatalogo(serializers.Serializer):
     id = serializers.IntegerField()
     nombre = serializers.CharField()
+    peso = serializers.IntegerField(
+        help_text='Peso porcentual oficial de la competencia en el examen.',
+    )
     afirmaciones = SerializadorAfirmacionCatalogo(many=True)
 
 

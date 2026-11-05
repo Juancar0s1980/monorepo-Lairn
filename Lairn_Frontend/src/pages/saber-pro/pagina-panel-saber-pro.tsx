@@ -383,11 +383,14 @@ export default function PaginaPanelSaberPro() {
     void recargar()
   }
 
-  // Navegación de las herramientas del panel que ya están disponibles. Por ahora
-  // solo el banco de contenido (HU-20); las demás siguen "Próximamente".
+  // Navegación de las herramientas del panel que ya están disponibles:
+  // simulacros (HU-19) y banco de contenido (HU-20); las demás siguen "Próximamente".
   const manejarAccionFuncionalidad = (clave: string) => {
     if (clave === 'banco_contenido') {
       navigate('/saber-pro/banco')
+    }
+    if (clave === 'simulacros') {
+      navigate('/saber-pro/simulacros')
     }
   }
 

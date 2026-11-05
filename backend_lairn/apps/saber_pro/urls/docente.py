@@ -21,9 +21,15 @@ from apps.saber_pro.views import (
     VistaCriteriosAreaSaberPro,
     VistaDetalleContenidoBancoSaberPro,
     VistaDetalleCursoSaberPro,
+    VistaDetalleSimulacroSaberPro,
+    VistaDisponibilidadSimulacroSaberPro,
     VistaEstudiantesCursoSaberPro,
     VistaGenerarContenidoSaberPro,
+    VistaPreguntasSimulacroSaberPro,
     VistaRegenerarCodigoCursoSaberPro,
+    VistaResultadosSimulacroSaberPro,
+    VistaRevisionPresentacionSaberPro,
+    VistaSimulacrosCursoSaberPro,
 )
 
 urlpatterns = [
@@ -53,4 +59,20 @@ urlpatterns = [
     # Detalle y aprobación de una pieza del banco (HU-20.3/20.4).
     path('docente/contenido/<int:contenido_id>/', VistaDetalleContenidoBancoSaberPro.as_view(), name='detalle_contenido_banco_saber_pro'),
     path('docente/contenido/<int:contenido_id>/aprobar/', VistaAprobarContenidoBancoSaberPro.as_view(), name='aprobar_contenido_banco_saber_pro'),
+
+    # Simulacros del curso: colección (GET/POST) y disponibilidad del banco (HU-19.1-19.3).
+    path('docente/cursos/<int:curso_id>/simulacros/', VistaSimulacrosCursoSaberPro.as_view(), name='simulacros_curso_saber_pro'),
+    path('docente/cursos/<int:curso_id>/simulacros/disponibilidad/', VistaDisponibilidadSimulacroSaberPro.as_view(), name='disponibilidad_simulacro_saber_pro'),
+
+    # Detalle, edición y eliminación de un simulacro (HU-19.4).
+    path('docente/cursos/<int:curso_id>/simulacros/<int:simulacro_id>/', VistaDetalleSimulacroSaberPro.as_view(), name='detalle_simulacro_saber_pro'),
+
+    # Preguntas asignadas al simulacro, en solo lectura y con respuestas correctas.
+    path('docente/cursos/<int:curso_id>/simulacros/<int:simulacro_id>/preguntas/', VistaPreguntasSimulacroSaberPro.as_view(), name='preguntas_simulacro_saber_pro'),
+
+    # Calificaciones de los estudiantes en escala 0.0-5.0 (HU-24).
+    path('docente/cursos/<int:curso_id>/simulacros/<int:simulacro_id>/resultados/', VistaResultadosSimulacroSaberPro.as_view(), name='resultados_simulacro_saber_pro'),
+
+    # Revisión y calificación de respuestas abiertas de un intento (HU-24).
+    path('docente/cursos/<int:curso_id>/simulacros/<int:simulacro_id>/resultados/<int:presentacion_id>/revision/', VistaRevisionPresentacionSaberPro.as_view(), name='revision_presentacion_saber_pro'),
 ]

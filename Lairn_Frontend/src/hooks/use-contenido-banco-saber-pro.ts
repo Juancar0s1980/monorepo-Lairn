@@ -1,13 +1,21 @@
 // Hook para listar el banco de contenido del docente para el área de un curso (HU-20).
 //
-// Llama a GET /saber-pro/docente/cursos/{id}/contenido/ (sin query param `estado`)
-// para traer todo el banco del área del curso; la página separa en cliente las
-// pestañas de "Pendientes" y "Aprobados". Expone `recargar()` para refrescar
-// tras generar, editar, aprobar o descartar contenido.
+// Llama a GET /saber-pro/docente/cursos/{id}/contenido/ con filtros opcionales
+// (estado, competencia_id, afirmacion_id, evidencia_id, parte) para traer el
+// banco del área. Permite recargar tras generar, editar, aprobar o descartar
+// contenido sin perder los filtros activos.
 
 import { useState, useEffect, useCallback } from 'react'
 import api from '@/services/api'
 import type { ContenidoBancoSaberPro } from '@/types/saber-pro'
+
+export interface FiltrosContenidoBanco {
+  estado?: 'pendiente' | 'aprobado' | 'todos'
+  competenciaId?: number | null
+  afirmacionId?: number | null
+  evidenciaId?: number | null
+  parte?: number | null
+}
 
 interface ResultadoUseContenidoBancoSaberPro {
   contenidos: ContenidoBancoSaberPro[]
@@ -16,19 +24,44 @@ interface ResultadoUseContenidoBancoSaberPro {
   recargar: () => Promise<void>
 }
 
-export function useContenidoBancoSaberPro(cursoId: number | null): ResultadoUseContenidoBancoSaberPro {
+export function useContenidoBancoSaberPro(
+  cursoId: number | null,
+  filtros: FiltrosContenidoBanco = {}
+): ResultadoUseContenidoBancoSaberPro {
   const [contenidos, setContenidos] = useState<ContenidoBancoSaberPro[]>([])
   const [cargando, setCargando] = useState(Boolean(cursoId))
   const [error, setError] = useState<string | null>(null)
 
-  // Recarga el banco desde el backend (se usa tras cada mutación de contenido).
+  const construirParametros = useCallback(() => {
+    const params = new URLSearchParams()
+    if (filtros.estado && filtros.estado !== 'todos') {
+      params.append('estado', filtros.estado)
+    }
+    if (filtros.competenciaId) {
+      params.append('competencia_id', String(filtros.competenciaId))
+    }
+    if (filtros.afirmacionId) {
+      params.append('afirmacion_id', String(filtros.afirmacionId))
+    }
+    if (filtros.evidenciaId) {
+      params.append('evidencia_id', String(filtros.evidenciaId))
+    }
+    if (filtros.parte) {
+      params.append('parte', String(filtros.parte))
+    }
+    return params
+  }, [filtros.afirmacionId, filtros.competenciaId, filtros.estado, filtros.evidenciaId, filtros.parte])
+
   const recargar = useCallback(async () => {
     if (cursoId === null) return
     setCargando(true)
     try {
-      const { data } = await api.get<ContenidoBancoSaberPro[]>(
-        `/saber-pro/docente/cursos/${cursoId}/contenido/`
-      )
+      const params = construirParametros()
+      const query = params.toString()
+      const url = query
+        ? `/saber-pro/docente/cursos/${cursoId}/contenido/?${query}`
+        : `/saber-pro/docente/cursos/${cursoId}/contenido/`
+      const { data } = await api.get<ContenidoBancoSaberPro[]>(url)
       setContenidos(data)
       setError(null)
     } catch {
@@ -36,12 +69,9 @@ export function useContenidoBancoSaberPro(cursoId: number | null): ResultadoUseC
     } finally {
       setCargando(false)
     }
-  }, [cursoId])
+  }, [construirParametros, cursoId])
 
   useEffect(() => {
-    // AbortController + flag: evita setState tras desmontar o al cambiar de curso.
-    // Toda la actualización de estado vive dentro del cargador async para no
-    // disparar setState síncrono en el cuerpo del efecto.
     const controlador = new AbortController()
     let activo = true
 
@@ -54,10 +84,14 @@ export function useContenidoBancoSaberPro(cursoId: number | null): ResultadoUseC
       }
       setCargando(true)
       try {
-        const { data } = await api.get<ContenidoBancoSaberPro[]>(
-          `/saber-pro/docente/cursos/${cursoId}/contenido/`,
-          { signal: controlador.signal }
-        )
+        const params = construirParametros()
+        const query = params.toString()
+        const url = query
+          ? `/saber-pro/docente/cursos/${cursoId}/contenido/?${query}`
+          : `/saber-pro/docente/cursos/${cursoId}/contenido/`
+        const { data } = await api.get<ContenidoBancoSaberPro[]>(url, {
+          signal: controlador.signal,
+        })
         if (activo) {
           setContenidos(data)
           setError(null)
@@ -74,7 +108,7 @@ export function useContenidoBancoSaberPro(cursoId: number | null): ResultadoUseC
       activo = false
       controlador.abort()
     }
-  }, [cursoId])
+  }, [construirParametros, cursoId])
 
   return { contenidos, cargando, error, recargar }
 }

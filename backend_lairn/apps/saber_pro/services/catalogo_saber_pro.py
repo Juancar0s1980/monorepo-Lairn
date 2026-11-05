@@ -17,11 +17,17 @@ decide QUÉ estructura le corresponde a cada área:
 - `consigna`: Comunicación Escrita es una pregunta abierta (texto argumentativo
   de máximo dos páginas), por lo que NO se le imponen criterios ni opciones.
 
+Además, `DISTRIBUCIONES_OFICIALES` centraliza el porcentaje con el que cada
+competencia (Razonamiento Cuantitativo y Competencias Ciudadanas) o afirmación
+(Lectura Crítica) debe participar en un simulacro. Los simulacros usan esos
+pesos tanto para preseleccionar la estructura como para repartir las preguntas.
+
 Las vistas y el agente de IA consultan estas funciones para validar las
 solicitudes del docente y construir el prompt correcto, de modo que agregar o
 modificar una estructura en un solo lugar es suficiente.
 """
 
+from apps.saber_pro.models.afirmacion_saber_pro import AfirmacionSaberPro
 from apps.saber_pro.models.competencia_saber_pro import CompetenciaSaberPro
 
 # Valores de estructura que consume el resto del módulo.
@@ -29,14 +35,55 @@ ESTRUCTURA_COMPETENCIAS = 'competencias'
 ESTRUCTURA_PARTES = 'partes'
 ESTRUCTURA_CONSIGNA = 'consigna'
 
-# Áreas que usan la jerarquía competencia → afirmación → evidencia.
-AREAS_ESTRUCTURA_COMPETENCIAS = (
-    'Razonamiento Cuantitativo',
-    'Lectura Crítica',
-    'Competencias Ciudadanas',
-)
+AREA_RAZONAMIENTO = 'Razonamiento Cuantitativo'
+AREA_LECTURA_CRITICA = 'Lectura Crítica'
+AREA_CIUDADANAS = 'Competencias Ciudadanas'
 AREA_CONSIGNA = 'Comunicación Escrita'
 AREA_PARTES = 'Inglés'
+
+# Áreas que usan la jerarquía competencia → afirmación → evidencia.
+AREAS_ESTRUCTURA_COMPETENCIAS = (
+    AREA_RAZONAMIENTO,
+    AREA_LECTURA_CRITICA,
+    AREA_CIUDADANAS,
+)
+
+# Distribución oficial aproximada del examen por área estructurada. El nivel
+# indica el criterio que reparte el porcentaje: competencia en Razonamiento
+# Cuantitativo/Competencias Ciudadanas y afirmación en Lectura Crítica (esa área
+# tiene una sola competencia general). Los nombres deben coincidir con
+# `seed_saber_pro.py`; el `orden` persistido se usa para asignar el peso.
+DISTRIBUCIONES_OFICIALES = {
+    AREA_RAZONAMIENTO: {
+        'nivel': 'competencia',
+        'criterios': (
+            ('Interpretación y representación', 33),
+            ('Formulación y ejecución', 33),
+            ('Argumentación', 34),
+        ),
+    },
+    AREA_LECTURA_CRITICA: {
+        'nivel': 'afirmacion',
+        'criterios': (
+            ('Identifica y entiende los contenidos locales que conforman un texto.', 26),
+            ('Comprende cómo se articulan las partes de un texto para darle un sentido global.', 40),
+            ('Reflexiona a partir de un texto y evalúa su contenido.', 34),
+        ),
+    },
+    AREA_CIUDADANAS: {
+        'nivel': 'competencia',
+        'criterios': (
+            ('Conocimientos', 30),
+            ('Argumentación', 20),
+            ('Multiperspectivismo', 30),
+            ('Pensamiento sistémico', 20),
+        ),
+    },
+}
+
+# Límite oficial del texto base de Lectura Crítica. Se aplica tanto al agente
+# generador como a la edición manual del docente.
+MAX_PALABRAS_CONTEXTO_LECTURA_CRITICA = 500
 
 # Cantidad de opciones de respuesta de cada parte del examen de Inglés.
 # La parte 1 se presenta como listado de letras A–H: 8 palabras para 5
@@ -77,6 +124,10 @@ PREGUNTAS_POR_PARTE_INGLES = {
     6: 5,
     7: 10,
 }
+
+# Un simulacro de Inglés siempre cubre las 7 partes, así que su total de
+# preguntas es fijo y no lo decide el docente.
+TOTAL_PREGUNTAS_INGLES = sum(PREGUNTAS_POR_PARTE_INGLES.values())
 
 # Partes cuyo bloque comparte un texto base en `contexto` que enmarca todas sus
 # preguntas (como el examen real). Las partes 2 y 3 son ítems autocontenidos.
@@ -235,6 +286,140 @@ def parte_exige_espacios(parte: int) -> bool:
     return parte in PARTES_CON_ESPACIOS_INGLES
 
 
+def _criterios_distribucion(area_nombre):
+    """Criterios oficiales con su peso, o `()` si el área no usa distribución."""
+    distribucion = DISTRIBUCIONES_OFICIALES.get(area_nombre)
+    return distribucion['criterios'] if distribucion else ()
+
+
+def _indice_criterio(criterios, nombre, orden) -> int | None:
+    """Ubica un criterio oficial por nombre y usa `orden` como respaldo.
+
+    El nombre es la referencia principal para no depender de que `orden` se haya
+    sembrado. Algunos registros creados manualmente conservan el `orden=0` por
+    defecto; en ese caso el nombre sigue resolviendo el peso correcto.
+    """
+    nombres = [criterio[0] for criterio in criterios]
+    if nombre in nombres:
+        return nombres.index(nombre)
+    indice = orden - 1 if orden else None
+    if indice is not None and 0 <= indice < len(criterios):
+        return indice
+    return None
+
+
+def peso_competencia(competencia) -> int:
+    """Peso porcentual oficial de una competencia dentro de su área.
+
+    Lectura Crítica tiene una sola competencia general, así que aporta el 100%
+    y el reparto real se hace entre sus afirmaciones (`peso_afirmacion`).
+    """
+    area_nombre = competencia.area.nombre
+    if area_nombre == AREA_LECTURA_CRITICA:
+        return 100
+
+    criterios = _criterios_distribucion(area_nombre)
+    indice = _indice_criterio(criterios, competencia.nombre, competencia.orden)
+    return criterios[indice][1] if indice is not None else 0
+
+
+def peso_afirmacion(afirmacion) -> int:
+    """Peso porcentual oficial de una afirmación dentro de su área.
+
+    En Lectura Crítica el porcentaje se reparte entre afirmaciones; en las demás
+    áreas estructuradas la afirmación hereda el peso de su competencia.
+    """
+    area_nombre = afirmacion.competencia.area.nombre
+    if area_nombre == AREA_LECTURA_CRITICA:
+        criterios = _criterios_distribucion(area_nombre)
+        indice = _indice_criterio(criterios, afirmacion.nombre, afirmacion.orden)
+        return criterios[indice][1] if indice is not None else 0
+    return peso_competencia(afirmacion.competencia)
+
+
+def peso_de_criterio(competencia=None, afirmacion=None) -> int:
+    """Peso oficial del criterio seleccionado (afirmación si viene, si no competencia)."""
+    if afirmacion is not None:
+        return peso_afirmacion(afirmacion)
+    if competencia is not None:
+        return peso_competencia(competencia)
+    return 0
+
+
+def distribuir_por_pesos(total: int, pesos) -> list:
+    """Reparte `total` preguntas según pesos con el método del mayor residuo.
+
+    Garantiza que la suma sea exactamente `total` y que todo criterio reciba al
+    menos una pregunta cuando hay preguntas suficientes. La diferencia de a uno
+    respecto al porcentaje exacto es inevitable al trabajar con enteros.
+    """
+    pesos = [max(0, int(peso)) for peso in pesos]
+    if not pesos:
+        return []
+    if total < len(pesos):
+        raise ValueError(
+            f'Se requieren al menos {len(pesos)} preguntas para cubrir todos los criterios.'
+        )
+
+    suma = sum(pesos)
+    if suma <= 0:
+        pesos = [1] * len(pesos)
+        suma = len(pesos)
+
+    exactos = [total * peso / suma for peso in pesos]
+    asignaciones = [int(valor) for valor in exactos]
+    restante = total - sum(asignaciones)
+    orden = sorted(
+        range(len(pesos)),
+        key=lambda indice: (-(exactos[indice] - asignaciones[indice]), indice),
+    )
+    for indice in orden[:restante]:
+        asignaciones[indice] += 1
+
+    # Un peso muy pequeño podría quedar en cero con totales pequeños; se le
+    # quita una pregunta al criterio con más asignaciones para no dejar vacío
+    # un criterio seleccionado por el docente.
+    for indice, cantidad in enumerate(asignaciones):
+        if cantidad == 0:
+            donante = max(range(len(asignaciones)), key=lambda i: (asignaciones[i], -i))
+            if asignaciones[donante] > 1:
+                asignaciones[donante] -= 1
+                asignaciones[indice] += 1
+    return asignaciones
+
+
+def criterios_oficiales_area(area) -> list:
+    """Criterios que reparten los porcentajes oficiales de un área estructurada.
+
+    Devuelve dicts con las instancias resueltas (`competencia`, `afirmacion`,
+    `parte`) y sin `cantidad`: el llamador decide el total y reparte con
+    `distribuir_por_pesos`. En Lectura Crítica usa sus 3 afirmaciones; en
+    Razonamiento Cuantitativo y Competencias Ciudadanas, sus competencias.
+    """
+    area_nombre = area.nombre
+    if area_nombre in (AREA_RAZONAMIENTO, AREA_CIUDADANAS):
+        return [
+            {'competencia': competencia, 'afirmacion': None, 'parte': None}
+            for competencia in CompetenciaSaberPro.objects.filter(area=area).order_by('orden', 'id')
+        ]
+    if area_nombre == AREA_LECTURA_CRITICA:
+        return [
+            {'competencia': afirmacion.competencia, 'afirmacion': afirmacion, 'parte': None}
+            for afirmacion in (
+                AfirmacionSaberPro.objects.filter(competencia__area=area)
+                .select_related('competencia')
+                .order_by('competencia__orden', 'orden', 'id')
+            )
+        ]
+    return []
+
+
+def texto_distribucion_oficial(area_nombre) -> str:
+    """Descripción de la distribución oficial para inyectar en el prompt de IA."""
+    criterios = _criterios_distribucion(area_nombre)
+    return ', '.join(f'{nombre} {peso}%' for nombre, peso in criterios)
+
+
 def validar_relacion(opciones, relaciones) -> tuple:
     """Valida la forma de un ítem de la parte 1 de Inglés y lo normaliza.
 
@@ -289,10 +474,12 @@ def partes_ingles() -> list:
 def criterios_area(area) -> list:
     """Jerarquía competencial agrupada de un área, para el selector del docente.
 
-    Devuelve lista de dicts `{'id', 'nombre', 'afirmaciones': [{'id', 'nombre',
-    'evidencias': [{'id', 'nombre'}]}]` anclados al área. Solo tiene sentido
-    para las áreas con `ESTRUCTURA_COMPETENCIAS`; en Inglés y Comunicación
-    Escrita devuelve lista vacía (se usan `partes_ingles()` o ningún criterio).
+    Devuelve lista de dicts `{'id', 'nombre', 'peso', 'afirmaciones': [{'id',
+    'nombre', 'peso', 'evidencias': [{'id', 'nombre'}]}]}` anclados al área.
+    `peso` es el porcentaje oficial con el que ese criterio entra al simulacro.
+    Solo tiene sentido para las áreas con `ESTRUCTURA_COMPETENCIAS`; en Inglés y
+    Comunicación Escrita devuelve lista vacía (se usan `partes_ingles()` o
+    ningún criterio).
     """
     competencias = (
         CompetenciaSaberPro.objects.filter(area=area)
@@ -303,10 +490,12 @@ def criterios_area(area) -> list:
         {
             'id': competencia.id,
             'nombre': competencia.nombre,
+            'peso': peso_competencia(competencia),
             'afirmaciones': [
                 {
                     'id': afirmacion.id,
                     'nombre': afirmacion.nombre,
+                    'peso': peso_afirmacion(afirmacion),
                     'evidencias': [
                         {'id': evidencia.id, 'nombre': evidencia.nombre}
                         for evidencia in sorted(afirmacion.evidencias.all(), key=lambda e: (e.orden, e.id))

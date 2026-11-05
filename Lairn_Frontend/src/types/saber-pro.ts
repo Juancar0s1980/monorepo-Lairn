@@ -117,6 +117,7 @@ export interface EvidenciaCatalogoSaberPro {
 export interface AfirmacionCatalogoSaberPro {
   id: number
   nombre: string
+  peso: number
   evidencias: EvidenciaCatalogoSaberPro[]
 }
 
@@ -124,6 +125,7 @@ export interface AfirmacionCatalogoSaberPro {
 export interface CompetenciaCatalogoSaberPro {
   id: number
   nombre: string
+  peso: number
   afirmaciones: AfirmacionCatalogoSaberPro[]
 }
 
@@ -205,4 +207,318 @@ export interface DatosEditarContenidoSaberPro {
   preguntas?: PreguntaContenidoSaberPro[]
   contexto?: string
   tema?: string
+}
+// ---------------------------------------------------------------------------
+// Contratos de la HU-19 (creacion y gestion de simulacros). Reflejan
+// /docente/cursos/{id}/simulacros/, su disponibilidad de banco aprobado y el
+// listado de simulacros activos del estudiante inscrito (HU-19.5).
+// ---------------------------------------------------------------------------
+
+export interface DistribucionSimulacro {
+  id: number
+  competencia: ReferenciaCriterio | null
+  afirmacion: ReferenciaCriterio | null
+  parte: number | null
+  cantidad: number
+}
+
+export interface SimulacroSaberPro {
+  id: number
+  curso: CursoSaberPro
+  area: AreaSaberPro
+  titulo: string
+  descripcion: string
+  num_preguntas: number
+  tiempo_limite_minutos: number
+  intentos_maximos: number
+  fecha_limite: string | null
+  limite_palabras: number | null
+  activo: boolean
+  tiene_codigo_desbloqueo: boolean
+  total_preguntas: number
+  distribuciones: DistribucionSimulacro[]
+  creado_en: string
+  actualizado_en: string
+}
+
+// Pregunta aprobada que quedó asignada al simulacro, con su orden y el
+// contenido completo (incluida la respuesta correcta para el docente).
+export interface PreguntaAsignadaSimulacro {
+  id: number
+  orden: number
+  contenido: ContenidoBancoSaberPro
+}
+
+// Respuesta de GET
+// /saber-pro/docente/cursos/{id}/simulacros/{simulacroId}/preguntas/.
+export interface PreguntasSimulacroSaberPro {
+  simulacro_id: number
+  titulo: string
+  total_preguntas: number
+  preguntas: PreguntaAsignadaSimulacro[]
+}
+
+export interface CursoResumenSimulacro {
+  id: number
+  nombre: string
+  area: AreaSaberPro
+}
+
+export interface SimulacroEstudianteSaberPro {
+  id: number
+  curso: CursoResumenSimulacro
+  area: AreaSaberPro
+  titulo: string
+  descripcion: string
+  num_preguntas: number
+  tiempo_limite_minutos: number
+  total_preguntas: number
+  intentos_maximos: number
+  intentos_realizados: number
+  intentos_restantes: number
+  intento_en_progreso: boolean
+  puede_presentar: boolean
+  fecha_limite: string | null
+  limite_palabras: number | null
+  vencido: boolean
+  creado_en: string
+}
+
+export interface DatosDistribucionSimulacro {
+  competencia_id?: number | null
+  afirmacion_id?: number | null
+  parte?: number | null
+  cantidad?: number | null
+}
+
+export interface DatosSimulacroSaberPro {
+  titulo?: string
+  descripcion?: string
+  num_preguntas?: number
+  tiempo_limite_minutos?: number
+  intentos_maximos?: number
+  fecha_limite?: string | null
+  limite_palabras?: number | null
+  activo?: boolean
+  codigo_desbloqueo?: string
+  distribuciones?: DatosDistribucionSimulacro[]
+}
+
+export interface AfirmacionDisponibilidadSimulacro {
+  id: number
+  nombre: string
+  peso: number
+  disponibles: number
+}
+
+export interface CompetenciaDisponibilidadSimulacro {
+  id: number
+  nombre: string
+  peso: number
+  disponibles: number
+  afirmaciones: AfirmacionDisponibilidadSimulacro[]
+}
+
+export interface ParteDisponibilidadSimulacro {
+  numero: number
+  nombre: string
+  peso: number
+  preguntas: number
+  disponibles: number
+}
+
+export interface DisponibilidadSimulacroSaberPro {
+  area: AreaSaberPro
+  tipo_estructura: 'competencias' | 'partes' | 'consigna'
+  total_aprobados: number
+  competencias: CompetenciaDisponibilidadSimulacro[]
+  partes: ParteDisponibilidadSimulacro[]
+}
+
+// ---------------------------------------------------------------------------
+// Contratos de la HU-21 (presentación cronometrada del simulacro). Las
+// respuestas correctas NUNCA llegan al navegador: solo el bloque actual, el
+// avance y el resultado final.
+// ---------------------------------------------------------------------------
+
+export type SubtipoPreguntaPresentacion =
+  | 'opcion_multiple'
+  | 'relacionar'
+  | 'bloque_ingles'
+  | 'consigna'
+
+// Subpregunta de los bloques de Inglés 2 a 7.
+export interface PreguntaInternaPresentacion {
+  id: number
+  enunciado: string
+  opciones: string[]
+}
+
+export interface PreguntaPresentacionSaberPro {
+  id: number
+  orden: number
+  tipo: 'seleccion_multiple' | 'consigna_escrita'
+  subtipo: SubtipoPreguntaPresentacion
+  parte: number | null
+  tema: string
+  contexto: string
+  enunciado: string
+  opciones: string[]
+  descripciones: string[]
+  preguntas: PreguntaInternaPresentacion[]
+  total_items: number
+  limite_palabras: number | null
+}
+
+export type MotivoFinalizacionPresentacion =
+  | ''
+  | 'completada'
+  | 'manual'
+  | 'tiempo_agotado'
+  | 'fecha_limite'
+
+export interface RetroalimentacionRespuestaSaberPro {
+  respuesta_id: number
+  orden: number
+  tema: string
+  enunciado: string
+  texto: string
+  calificacion: number | null
+  retroalimentacion: string
+  revisada_en: string | null
+}
+
+export interface ResultadoPresentacionSaberPro {
+  puntaje: number
+  calificacion: number
+  correctas: number
+  total_items: number
+  total_evaluables: number
+  contenidos_respondidos: number
+  total_preguntas: number
+  requiere_revision: boolean
+  revision_pendiente: boolean
+    calificacion_docente: number | null
+  retroalimentacion_docente: string
+  motivo_finalizacion: MotivoFinalizacionPresentacion
+  finalizada_en: string | null
+}
+
+export interface ResultadoEstudianteSimulacroSaberPro {
+  id: number
+  intentos_pendientes: number
+  estudiante: {
+    id: number
+    nombre_completo: string
+    email: string
+  }
+  intento: number
+  calificacion: number
+  aprobado: boolean
+  puntaje: number
+  correctas: number
+  total_evaluables: number
+  contenidos_respondidos: number
+  total_preguntas: number
+  requiere_revision: boolean
+  revision_pendiente: boolean
+  motivo_finalizacion: MotivoFinalizacionPresentacion
+  iniciada_en: string
+  finalizada_en: string | null
+}
+
+export interface ResumenResultadosSimulacroSaberPro {
+  total_estudiantes: number
+  total_intentos: number
+  promedio_calificacion: number
+  aprobados: number
+  requieren_revision: number
+}
+
+export interface ResultadosSimulacroSaberPro {
+  simulacro_id: number
+  simulacro_titulo: string
+  intentos_maximos: number
+  resumen: ResumenResultadosSimulacroSaberPro
+  resultados: ResultadoEstudianteSimulacroSaberPro[]
+}
+
+export interface EstadoPresentacionSaberPro {
+  presentacion_id: number
+  simulacro_id: number
+  simulacro_titulo: string
+  curso_nombre: string
+  area_nombre: string
+  intento: number
+  estado: 'en_progreso' | 'finalizada'
+  bloqueada: boolean
+  requiere_codigo_desbloqueo: boolean
+  motivo_finalizacion: MotivoFinalizacionPresentacion
+  iniciada_en: string
+  expira_en: string
+  finalizada_en: string | null
+  fecha_limite: string | null
+  limite_palabras: number | null
+  tiempo_limite_minutos: number
+  tiempo_restante_segundos: number
+  pregunta_numero: number
+  total_preguntas: number
+  total_items: number
+  total_evaluables: number
+  contenidos_respondidos: number
+  puede_finalizar: boolean
+  finalizada: boolean
+  pregunta: PreguntaPresentacionSaberPro | null
+  resultado: ResultadoPresentacionSaberPro | null
+}
+
+export interface RelacionRespuestaPresentacion {
+  descripcion: string
+  respuesta: string
+}
+
+// El cuerpo cambia según el subtipo: solo se envía una de las cuatro formas.
+export interface DatosRespuestaPresentacion {
+  pregunta_id?: number
+  opcion?: string
+  relaciones?: RelacionRespuestaPresentacion[]
+  respuestas?: string[]
+  texto?: string
+}
+
+// Contratos de revisión docente de consignas abiertas (HU-24).
+// El docente califica el intento completo: una nota y una retroalimentación.
+export interface RespuestaRevisionSaberPro {
+  id: number
+  orden: number
+  tema: string
+  contexto: string
+  enunciado: string
+  texto: string
+  palabras: number
+  limite_palabras: number | null
+}
+
+export interface DetalleRevisionSaberPro {
+  presentacion_id: number
+  simulacro_titulo: string
+  estudiante_nombre: string
+  intento: number
+  puntaje: number
+  calificacion: number
+  calificacion_docente: number | null
+  retroalimentacion: string
+  revisada_por: {
+    id: number
+    nombre_completo: string
+  } | null
+  revisada_en: string | null
+  revision_pendiente: boolean
+  total_consignas: number
+  respuestas: RespuestaRevisionSaberPro[]
+}
+
+export interface DatosRevisionPresentacionSaberPro {
+  calificacion: number
+  retroalimentacion?: string
 }
