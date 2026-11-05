@@ -27,8 +27,12 @@ from pathlib import Path
 
 from backend_lairn.ia_client import obtener_cliente_ia
 from apps.saber_pro.services.catalogo_saber_pro import (
+    AREA_CIUDADANAS,
     AREA_CONSIGNA,
+    AREA_LECTURA_CRITICA,
+    AREA_RAZONAMIENTO,
     AREAS_ESTRUCTURA_COMPETENCIAS,
+    MAX_PALABRAS_CONTEXTO_LECTURA_CRITICA,
     descripciones_de_parte,
     es_parte_relacion,
     opciones_de_parte,
@@ -36,6 +40,7 @@ from apps.saber_pro.services.catalogo_saber_pro import (
     parte_usa_texto_comun,
     partes_ingles,
     preguntas_de_parte,
+    texto_distribucion_oficial,
     validar_relacion,
 )
 
@@ -78,7 +83,7 @@ MAX_INTENTOS = 2
 
 # Reglas académicas por área, tomadas de la skill de Saber Pro. Se inyectan en
 # el prompt para que la IA no genere contenidos fuera del alcance del examen.
-_BLOQUE_RAZONAMIENTO = """
+_BLOQUE_RAZONAMIENTO = f"""
 Contenidos que puedes utilizar (catálogo ICFES del área):
 - Estadística: tipos de representación de datos: tablas y gráficos; intersección, unión y contenencia de conjuntos; conteos simples mediante principios de suma y multiplicación; azar y probabilidad; promedio; rango estadístico; población y muestra; nociones de inferencia muestral; error de estimación.
 - Álgebra y cálculo: fracciones; razones; números decimales; porcentajes; suma; resta; multiplicación; división; potenciación; notación científica; relaciones lineales y afines; razones de cambio; tasas de interés; tasas cambiarias; velocidad; aceleración.
@@ -88,18 +93,18 @@ Contextos (elige siempre uno):
 - Laborales u ocupacionales: tareas que se desarrollan en el trabajo siempre y cuando no requieran conocimientos o habilidades técnicas propias de una ocupación específica.
 - Divulgación científica: situaciones propias de la ciencia que son de conocimiento público por la naturalidad de su lenguaje o por su importancia social y cultural.
 - Comunitarios o sociales: interacción social de los ciudadanos y aquello que es propio de la sociedad en su conjunto; política, economía, convivencia y cuidado del medioambiente.
-Distribución oficial aproximada del examen por competencia: Interpretación y representación 33%, Formulación y ejecución 33%, Argumentación 34%."""
+Distribución oficial aproximada del examen por competencia: {texto_distribucion_oficial(AREA_RAZONAMIENTO)}."""
 
-_BLOQUE_LECTURA = """
+_BLOQUE_LECTURA = f"""
 Tipos de texto a usar:
 - Continuos literarios: novela, cuento, dramaturgia.
 - Continuos informativos: ensayo, columna de opinión, crónica.
 - Discontinuos literarios: caricatura, cómic.
 - Discontinuos informativos: etiqueta, infografía, tabla, diagrama, aviso publicitario, manual, reglamento.
-Distribución aproximada por afirmación: contenidos locales 26%, articulación global 40%, reflexión y evaluación 34%.
-Cada pregunta DEBE traer en "contexto" un texto base de máximo 500 palabras sobre el que se pregunta (para textos discontinuos, descríbelos con sus elementos)."""
+Distribución aproximada por afirmación: {texto_distribucion_oficial(AREA_LECTURA_CRITICA)}.
+Cada pregunta DEBE traer en "contexto" un texto base de máximo {MAX_PALABRAS_CONTEXTO_LECTURA_CRITICA} palabras sobre el que se pregunta (para textos discontinuos, descríbelos con sus elementos)."""
 
-_BLOQUE_CIUDADANAS = """
+_BLOQUE_CIUDADANAS = f"""
 Temáticas permitidas:
 - Constitución política de Colombia y sus principios fundamentales.
 - Derechos y deberes que la Constitución consagra.
@@ -108,7 +113,7 @@ Temáticas permitidas:
 - Existencia y análisis de diferentes perspectivas en situaciones donde interactúan diferentes partes: posiciones, intereses, conflicto, cosmovisiones, ideologías y roles sociales.
 - Problemas y soluciones entendidos como dimensiones relacionadas: relaciones entre dimensiones y efectos de una solución en cada dimensión.
 Contextos: situaciones ciudadanas, sociales o públicas concretas, en español neutro.
-Distribución oficial aproximada del examen por competencia: Conocimientos 30%, Argumentación 20%, Multiperspectivismo 30%, Pensamiento sistémico 20%."""
+Distribución oficial aproximada del examen por competencia: {texto_distribucion_oficial(AREA_CIUDADANAS)}."""
 
 # Reglas fijas de cada pregunta; el bloque de idioma cambia en Inglés.
 _REGLAS_PREGUNTA = """
@@ -432,7 +437,10 @@ Tu única salida debe ser un objeto JSON válido, sin texto adicional, usando EX
 def _nota_contexto(contexto_requerido: bool) -> str:
     """Frase de la regla 4 según el área: Lectura Crítica exige texto base."""
     if contexto_requerido:
-        return ', OBLIGATORIO en Lectura Crítica (texto base de máximo 500 palabras)'
+        return (
+            ', OBLIGATORIO en Lectura Crítica '
+            f'(texto base de máximo {MAX_PALABRAS_CONTEXTO_LECTURA_CRITICA} palabras)'
+        )
     return ''
 
 
@@ -608,8 +616,11 @@ def _validar_pregunta(datos: dict, opciones_esperadas: int, contexto_requerido: 
     if contexto_requerido:
         if not contexto:
             raise ValueError('la clave "contexto" es obligatoria en Lectura Crítica')
-        if len(contexto.split()) > 500:
-            raise ValueError('el "contexto" de Lectura Crítica excede las 500 palabras')
+        if len(contexto.split()) > MAX_PALABRAS_CONTEXTO_LECTURA_CRITICA:
+            raise ValueError(
+                'el "contexto" de Lectura Crítica excede las '
+                f'{MAX_PALABRAS_CONTEXTO_LECTURA_CRITICA} palabras'
+            )
 
     return {
         'enunciado': str(datos['enunciado']).strip(),

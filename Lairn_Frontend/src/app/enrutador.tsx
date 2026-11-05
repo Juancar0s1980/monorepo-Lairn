@@ -50,6 +50,13 @@ const PaginaTemaEstudioEstudiante = lazy(() => import('@/pages/examenes/pagina-t
 const PaginaPanelSaberPro = lazy(() => import('@/pages/saber-pro/pagina-panel-saber-pro'))
 const PaginaGestionCursosSaberPro = lazy(() => import('@/pages/saber-pro/pagina-gestion-cursos-saber-pro'))
 const PaginaBancoContenidoSaberPro = lazy(() => import('@/pages/saber-pro/pagina-banco-contenido-saber-pro'))
+const PaginaSimulacrosSaberPro = lazy(() => import('@/pages/saber-pro/pagina-simulacros-saber-pro'))
+const PaginaSimulacrosEstudianteSaberPro = lazy(
+  () => import('@/pages/saber-pro/pagina-simulacros-estudiante-saber-pro')
+)
+const PaginaPresentarSimulacroSaberPro = lazy(
+  () => import('@/pages/saber-pro/pagina-presentar-simulacro-saber-pro')
+)
 
 // Fallback de carga mostrado mientras se descarga el chunk de una página.
 function CargandoPagina() {
@@ -94,6 +101,15 @@ function PaginaLaboratorioPorRol() {
 
   if (rol === ROLES.DOCENTE) return <PaginaEditorLaboratorioDocente />
   if (rol === ROLES.ESTUDIANTE) return <PaginaResolverLaboratorioEstudiante />
+  return <Navigate to="/" replace />
+}
+
+// Selector por rol para Simulacros: Docente gestiona, Estudiante consulta los publicados.
+function PaginaSimulacrosSaberProPorRol() {
+  const { rol } = useAuth()
+
+  if (rol === ROLES.DOCENTE) return <PaginaSimulacrosSaberPro />
+  if (rol === ROLES.ESTUDIANTE) return <PaginaSimulacrosEstudianteSaberPro />
   return <Navigate to="/" replace />
 }
 
@@ -185,6 +201,24 @@ function RutasPrivadas() {
             element={
               <RutaProtegida rolesPermitidos={[ROLES.DOCENTE]}>
                 <PaginaBancoContenidoSaberPro />
+              </RutaProtegida>
+            }
+          />
+          {/* HU-19: simulacros del curso, con vista distinta por rol. */}
+          <Route
+            path="/saber-pro/simulacros"
+            element={
+              <RutaProtegida rolesPermitidos={[ROLES.DOCENTE, ROLES.ESTUDIANTE]}>
+                <PaginaSimulacrosSaberProPorRol />
+              </RutaProtegida>
+            }
+          />
+          {/* HU-21: presentación cronometrada de un simulacro, solo estudiante. */}
+          <Route
+            path="/saber-pro/simulacros/:simulacroId/presentar"
+            element={
+              <RutaProtegida rolesPermitidos={[ROLES.ESTUDIANTE]}>
+                <PaginaPresentarSimulacroSaberPro />
               </RutaProtegida>
             }
           />
