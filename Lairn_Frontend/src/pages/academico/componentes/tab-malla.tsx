@@ -5,13 +5,24 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Loader2, Pencil, Plus, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { Loader2, Pencil, Plus, Trash2, Users } from 'lucide-react'
 import { etiquetaOrigen } from '../academico-utils'
 import type { Academico } from '../use-academico'
+import { AsignacionDocentes } from './asignacion-docentes'
 
 export function TabMalla({ ac }: { ac: Academico }) {
+  // ADR-017: asignación masiva de docentes (la individual sigue en "Editar asignatura").
+  const [asignando, setAsignando] = useState(false)
+  const programa = ac.programas.find((p) => String(p.id) === String(ac.programaId)) ?? null
   return (
     <div className="grid gap-4 md:grid-cols-2">
+      <AsignacionDocentes
+        abierto={asignando}
+        alCerrar={() => setAsignando(false)}
+        programa={programa ? { id: programa.id, codigo: programa.codigo, nombre: programa.nombre } : null}
+        alAplicar={() => { if (ac.programaId) void ac.recargarDetalle(ac.programaId) }}
+      />
       {/* Semestres */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
@@ -93,10 +104,16 @@ export function TabMalla({ ac }: { ac: Academico }) {
             <CardTitle>Asignaturas</CardTitle>
             <CardDescription>{ac.asignaturas.length} en el catálogo del programa</CardDescription>
           </div>
-          <Button size="sm" onClick={ac.abrirCrearAsignatura} disabled={!ac.programaId}>
-            <Plus className="h-4 w-4 mr-1.5" />
-            Nueva
-          </Button>
+          <div className="flex flex-wrap justify-end gap-1.5">
+            <Button size="sm" variant="outline" onClick={() => setAsignando(true)} disabled={!ac.programaId || !ac.asignaturas.length}>
+              <Users className="h-4 w-4 mr-1.5" aria-hidden />
+              Asignar docentes
+            </Button>
+            <Button size="sm" onClick={ac.abrirCrearAsignatura} disabled={!ac.programaId}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              Nueva
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {ac.cargandoDetalle ? (

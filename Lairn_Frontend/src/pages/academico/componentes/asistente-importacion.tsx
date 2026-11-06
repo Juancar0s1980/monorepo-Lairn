@@ -74,7 +74,7 @@ const ACCIONES: Record<AccionImportacion, { previa: string; hecho: string; clase
   rechazar: { previa: 'Rechazado', hecho: 'Rechazado', clase: 'bg-destructive/10 text-destructive' },
 }
 
-const ENTIDADES = { programa: 'Programa', asignatura: 'Asignatura', usuario: 'Usuario' } as const
+const ENTIDADES = { programa: 'Programa', asignatura: 'Asignatura', usuario: 'Usuario', docente: 'Docente (ADR-017)' } as const
 
 const EJEMPLO_JSON = `{
   "programas": [

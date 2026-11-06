@@ -41,6 +41,7 @@ import {
   Target,
   AlertCircle,
 } from "lucide-react";
+import { PanelEstudianteEvaluacion } from './componentes/paneles-rol'
 
 
 
@@ -211,6 +212,9 @@ export default function PaginaDashboardEstudiante() {
           )
         }
       />
+
+      {/* ADR-014: evaluación de resultados de aprendizaje */}
+      <PanelEstudianteEvaluacion />
 
       {/* ═══════════════════════════════════════════════════════════
           SECCIÓN 2 — Stats rápidas (5 cards)

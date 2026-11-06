@@ -186,7 +186,7 @@ export interface CorreccionPropuesta {
 export type AccionImportacion = 'crear' | 'actualizar' | 'sin_cambios' | 'omitir' | 'rechazar'
 
 export interface RegistroImportacion {
-  entidad: 'programa' | 'asignatura' | 'usuario'
+  entidad: 'programa' | 'asignatura' | 'usuario' | 'docente'
   clave: string
   nombre: string
   accion: AccionImportacion

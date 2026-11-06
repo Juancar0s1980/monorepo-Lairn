@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { ResumenGlobalAdmin } from '@/types/analitica'
+import { PanelAdminEvaluacion } from './componentes/paneles-rol'
 
 // Formatea la fecha actual en español.
 function formatearFecha(): string {
@@ -116,6 +117,9 @@ export default function PaginaDashboardAdmin() {
           </span>
         }
       />
+
+      {/* ADR-014: evaluación de resultados de aprendizaje */}
+      <PanelAdminEvaluacion />
 
       {/* Stats rápidas */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

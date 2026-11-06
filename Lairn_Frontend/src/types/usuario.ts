@@ -3,6 +3,8 @@ export const ROLES = {
   ADMIN: 'Administrador',
   // Gestiona la estructura curricular (HU-01.3 a HU-02.3); no crea programas ni importa datos.
   COORDINADOR: 'Coordinador',
+  // Consulta el reporte ejecutivo institucional (HU-11); solo lectura.
+  VICERRECTOR: 'Vicerrector',
   DOCENTE: 'Docente',
   ESTUDIANTE: 'Estudiante',
 } as const

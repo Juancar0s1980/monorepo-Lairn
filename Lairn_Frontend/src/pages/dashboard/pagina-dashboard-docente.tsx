@@ -31,6 +31,7 @@ import {
   ArrowRight,
   AlertCircle,
 } from "lucide-react";
+import { PanelDocenteEvaluacion } from './componentes/paneles-rol'
 
 // Devuelve el saludo según la hora del día.
 function obtenerSaludo(): string {
@@ -143,6 +144,9 @@ export default function PaginaDashboardDocente() {
           )
         }
       />
+
+      {/* ADR-014: evaluación de resultados de aprendizaje */}
+      <PanelDocenteEvaluacion />
 
       {/* ═══════════════════════════════════════════════════════════
           SECCIÓN 2 — Stats rápidas (4 cards)
