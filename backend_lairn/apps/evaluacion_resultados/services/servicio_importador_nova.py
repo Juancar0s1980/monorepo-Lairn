@@ -8,7 +8,8 @@ Contrato JSON aceptado (el del correo de TI):
   "programas": [{codigo, nombre, modalidad?, sede?, duracion?, vigencia?,
                  external_id?, semestres?: [1,2,...]}],
   "asignaturas": [{codigo, nombre, creditos?, intensidad?, tipo?,
-                    programa_codigo, semestre?, external_id?}],
+                    programa_codigo, semestre?, external_id?,
+                    docente_email?, curso_codigo?}],
   "usuarios": [{email, ...}]
 }
 
@@ -29,6 +30,11 @@ Reglas de negocio que preserva:
     lugar de moverse en silencio.
   - Usuarios: nunca se crean ni modifican cuentas desde aquí; solo se
     informa si existen (alta pendiente por TI).
+  - Docente de la asignatura (opcional, ADR-017): `docente_email` y
+    `curso_codigo` usan las mismas reglas que la asignación masiva
+    (`servicio_asignacion_docentes`). Un docente inválido NO rechaza la
+    asignatura: se informa en una fila "docente" aparte. Sin esos campos el
+    contrato y el resultado son los de siempre.
 
 `huella` (SHA-256 del JSON canónico) permite confirmar que se importa lo
 mismo que se revisó en la vista previa.
@@ -214,6 +220,7 @@ def _planificar(payload) -> dict:
         filas.append(_fila('programa', codigo, datos['nombre'], accion))
 
     vistas_asignatura: set = set()
+    resolutor = None
     for i, item in enumerate(asignaturas, start=1):
         if not isinstance(item, dict):
             filas.append(_fila('asignatura', f'#{i}', '', 'rechazar', 'el registro no es un objeto JSON'))
@@ -267,12 +274,27 @@ def _planificar(payload) -> dict:
         if existente is not None:
             datos = {campo: valor for campo, valor in datos.items()
                      if item.get(CAMPOS_ASIGNATURA[campo]) not in (None, '')}
+        nombre = str(item.get('nombre') or '').strip() or (existente.nombre if existente else '')
+        asignacion = fila_docente = None
+        email_docente = str(item.get('docente_email') or '').strip()
+        if email_docente:
+            from .servicio_asignacion_docentes import Resolutor
+
+            resolutor = resolutor or Resolutor()
+            d = resolutor.resolver(existente, nombre, email_docente, str(item.get('curso_codigo') or '').strip())
+            accion = {'error': 'rechazar', 'ya_asignada': 'sin_cambios'}.get(d['estado'], 'actualizar')
+            fila_docente = _fila('docente', codigo, nombre, accion, d['mensaje'])
+            if d['estado'] in ('valida', 'advertencia'):
+                asignacion = d
         plan_asignaturas.append({
             'codigo': existente.codigo if existente else codigo,
             'programa_codigo': prog_codigo.lower(), 'existente': existente, 'datos': datos,
             'semestre': numero_semestre, 'external_id': external_id, 'crudo': item,
+            'asignacion': asignacion,
         })
         filas.append(_fila('asignatura', codigo, datos['nombre'], 'actualizar' if existente else 'crear'))
+        if fila_docente:
+            filas.append(fila_docente)
 
     User = get_user_model()
     vistos_usuario: set = set()
@@ -301,6 +323,9 @@ def _planificar(payload) -> dict:
 # --- Fase 2: aplicar (solo modo real) ----------------------------------------
 
 def _aplicar(plan: dict) -> None:
+    from .servicio_asignacion_docentes import aplicar_decision
+
+    cursos_creados: dict = {}
     programas_obj: dict = {}
     for p in plan['programas']:
         datos = {**p['datos'], 'datos_origen': p['crudo']}
@@ -345,10 +370,12 @@ def _aplicar(plan: dict) -> None:
                 setattr(asignatura, campo, valor)
             asignatura.save()
         else:
-            AsignaturaMalla.objects.create(
+            asignatura = AsignaturaMalla.objects.create(
                 codigo=a['codigo'], programa=programa, origen=OpcionesOrigen.API_NOVA,
                 estado_revision=OpcionesEstadoRevision.APROBADO, activo=True, **datos,
             )
+        if a.get('asignacion'):
+            aplicar_decision(asignatura, a['asignacion'], cursos_creados)
 
 
 def importar_programas_json(
