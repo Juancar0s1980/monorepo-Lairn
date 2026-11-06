@@ -56,7 +56,7 @@ Endpoints backend usados:
 - `GET /examenes/cursos/{id}/estudiantes/` → estudiantes de un curso
 - `DELETE /examenes/cursos/{id}/estudiantes/{estId}/` → eliminar estudiante de curso
 
-### Evaluación Académica (`/academico`, solo Administrador)
+### Evaluación Académica (`/academico`, Administrador y Coordinador)
 - `GET /evaluacion/programas/` → programas activos
 - `POST /evaluacion/programas/` → crear programa
 - `PATCH /evaluacion/programas/{id}/` → actualizar; `{"activo": false, "estado_revision": "inactivo"}` desactiva (borrado lógico, HU-01.8)
@@ -68,7 +68,16 @@ Endpoints backend usados:
 - `GET /evaluacion/programas/{id}/momentos/` → momentos de evaluación
 - `GET /evaluacion/programas/{id}/tablero/` → resumen del programa
 - `GET /evaluacion/cargues/` → cargues documentales
-- `POST /evaluacion/integracion/importar-json/` → `{datos, modo: 'simulacro'|'real'}`
+- `POST /evaluacion/integracion/importar-json/` → `{datos, modo: 'simulacro'|'real', fuente?: 'archivo'|'pegado', huella?}` (archivo o JSON pegado)
+- `POST /evaluacion/integracion/importar-url/` → `{url, modo, huella?}`: el backend descarga el JSON (solo https, bloquea redes internas, 5 MB, 20/min). `modo: 'real'` exige la `huella` devuelta por la validación (`simulacro`); si la fuente cambió responde 409. Flujo en `use-importacion.ts` + `componentes/asistente-importacion.tsx`.
+
+### Banco de preguntas por RA (`/banco-preguntas`, solo Docente — HU-04/05)
+- `GET /evaluacion/docente/asignaturas/` → asignaturas cuyo `curso_vinculado` es un curso del docente, con sus RA y competencias transversales
+- `POST /evaluacion/docente/banco/generar/` → `{asignatura, resultado, competencia_transversal?, cantidad 1-5}` → preguntas en estado `pendiente` (IA, 20-90 s, timeout 120 s, 10/min)
+- `GET /evaluacion/docente/banco/?estado=&asignatura=&resultado=&competencia_transversal=`
+- `PATCH /evaluacion/docente/banco/{id}/` (solo pendientes) · `POST .../aprobar/` · `POST .../descartar/ {motivo?}`
+- La coordinación vincula curso↔asignatura en Malla (`curso_vinculado`, lista en `GET /evaluacion/cursos/`).
+- Código: `src/pages/banco-preguntas/` (hook `use-banco-preguntas.ts`), tipos en `src/types/banco.ts`.
 
 ### Motor Adaptativo (rendir examen)
 - `POST /motor-adaptativo/iniciar/` → `{ examen_id }` → inicia sesión de examen, devuelve primera pregunta
@@ -110,7 +119,8 @@ Patrón estándar para capturar y mostrar estos errores:
 
 ## Roles
 
-Tres roles como strings exactos: `Administrador`, `Docente`, `Estudiante`.
+Cuatro roles como strings exactos: `Administrador`, `Coordinador`, `Docente`, `Estudiante`.
+`Coordinador` (HU-01.3 a HU-02.3): entra directo a `/academico`; consulta programas y gestiona malla, competencias, RA y momentos. No crea/edita programas ni ve Importar (`ac.esAdmin`). Backend: `EsGestorAcademico` / `EsAdministradorOLecturaCoordinador`.
 Deben coincidir exactamente con los datos del backend (case-sensitive).
 La sidebar en `src/app/layout.tsx` muestra navegación diferente por rol.
 `RutaProtegida` acepta `rolesPermitidos?: string[]` para restringir acceso.

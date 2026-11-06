@@ -69,6 +69,15 @@ DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="Lairn <onboarding@res
 # de contraseña que se envía por correo (ej. https://lairn.app).
 FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:5173")
 
+# Importacion de programas desde URL JSON (evaluacion_resultados).
+# Lista separada por comas de hosts autorizados (ej. "api.uniautonoma.edu.co").
+# Vacio = cualquier host publico; las IP privadas/loopback se bloquean siempre.
+IMPORTACION_JSON_HOSTS_PERMITIDOS = [
+    h.strip().lower()
+    for h in config("IMPORTACION_JSON_HOSTS_PERMITIDOS", default="").split(",")
+    if h.strip()
+]
+
 
 # Application definition
 

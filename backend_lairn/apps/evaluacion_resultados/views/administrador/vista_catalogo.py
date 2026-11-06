@@ -34,11 +34,11 @@ from apps.evaluacion_resultados.services.servicio_trazabilidad import (
     requiere_versionado,
     versionar_resultado,
 )
-from core.permissions.permisos_rol import EsAdministrador
+from core.permissions.permisos_rol import EsAdministradorOLecturaCoordinador, EsGestorAcademico
 
 
 class VistaListaCrearProgramas(generics.ListCreateAPIView):
-    permission_classes = [EsAdministrador]
+    permission_classes = [EsAdministradorOLecturaCoordinador]
     queryset = ProgramaAcademico.objects.filter(activo=True).prefetch_related('semestres').order_by('nombre')
     serializer_class = SerializadorPrograma
 
@@ -56,7 +56,7 @@ class VistaDetallePrograma(generics.RetrieveUpdateDestroyAPIView):
     aprobados se conservan como auditoría de lo incorporado.
     """
 
-    permission_classes = [EsAdministrador]
+    permission_classes = [EsAdministradorOLecturaCoordinador]
     queryset = ProgramaAcademico.objects.all()
     serializer_class = SerializadorPrograma
 
@@ -108,7 +108,7 @@ class VistaDetallePrograma(generics.RetrieveUpdateDestroyAPIView):
 
 
 class VistaListaCrearSemestres(generics.ListCreateAPIView):
-    permission_classes = [EsAdministrador]
+    permission_classes = [EsGestorAcademico]
     serializer_class = SerializadorSemestre
 
     def get_queryset(self):
@@ -124,7 +124,7 @@ class VistaListaCrearSemestres(generics.ListCreateAPIView):
 class VistaDetalleSemestre(generics.RetrieveUpdateDestroyAPIView):
     """CRUD completo de semestre (malla). DELETE = borrado lógico HU-01.8."""
 
-    permission_classes = [EsAdministrador]
+    permission_classes = [EsGestorAcademico]
     serializer_class = SerializadorSemestre
 
     def get_queryset(self):
@@ -137,7 +137,7 @@ class VistaDetalleSemestre(generics.RetrieveUpdateDestroyAPIView):
 
 
 class VistaListaCrearAsignaturas(generics.ListCreateAPIView):
-    permission_classes = [EsAdministrador]
+    permission_classes = [EsGestorAcademico]
     serializer_class = SerializadorAsignatura
 
     def get_queryset(self):
@@ -160,7 +160,7 @@ class VistaListaCrearAsignaturas(generics.ListCreateAPIView):
 class VistaDetalleAsignatura(generics.RetrieveUpdateDestroyAPIView):
     """CRUD completo de asignatura (malla). DELETE = borrado lógico HU-01.8."""
 
-    permission_classes = [EsAdministrador]
+    permission_classes = [EsGestorAcademico]
     serializer_class = SerializadorAsignatura
 
     def get_queryset(self):
@@ -183,7 +183,7 @@ class VistaDetalleAsignatura(generics.RetrieveUpdateDestroyAPIView):
 
 
 class VistaListaCrearCompetencias(generics.ListCreateAPIView):
-    permission_classes = [EsAdministrador]
+    permission_classes = [EsGestorAcademico]
     serializer_class = SerializadorCompetencia
 
     def get_queryset(self):
@@ -202,7 +202,7 @@ class VistaDetalleCompetencia(generics.RetrieveUpdateDestroyAPIView):
     La FK de RA usa PROTECT: no se borra físicamente una competencia
     con resultados activos, por eso el delete desactiva en su lugar.
     """
-    permission_classes = [EsAdministrador]
+    permission_classes = [EsGestorAcademico]
     queryset = Competencia.objects.all()
     serializer_class = SerializadorCompetencia
 
@@ -213,7 +213,7 @@ class VistaDetalleCompetencia(generics.RetrieveUpdateDestroyAPIView):
 
 
 class VistaListaCrearResultados(generics.ListCreateAPIView):
-    permission_classes = [EsAdministrador]
+    permission_classes = [EsGestorAcademico]
     serializer_class = SerializadorResultado
 
     def get_queryset(self):
@@ -244,7 +244,7 @@ class VistaDetalleResultado(generics.RetrieveUpdateDestroyAPIView):
     DELETE = borrado lógico (activo=False) para conservar histórico.
     """
 
-    permission_classes = [EsAdministrador]
+    permission_classes = [EsGestorAcademico]
     queryset = ResultadoAprendizaje.objects.all()
     serializer_class = SerializadorResultado
 
@@ -298,7 +298,7 @@ class VistaDetalleResultado(generics.RetrieveUpdateDestroyAPIView):
 
 
 class VistaListaCrearMomentos(generics.ListCreateAPIView):
-    permission_classes = [EsAdministrador]
+    permission_classes = [EsGestorAcademico]
     serializer_class = SerializadorMomento
 
     def get_queryset(self):
@@ -318,7 +318,7 @@ class VistaDetalleMomento(generics.RetrieveUpdateDestroyAPIView):
     el borrado lógico los conserva; el tablero solo muestra
     momentos activos.
     """
-    permission_classes = [EsAdministrador]
+    permission_classes = [EsGestorAcademico]
     queryset = MomentoEvaluacion.objects.all()
     serializer_class = SerializadorMomento
 
@@ -329,7 +329,7 @@ class VistaDetalleMomento(generics.RetrieveUpdateDestroyAPIView):
 
 
 class VistaVincularResultadoMomento(generics.ListCreateAPIView):
-    permission_classes = [EsAdministrador]
+    permission_classes = [EsGestorAcademico]
     serializer_class = SerializadorMomentoResultado
 
     def get_queryset(self):
@@ -349,6 +349,6 @@ class VistaDetalleVinculo(generics.RetrieveUpdateDestroyAPIView):
     el RA y el momento se conservan).
     """
 
-    permission_classes = [EsAdministrador]
+    permission_classes = [EsGestorAcademico]
     queryset = MomentoResultado.objects.all()
     serializer_class = SerializadorMomentoResultado

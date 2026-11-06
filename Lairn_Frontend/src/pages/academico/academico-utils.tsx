@@ -78,6 +78,8 @@ export const FORM_ASIGNATURA_VACIO = {
   intensidad_horaria: 0,
   tipo: 'obligatoria' as AsignaturaMalla['tipo'],
   semestre: '' as string,
+  // Curso Lairn del docente que dicta la asignatura ('' = sin docente asignado).
+  curso_vinculado: '' as string,
 }
 
 // Formulario vacío de resultado de aprendizaje.

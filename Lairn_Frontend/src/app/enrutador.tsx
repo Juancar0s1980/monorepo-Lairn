@@ -50,6 +50,7 @@ const PaginaTemaEstudioEstudiante = lazy(() => import('@/pages/examenes/pagina-t
 const PaginaPanelSaberPro = lazy(() => import('@/pages/saber-pro/pagina-panel-saber-pro'))
 const PaginaGestionCursosSaberPro = lazy(() => import('@/pages/saber-pro/pagina-gestion-cursos-saber-pro'))
 const PaginaBancoContenidoSaberPro = lazy(() => import('@/pages/saber-pro/pagina-banco-contenido-saber-pro'))
+const PaginaBancoPreguntasDocente = lazy(() => import('@/pages/banco-preguntas/pagina-banco-preguntas-docente'))
 const PaginaSimulacrosSaberPro = lazy(() => import('@/pages/saber-pro/pagina-simulacros-saber-pro'))
 const PaginaSimulacrosEstudianteSaberPro = lazy(
   () => import('@/pages/saber-pro/pagina-simulacros-estudiante-saber-pro')
@@ -87,6 +88,8 @@ function PaginaDashboardPorRol() {
   const { rol } = useAuth()
 
   if (rol === ROLES.ADMIN) return <PaginaDashboardAdmin />
+  // El Coordinador aún no tiene tablero propio: su espacio de trabajo es /academico.
+  if (rol === ROLES.COORDINADOR) return <Navigate to="/academico" replace />
   if (rol === ROLES.DOCENTE) return <PaginaDashboardDocente />
   if (rol === ROLES.ESTUDIANTE) return <PaginaDashboardEstudiante />
   return <Navigate to="/iniciar-sesion" replace />
@@ -210,6 +213,15 @@ function RutasPrivadas() {
               </RutaProtegida>
             }
           />
+          {/* Módulo 2 (HU-04/05): banco de preguntas por RA, exclusivo del docente. */}
+          <Route
+            path="/banco-preguntas"
+            element={
+              <RutaProtegida rolesPermitidos={[ROLES.DOCENTE]}>
+                <PaginaBancoPreguntasDocente />
+              </RutaProtegida>
+            }
+          />
           {/* HU-19: simulacros del curso, con vista distinta por rol. */}
           <Route
             path="/saber-pro/simulacros"
@@ -249,7 +261,7 @@ function RutasPrivadas() {
           <Route
             path="/academico"
             element={
-              <RutaProtegida rolesPermitidos={[ROLES.ADMIN]}>
+              <RutaProtegida rolesPermitidos={[ROLES.ADMIN, ROLES.COORDINADOR]}>
                 <PaginaAcademicoAdmin />
               </RutaProtegida>
             }

@@ -1,7 +1,6 @@
-// Tab de Integración: importar JSON NOVA + subir PDF + aprobar cargues.
-// Antes solo existía el importar JSON; la subida de PDF y el aprobar
-// existían en el backend pero no tenían UI, así que el flujo documental
-// parecía roto.
+// Pestaña "Importar información": asistente de importación (URL, archivo o
+// JSON pegado) + documentos institucionales procesados por IA (pensum,
+// resolución, plan de aula) que se revisan antes de incorporarlos.
 
 import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -15,124 +14,39 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
-import { Eye, FileUp, Loader2, Trash2, Upload } from 'lucide-react'
+import { Eye, Loader2, Trash2, Upload } from 'lucide-react'
 import type { Academico } from '../use-academico'
 import { DialogoRevisionCargue } from './revision-cargue'
+import { AsistenteImportacion } from './asistente-importacion'
 
 export function TabIntegracion({ ac }: { ac: Academico }) {
   const inputPdf = useRef<HTMLInputElement>(null)
   const [archivoNombre, setArchivoNombre] = useState('')
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      {/* Importar JSON NOVA */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Importar desde NOVA (JSON)</CardTitle>
-          <CardDescription>
-            Estructura del correo de TI: programas, asignaturas, usuarios
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Select
-              value={ac.modoImportacion}
-              onValueChange={(v) => ac.setModoImportacion(v as 'simulacro' | 'real')}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="simulacro">Simulacro (dry-run)</SelectItem>
-                <SelectItem value="real">Real (escribe)</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              {ac.modoImportacion === 'simulacro'
-                ? 'Valida sin escribir nada'
-                : 'Upsert idempotente por external_id'}
-            </p>
-          </div>
-          <Textarea
-            placeholder='{"programas": [{"codigo": "...", "nombre": "..."}], "asignaturas": [...], "usuarios": [...]}'
-            value={ac.jsonNOVA}
-            onChange={(e) => ac.setJsonNOVA(e.target.value)}
-            className="min-h-[160px] font-mono text-xs"
-          />
-          <Button onClick={ac.importarNOVA} disabled={ac.importando}>
-            {ac.importando ? (
-              <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-            ) : (
-              <FileUp className="h-4 w-4 mr-1.5" />
-            )}
-            Importar
-          </Button>
-
-          {ac.resumenImportacion && (
-            <Card className="border-border bg-muted">
-              <CardContent className="space-y-2 p-4">
-                <div className="flex items-center gap-2">
-                  <Badge
-                    variant={ac.resumenImportacion.modo === 'simulacro' ? 'secondary' : 'default'}
-                    className="bg-primary text-primary-foreground border-transparent"
-                  >
-                    {ac.resumenImportacion.modo}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground">
-                    Registro de bitácora #{ac.resumenImportacion.registro_id}
-                  </span>
-                </div>
-                <div className="grid grid-cols-4 gap-2 text-center">
-                  <div className="rounded-lg bg-card p-2">
-                    <p className="text-lg font-bold text-primary">{ac.resumenImportacion.creados}</p>
-                    <p className="text-[10px] text-muted-foreground">Crear</p>
-                  </div>
-                  <div className="rounded-lg bg-card p-2">
-                    <p className="text-lg font-bold text-accent-foreground">
-                      {ac.resumenImportacion.actualizados}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground">Actualizar</p>
-                  </div>
-                  <div className="rounded-lg bg-card p-2">
-                    <p className="text-lg font-bold text-muted-foreground">
-                      {ac.resumenImportacion.omitidos}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground">Omitir</p>
-                  </div>
-                  <div className="rounded-lg bg-card p-2">
-                    <p className="text-lg font-bold text-foreground">
-                      {ac.resumenImportacion.total_recibidos}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground">Total</p>
-                  </div>
-                </div>
-                {ac.resumenImportacion.errores.length > 0 && (
-                  <ul className="space-y-1">
-                    {ac.resumenImportacion.errores.map((e, i) => (
-                      <li key={i} className="text-xs text-destructive">
-                        • {e}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </CardContent>
-            </Card>
-          )}
-        </CardContent>
-      </Card>
+    <div className="space-y-4">
+      {/* Importación guiada desde URL / archivo / pegado */}
+      <AsistenteImportacion im={ac.importacion} />
 
       {/* Cargues documentales */}
       <Card>
         <CardHeader>
-          <CardTitle>Cargues documentales (IA)</CardTitle>
-          <CardDescription>Pensum / resolución / plan de aula procesados</CardDescription>
+          <CardTitle>Documentos institucionales</CardTitle>
+          <CardDescription>
+            Sube el pensum, la resolución o un plan de aula en PDF. La IA propone la información
+            y tú la revisas antes de incorporarla al programa.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {/* Subida de PDF: antes no tenía UI y el endpoint parecía no usarse */}
           <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted p-3">
             <Select
               value={ac.tipoPdf}
+              items={[
+                { value: 'pensum', label: 'Pensum' },
+                { value: 'resolucion', label: 'Resolución' },
+                { value: 'plan_aula', label: 'Plan de aula' },
+              ]}
               onValueChange={(v) =>
                 ac.setTipoPdf(v as 'pensum' | 'resolucion' | 'plan_aula')
               }
@@ -172,6 +86,7 @@ export function TabIntegracion({ ac }: { ac: Academico }) {
             </Button>
           </div>
 
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -238,6 +153,7 @@ export function TabIntegracion({ ac }: { ac: Academico }) {
               ))}
             </TableBody>
           </Table>
+          </div>
           {!ac.cargues.length && (
             <p className="text-sm text-muted-foreground">
               Sin cargues todavía. Sube un PDF para generar la propuesta IA, revísala

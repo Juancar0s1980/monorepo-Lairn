@@ -11,16 +11,19 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import api from '@/services/api'
+import { useAuth } from '@/context/contexto-auth/use-auth'
+import { ROLES } from '@/types/usuario'
+import { useImportacion } from './use-importacion'
 import { toast } from 'sonner'
 import type {
   AsignaturaMalla,
   CargueDocumental,
   Competencia,
   CorreccionPropuesta,
+  CursoVinculable,
   MomentoEvaluacion,
   MomentoResultado,
   ProgramaAcademico,
-  ResumenImportacion,
   ResultadoAprobacionCargue,
   ResultadoAprendizaje,
   SemestrePrograma,
@@ -47,6 +50,10 @@ async function getLista<T>(url: string, nombre: string): Promise<T[]> {
 }
 
 export function useAcademico() {
+  // Administrador: todo. Coordinador: consulta programas y gestiona la estructura
+  // curricular; no crea/edita programas ni importa (el backend lo bloquea igual).
+  const { rol } = useAuth()
+  const esAdmin = rol === ROLES.ADMIN
   // Programas activos (lista base para todos los selects).
   const [programas, setProgramas] = useState<ProgramaAcademico[]>([])
   const [programaId, setProgramaId] = useState<string>('')
@@ -107,12 +114,8 @@ export function useAcademico() {
   const [momentos, setMomentos] = useState<MomentoEvaluacion[]>([])
   const [tablero, setTablero] = useState<TableroPrograma | null>(null)
   const [cargues, setCargues] = useState<CargueDocumental[]>([])
-
-  // Importación JSON NOVA.
-  const [jsonNOVA, setJsonNOVA] = useState('')
-  const [modoImportacion, setModoImportacion] = useState<'simulacro' | 'real'>('simulacro')
-  const [importando, setImportando] = useState(false)
-  const [resumenImportacion, setResumenImportacion] = useState<ResumenImportacion | null>(null)
+  // Cursos (con su docente) que se pueden vincular a una asignatura.
+  const [cursosVinculables, setCursosVinculables] = useState<CursoVinculable[]>([])
 
   // Subida de PDF (pensum / resolución / plan de aula).
   const [subiendoPdf, setSubiendoPdf] = useState(false)
@@ -178,9 +181,19 @@ export function useAcademico() {
   useEffect(() => {
     const cargar = async () => {
       try {
+        // Los cargues solo existen para el Administrador: pedirlos como
+        // Coordinador daría 403 y tumbaría toda la carga inicial.
+        // La lista de cursos solo alimenta el selector "Docente" de la malla;
+        // si falla, el resto de la vista sigue funcionando.
+        api
+          .get<CursoVinculable[]>('/evaluacion/cursos/')
+          .then((r) => setCursosVinculables(Array.isArray(r.data) ? r.data : []))
+          .catch(() => setCursosVinculables([]))
         const [resProgramas, resCargues] = await Promise.all([
           api.get<ProgramaAcademico[]>('/evaluacion/programas/'),
-          api.get<CargueDocumental[]>('/evaluacion/cargues/'),
+          esAdmin
+            ? api.get<CargueDocumental[]>('/evaluacion/cargues/')
+            : Promise.resolve({ data: [] as CargueDocumental[] }),
         ])
         const lista = Array.isArray(resProgramas.data) ? resProgramas.data : []
         setProgramas(lista)
@@ -193,7 +206,7 @@ export function useAcademico() {
       }
     }
     cargar()
-  }, [])
+  }, [esAdmin])
 
   // Al cambiar de programa: semestres, malla, DCE, momentos y tablero.
   // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -339,6 +352,7 @@ export function useAcademico() {
       intensidad_horaria: a.intensidad_horaria,
       tipo: a.tipo,
       semestre: a.semestre != null ? String(a.semestre) : '',
+      curso_vinculado: a.curso_vinculado != null ? String(a.curso_vinculado) : '',
     })
     setModalAsignatura(true)
   }
@@ -366,6 +380,10 @@ export function useAcademico() {
         tipo: formAsignatura.tipo,
         // El backend espera el id del semestre o null si aún no se ubica.
         semestre: semestreId,
+        curso_vinculado:
+          formAsignatura.curso_vinculado && formAsignatura.curso_vinculado !== 'sin-docente'
+            ? Number(formAsignatura.curso_vinculado)
+            : null,
       }
       if (editandoAsignatura) {
         await api.patch(
@@ -460,7 +478,7 @@ export function useAcademico() {
       return
     }
     if (!formResultado.descripcion.trim()) {
-      toast.error('La descripción (afirmación DCE) es obligatoria')
+      toast.error('La afirmación es obligatoria: describe qué debe lograr el estudiante')
       return
     }
     setGuardando(true)
@@ -676,42 +694,12 @@ export function useAcademico() {
     }
   }
 
-  // Importa JSON NOVA (simulacro no escribe nada).
-  const importarNOVA = async () => {
-    if (!jsonNOVA.trim()) {
-      toast.error('Pega el JSON a importar')
-      return
-    }
-    let datos: unknown
-    try {
-      datos = JSON.parse(jsonNOVA)
-    } catch {
-      toast.error('JSON inválido: revisa la sintaxis')
-      return
-    }
-    setImportando(true)
-    setResumenImportacion(null)
-    try {
-      const res = await api.post<ResumenImportacion>('/evaluacion/integracion/importar-json/', {
-        datos,
-        modo: modoImportacion,
-      })
-      setResumenImportacion(res.data)
-      toast.success(
-        res.data.modo === 'simulacro'
-          ? `Simulacro: ${res.data.creados} se crearían`
-          : `Importado: ${res.data.creados} creados, ${res.data.actualizados} actualizados`,
-      )
-      if (res.data.modo === 'real') {
-        await recargarProgramas(programaId || undefined)
-        if (programaId) await recargarDetalle(programaId)
-      }
-    } catch (err: unknown) {
-      toast.error(mensajeError(err, 'No se pudo importar el JSON'))
-    } finally {
-      setImportando(false)
-    }
-  }
+  // Asistente de importación (URL / archivo / pegado). Tras importar en
+  // real se recargan los programas y el detalle del programa activo.
+  const importacion = useImportacion(async () => {
+    await recargarProgramas(programaId || undefined)
+    if (programaId) await recargarDetalle(programaId)
+  })
 
   // Sube un PDF de pensum/resolución/plan de aula para propuesta IA.
   const subirPdf = async (archivo: File | null) => {
@@ -829,6 +817,8 @@ export function useAcademico() {
   }
 
   return {
+    esAdmin,
+    cursosVinculables,
     // Listas base
     programas, programaId, setProgramaId, busqueda, setBusqueda, programasFiltrados,
     cargando, cargandoDetalle, guardando,
@@ -859,8 +849,7 @@ export function useAcademico() {
     // Borrado
     confirmacion, setConfirmacion, eliminando, ejecutarBorrado,
     // Integración
-    jsonNOVA, setJsonNOVA, modoImportacion, setModoImportacion,
-    importando, resumenImportacion, importarNOVA,
+    importacion,
     subiendoPdf, tipoPdf, setTipoPdf, subirPdf,
     aprobandoCargue, aprobarCargue, actualizarCargue,
     revisandoCargue, setRevisandoCargue,

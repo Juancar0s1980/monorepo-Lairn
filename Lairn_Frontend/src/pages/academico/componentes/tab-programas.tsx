@@ -13,28 +13,34 @@ import type { Academico } from '../use-academico'
 export function TabProgramas({ ac }: { ac: Academico }) {
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0">
+      <CardHeader className="flex flex-col gap-3 space-y-0 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <CardTitle>Programas académicos</CardTitle>
           <CardDescription>
-            {ac.programasFiltrados.length} de {ac.programas.length} programas · crear, editar y
-            desactivar (borrado lógico)
+            {ac.programasFiltrados.length} de {ac.programas.length} programas ·{' '}
+            {ac.esAdmin
+              ? 'crea, edita o desactiva programas'
+              : 'consulta de la oferta académica vigente'}
           </CardDescription>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar..."
               value={ac.busqueda}
               onChange={(e) => ac.setBusqueda(e.target.value)}
-              className="w-[200px] pl-8"
+              aria-label="Buscar programa por nombre o código"
+              className="w-full pl-8 sm:w-[200px]"
             />
           </div>
-          <Button onClick={ac.abrirCrearPrograma}>
-            <Plus className="h-4 w-4 mr-1.5" />
-            Nuevo programa
-          </Button>
+          {/* Crear/editar programas es exclusivo del Administrador (HU-01.1 / 01.2) */}
+          {ac.esAdmin && (
+            <Button onClick={ac.abrirCrearPrograma}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              Nuevo programa
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent>
@@ -53,7 +59,7 @@ export function TabProgramas({ ac }: { ac: Academico }) {
                 <TableHead className="text-right">Duración</TableHead>
                 <TableHead>Origen</TableHead>
                 <TableHead>Estado</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
+                {ac.esAdmin && <TableHead className="text-right">Acciones</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -70,6 +76,7 @@ export function TabProgramas({ ac }: { ac: Academico }) {
                   <TableCell>
                     <BadgeRevision estado={p.estado_revision} />
                   </TableCell>
+                  {ac.esAdmin && (
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
                       <Button
@@ -92,6 +99,7 @@ export function TabProgramas({ ac }: { ac: Academico }) {
                       </Button>
                     </div>
                   </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>

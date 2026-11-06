@@ -250,6 +250,7 @@ export default function PaginaUsuarios() {
                   <TableCell>
                     <Select
                       value={String(u.role.id)}
+                      items={roles.map((r) => ({ value: String(r.id), label: r.name }))}
                       onValueChange={(valor) => valor && cambiarRol(u.id, valor)}
                       disabled={esUsuarioActual}
                     >

@@ -3,10 +3,10 @@ from apps.users.models.role import Role
 
 
 class Command(BaseCommand):
-    help = 'Inserta los roles base del sistema: Administrador, Docente, Estudiante'
+    help = 'Inserta los roles base del sistema: Administrador, Coordinador, Vicerrector, Docente, Estudiante'
 
     def handle(self, *args, **kwargs):
-        roles = ['Administrador', 'Docente', 'Estudiante']
+        roles = ['Administrador', 'Coordinador', 'Vicerrector', 'Docente', 'Estudiante']
         for nombre in roles:
             rol, creado = Role.objects.get_or_create(name=nombre)
             if creado:

@@ -123,6 +123,9 @@ export function TabMalla({ ac }: { ac: Academico }) {
                       <span className="block text-[11px] font-normal capitalize text-muted-foreground">
                         {a.tipo} · {a.intensidad_horaria}h
                       </span>
+                      <span className="block text-[11px] font-normal text-muted-foreground">
+                        {a.curso_vinculado_nombre ? `Docente: ${a.curso_vinculado_nombre}` : 'Sin docente asignado'}
+                      </span>
                     </TableCell>
                     <TableCell className="text-right">{a.creditos}</TableCell>
                     <TableCell>
