@@ -20,6 +20,7 @@ import {
   ListChecks,
   Play,
   Repeat,
+  Target,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -269,9 +270,18 @@ export default function PaginaSimulacrosEstudianteSaberPro() {
               Revisa las condiciones antes de presentar.
             </p>
           </div>
-          <span className={`hidden h-16 w-16 items-center justify-center rounded-2xl sm:flex ${paletaSaberPro.chipAccion}`}>
-            <GraduationCap className="h-8 w-8" />
-          </span>
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              className={`h-11 gap-2 px-4 font-bold ${paletaSaberPro.botonNeutro}`}
+              onClick={() => navigate('/saber-pro/desempeno')}
+            >
+              <Target className="h-4 w-4" /> Mi desempeño
+            </Button>
+            <span className={`hidden h-16 w-16 items-center justify-center rounded-2xl sm:flex ${paletaSaberPro.chipAccion}`}>
+              <GraduationCap className="h-8 w-8" />
+            </span>
+          </div>
         </header>
 
         <main className="mt-8">

@@ -522,3 +522,65 @@ export interface DatosRevisionPresentacionSaberPro {
   calificacion: number
   retroalimentacion?: string
 }
+
+// ---------------------------------------------------------------------------
+// Contratos de la HU-23 (comparación de desempeño).
+// El docente recibe un ranking nominal de su curso; el estudiante recibe solo
+// sus agregados y su percentil, nunca nombres ni posiciones de otros.
+// ---------------------------------------------------------------------------
+
+// Referencia mínima del curso comparado.
+export interface CursoComparacionSaberPro {
+  id: number
+  nombre: string
+  area: AreaSaberPro
+}
+
+// Filtro efectivo aplicado: por simulacro concreto o por el área del curso.
+export interface FiltroComparacionSaberPro {
+  tipo: 'simulacro' | 'area'
+  simulacro: {
+    id: number
+    titulo: string
+  } | null
+}
+
+// Respuesta de GET /saber-pro/estudiante/desempeno/ (HU-23.4).
+// `percentil` es el porcentaje de estudiantes del curso superados y solo se
+// calcula cuando `hay_comparacion` es true.
+export interface DesempenoEstudianteSaberPro {
+  curso: CursoComparacionSaberPro
+  filtro: FiltroComparacionSaberPro
+  tiene_resultados: boolean
+  hay_comparacion: boolean
+  total_estudiantes: number
+  percentil: number | null
+  mensaje: string
+  mi_puntaje: number | null
+  mi_calificacion: number | null
+  mis_intentos_considerados: number
+  mis_simulacros_considerados: number
+}
+
+// Una fila del ranking nominal visible solo para el docente (HU-23.1/23.2).
+export interface FilaRankingSaberPro {
+  posicion: number
+  estudiante: {
+    id: number
+    nombre_completo: string
+    email: string
+  }
+  puntaje: number
+  calificacion: number
+  intentos_considerados: number
+  simulacros_considerados: number
+}
+
+// Respuesta de GET /saber-pro/docente/cursos/{id}/ranking/ (HU-23.1/23.2).
+export interface RankingCursoSaberPro {
+  curso: CursoComparacionSaberPro
+  filtro: FiltroComparacionSaberPro
+  total_estudiantes: number
+  total_inscritos: number
+  ranking: FilaRankingSaberPro[]
+}

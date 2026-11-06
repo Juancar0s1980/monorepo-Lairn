@@ -46,7 +46,7 @@ _FUNCIONALIDADES_DOCENTE = [
         'clave': 'ranking',
         'titulo': 'Ranking',
         'descripcion': 'Consulta el listado nominal de tus estudiantes por simulacro o área, con fines pedagógicos (HU-23).',
-        'disponible': False,
+        'disponible': True,
     },
 ]
 
@@ -62,7 +62,7 @@ _FUNCIONALIDADES_ESTUDIANTE = [
         'clave': 'desempeno',
         'titulo': 'Mi desempeño',
         'descripcion': 'Consulta tu percentil por área o simulacro frente a tu curso, sin ver datos de otros estudiantes (HU-23).',
-        'disponible': False,
+        'disponible': True,
     },
 ]
 

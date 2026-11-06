@@ -24,6 +24,8 @@ from .vista_desbloquear_presentacion_saber_pro import VistaDesbloquearPresentaci
 from .vista_finalizar_presentacion_saber_pro import VistaFinalizarPresentacionSaberPro
 from .vista_resultados_simulacro_saber_pro import VistaResultadosSimulacroSaberPro
 from .vista_revision_presentacion_saber_pro import VistaRevisionPresentacionSaberPro
+from .vista_ranking_curso_saber_pro import VistaRankingCursoSaberPro
+from .vista_desempeno_estudiante_saber_pro import VistaDesempenoEstudianteSaberPro
 
 __all__ = [
     'VistaPanelSaberPro',
@@ -52,4 +54,6 @@ __all__ = [
     'VistaFinalizarPresentacionSaberPro',
     'VistaResultadosSimulacroSaberPro',
     'VistaRevisionPresentacionSaberPro',
+    'VistaRankingCursoSaberPro',
+    'VistaDesempenoEstudianteSaberPro',
 ]

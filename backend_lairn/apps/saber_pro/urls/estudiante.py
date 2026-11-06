@@ -13,6 +13,7 @@ from apps.saber_pro.views import (
     VistaBloquearPresentacionSaberPro,
     VistaCursosEstudianteSaberPro,
     VistaDesbloquearPresentacionSaberPro,
+    VistaDesempenoEstudianteSaberPro,
     VistaEstadoPresentacionSaberPro,
     VistaFinalizarPresentacionSaberPro,
     VistaIniciarPresentacionSaberPro,
@@ -30,6 +31,9 @@ urlpatterns = [
 
     # Simulacros activos de los cursos inscritos del estudiante (HU-19.5).
     path('estudiante/simulacros/', VistaSimulacrosEstudianteSaberPro.as_view(), name='simulacros_estudiante_saber_pro'),
+
+    # Percentil y agregados propios frente al curso, sin datos de terceros (HU-23).
+    path('estudiante/desempeno/', VistaDesempenoEstudianteSaberPro.as_view(), name='desempeno_estudiante_saber_pro'),
 
     # Presentación cronometrada del simulacro (HU-21).
     path(
