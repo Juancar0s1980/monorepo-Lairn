@@ -58,6 +58,37 @@ class Command(BaseCommand):
                 'rol': 'Estudiante',
                 'is_staff': False,
             },
+            # Estudiantes adicionales para demostraciones de cargues, convocatorias y presentación de evaluaciones.
+            {
+                'first_name': 'Laura',
+                'second_name': '',
+                'first_last_name': 'Prueba',
+                'second_last_name': 'Uno',
+                'email': 'estudiante1@pseudotutor.com',
+                'password': 'Estudiante1234*',
+                'rol': 'Estudiante',
+                'is_staff': False,
+            },
+            {
+                'first_name': 'Andres',
+                'second_name': '',
+                'first_last_name': 'Prueba',
+                'second_last_name': 'Dos',
+                'email': 'estudiante2@pseudotutor.com',
+                'password': 'Estudiante1234*',
+                'rol': 'Estudiante',
+                'is_staff': False,
+            },
+            {
+                'first_name': 'Camila',
+                'second_name': '',
+                'first_last_name': 'Prueba',
+                'second_last_name': 'Tres',
+                'email': 'estudiante3@pseudotutor.com',
+                'password': 'Estudiante1234*',
+                'rol': 'Estudiante',
+                'is_staff': False,
+            },
         ]
 
         for datos in usuarios:
