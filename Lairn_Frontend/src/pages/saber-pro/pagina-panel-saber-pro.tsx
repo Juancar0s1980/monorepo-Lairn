@@ -383,11 +383,21 @@ export default function PaginaPanelSaberPro() {
     void recargar()
   }
 
-  // Navegación de las herramientas del panel que ya están disponibles. Por ahora
-  // solo el banco de contenido (HU-20); las demás siguen "Próximamente".
+  // Navegación de las herramientas del panel que ya están disponibles:
+  // simulacros (HU-19), banco de contenido (HU-20) y comparación de desempeño
+  // (HU-23: ranking para el docente, percentil para el estudiante).
   const manejarAccionFuncionalidad = (clave: string) => {
     if (clave === 'banco_contenido') {
       navigate('/saber-pro/banco')
+    }
+    if (clave === 'simulacros') {
+      navigate('/saber-pro/simulacros')
+    }
+    if (clave === 'ranking') {
+      navigate('/saber-pro/ranking')
+    }
+    if (clave === 'desempeno') {
+      navigate('/saber-pro/desempeno')
     }
   }
 

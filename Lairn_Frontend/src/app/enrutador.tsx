@@ -51,6 +51,19 @@ const PaginaPanelSaberPro = lazy(() => import('@/pages/saber-pro/pagina-panel-sa
 const PaginaGestionCursosSaberPro = lazy(() => import('@/pages/saber-pro/pagina-gestion-cursos-saber-pro'))
 const PaginaBancoContenidoSaberPro = lazy(() => import('@/pages/saber-pro/pagina-banco-contenido-saber-pro'))
 const PaginaBancoPreguntasDocente = lazy(() => import('@/pages/banco-preguntas/pagina-banco-preguntas-docente'))
+const PaginaSimulacrosSaberPro = lazy(() => import('@/pages/saber-pro/pagina-simulacros-saber-pro'))
+const PaginaSimulacrosEstudianteSaberPro = lazy(
+  () => import('@/pages/saber-pro/pagina-simulacros-estudiante-saber-pro')
+)
+const PaginaPresentarSimulacroSaberPro = lazy(
+  () => import('@/pages/saber-pro/pagina-presentar-simulacro-saber-pro')
+)
+const PaginaRankingSaberPro = lazy(
+  () => import('@/pages/saber-pro/pagina-ranking-saber-pro')
+)
+const PaginaDesempenoEstudianteSaberPro = lazy(
+  () => import('@/pages/saber-pro/pagina-desempeno-estudiante-saber-pro')
+)
 
 // Fallback de carga mostrado mientras se descarga el chunk de una página.
 function CargandoPagina() {
@@ -97,6 +110,15 @@ function PaginaLaboratorioPorRol() {
 
   if (rol === ROLES.DOCENTE) return <PaginaEditorLaboratorioDocente />
   if (rol === ROLES.ESTUDIANTE) return <PaginaResolverLaboratorioEstudiante />
+  return <Navigate to="/" replace />
+}
+
+// Selector por rol para Simulacros: Docente gestiona, Estudiante consulta los publicados.
+function PaginaSimulacrosSaberProPorRol() {
+  const { rol } = useAuth()
+
+  if (rol === ROLES.DOCENTE) return <PaginaSimulacrosSaberPro />
+  if (rol === ROLES.ESTUDIANTE) return <PaginaSimulacrosEstudianteSaberPro />
   return <Navigate to="/" replace />
 }
 
@@ -197,6 +219,42 @@ function RutasPrivadas() {
             element={
               <RutaProtegida rolesPermitidos={[ROLES.DOCENTE]}>
                 <PaginaBancoPreguntasDocente />
+              </RutaProtegida>
+            }
+          />
+          {/* HU-19: simulacros del curso, con vista distinta por rol. */}
+          <Route
+            path="/saber-pro/simulacros"
+            element={
+              <RutaProtegida rolesPermitidos={[ROLES.DOCENTE, ROLES.ESTUDIANTE]}>
+                <PaginaSimulacrosSaberProPorRol />
+              </RutaProtegida>
+            }
+          />
+          {/* HU-21: presentación cronometrada de un simulacro, solo estudiante. */}
+          <Route
+            path="/saber-pro/simulacros/:simulacroId/presentar"
+            element={
+              <RutaProtegida rolesPermitidos={[ROLES.ESTUDIANTE]}>
+                <PaginaPresentarSimulacroSaberPro />
+              </RutaProtegida>
+            }
+          />
+          {/* HU-23: ranking nominal del curso, exclusivo del docente propietario. */}
+          <Route
+            path="/saber-pro/ranking"
+            element={
+              <RutaProtegida rolesPermitidos={[ROLES.DOCENTE]}>
+                <PaginaRankingSaberPro />
+              </RutaProtegida>
+            }
+          />
+          {/* HU-23: percentil y agregados propios del estudiante, sin datos de terceros. */}
+          <Route
+            path="/saber-pro/desempeno"
+            element={
+              <RutaProtegida rolesPermitidos={[ROLES.ESTUDIANTE]}>
+                <PaginaDesempenoEstudianteSaberPro />
               </RutaProtegida>
             }
           />

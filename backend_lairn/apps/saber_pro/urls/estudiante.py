@@ -10,7 +10,15 @@ solo define el mapeo URL→vista, como el resto del paquete `urls`.
 
 from django.urls import path
 from apps.saber_pro.views import (
+    VistaBloquearPresentacionSaberPro,
     VistaCursosEstudianteSaberPro,
+    VistaDesbloquearPresentacionSaberPro,
+    VistaDesempenoEstudianteSaberPro,
+    VistaEstadoPresentacionSaberPro,
+    VistaFinalizarPresentacionSaberPro,
+    VistaIniciarPresentacionSaberPro,
+    VistaResponderPresentacionSaberPro,
+    VistaSimulacrosEstudianteSaberPro,
     VistaUnirseCursoSaberPro,
 )
 
@@ -20,4 +28,42 @@ urlpatterns = [
 
     # Listado de cursos a los que el estudiante se ha unido (HU-18.3).
     path('estudiante/cursos/', VistaCursosEstudianteSaberPro.as_view(), name='cursos_estudiante_saber_pro'),
+
+    # Simulacros activos de los cursos inscritos del estudiante (HU-19.5).
+    path('estudiante/simulacros/', VistaSimulacrosEstudianteSaberPro.as_view(), name='simulacros_estudiante_saber_pro'),
+
+    # Percentil y agregados propios frente al curso, sin datos de terceros (HU-23).
+    path('estudiante/desempeno/', VistaDesempenoEstudianteSaberPro.as_view(), name='desempeno_estudiante_saber_pro'),
+
+    # Presentación cronometrada del simulacro (HU-21).
+    path(
+        'estudiante/simulacros/<int:simulacro_id>/presentaciones/',
+        VistaIniciarPresentacionSaberPro.as_view(),
+        name='iniciar_presentacion_saber_pro',
+    ),
+    path(
+        'estudiante/presentaciones/<int:presentacion_id>/',
+        VistaEstadoPresentacionSaberPro.as_view(),
+        name='estado_presentacion_saber_pro',
+    ),
+    path(
+        'estudiante/presentaciones/<int:presentacion_id>/responder/',
+        VistaResponderPresentacionSaberPro.as_view(),
+        name='responder_presentacion_saber_pro',
+    ),
+    path(
+        'estudiante/presentaciones/<int:presentacion_id>/bloquear/',
+        VistaBloquearPresentacionSaberPro.as_view(),
+        name='bloquear_presentacion_saber_pro',
+    ),
+    path(
+        'estudiante/presentaciones/<int:presentacion_id>/desbloquear/',
+        VistaDesbloquearPresentacionSaberPro.as_view(),
+        name='desbloquear_presentacion_saber_pro',
+    ),
+    path(
+        'estudiante/presentaciones/<int:presentacion_id>/finalizar/',
+        VistaFinalizarPresentacionSaberPro.as_view(),
+        name='finalizar_presentacion_saber_pro',
+    ),
 ]
