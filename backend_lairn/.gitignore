@@ -29,3 +29,5 @@ media/
 # Sistema operativo
 .DS_Store
 Thumbs.db
+# Entregas y guías de tareas (privadas, se sirven solo por endpoints con permiso)
+archivos_privados/

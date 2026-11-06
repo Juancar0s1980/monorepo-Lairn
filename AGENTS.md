@@ -27,7 +27,7 @@ docker compose exec web python manage.py seed_usuarios   # requiere seed_roles p
 ```
 
 - Las migraciones corren automáticamente al arrancar `web`.
-- Cuentas seed reales (`apps/users/management/commands/seed_usuarios.py`): `admin@pseudotutor.com`/`Admin1234*`, `coordinador@pseudotutor.com`/`Coordinador1234*`, `docente@pseudotutor.com`/`Docente1234*`, `estudiante@pseudotutor.com`/`Estudiante1234*`.
+- Cuentas seed reales (`apps/users/management/commands/seed_usuarios.py`): `admin@pseudotutor.com`/`Admin1234*`, `coordinador@pseudotutor.com`/`Coordinador1234*`, `vicerrector@pseudotutor.com`/`Vicerrector1234*`, `docente@pseudotutor.com`/`Docente1234*`, `estudiante@pseudotutor.com`/`Estudiante1234*`.
   **Alto riesgo:** `backend_lairn/README.md` y `docs/COMANDOS.md` muestran contraseñas en minúscula (`admin1234`) que están desactualizadas.
 - Verificar: `docker compose ps` (db/ml/ejecutor con healthcheck) y URLs http://localhost:5173, /api/docs/ (Swagger), /admin/.
 

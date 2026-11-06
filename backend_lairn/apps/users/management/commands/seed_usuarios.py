@@ -29,6 +29,16 @@ class Command(BaseCommand):
                 'is_staff': False,
             },
             {
+                'first_name': 'Vicerrector',
+                'second_name': '',
+                'first_last_name': 'Academico',
+                'second_last_name': '',
+                'email': 'vicerrector@pseudotutor.com',
+                'password': 'Vicerrector1234*',
+                'rol': 'Vicerrector',
+                'is_staff': False,
+            },
+            {
                 'first_name': 'Docente',
                 'second_name': '',
                 'first_last_name': 'Prueba',
