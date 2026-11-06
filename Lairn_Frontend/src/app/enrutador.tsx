@@ -57,6 +57,12 @@ const PaginaSimulacrosEstudianteSaberPro = lazy(
 const PaginaPresentarSimulacroSaberPro = lazy(
   () => import('@/pages/saber-pro/pagina-presentar-simulacro-saber-pro')
 )
+const PaginaRankingSaberPro = lazy(
+  () => import('@/pages/saber-pro/pagina-ranking-saber-pro')
+)
+const PaginaDesempenoEstudianteSaberPro = lazy(
+  () => import('@/pages/saber-pro/pagina-desempeno-estudiante-saber-pro')
+)
 
 // Fallback de carga mostrado mientras se descarga el chunk de una página.
 function CargandoPagina() {
@@ -219,6 +225,24 @@ function RutasPrivadas() {
             element={
               <RutaProtegida rolesPermitidos={[ROLES.ESTUDIANTE]}>
                 <PaginaPresentarSimulacroSaberPro />
+              </RutaProtegida>
+            }
+          />
+          {/* HU-23: ranking nominal del curso, exclusivo del docente propietario. */}
+          <Route
+            path="/saber-pro/ranking"
+            element={
+              <RutaProtegida rolesPermitidos={[ROLES.DOCENTE]}>
+                <PaginaRankingSaberPro />
+              </RutaProtegida>
+            }
+          />
+          {/* HU-23: percentil y agregados propios del estudiante, sin datos de terceros. */}
+          <Route
+            path="/saber-pro/desempeno"
+            element={
+              <RutaProtegida rolesPermitidos={[ROLES.ESTUDIANTE]}>
+                <PaginaDesempenoEstudianteSaberPro />
               </RutaProtegida>
             }
           />

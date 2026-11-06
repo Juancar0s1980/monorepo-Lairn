@@ -18,6 +18,7 @@ import {
   Loader2,
   Plus,
   Trash2,
+  Trophy,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -186,14 +187,23 @@ export default function PaginaSimulacrosSaberPro() {
               de tu banco segun la distribucion que definas.
             </p>
           </div>
-          <Button
-            type="button"
-            className={`h-11 gap-2 px-5 font-bold shadow-md ${paletaSaberPro.botonAccion}`}
-            onClick={abrirCreacion}
-            disabled={!cursoSeleccionado}
-          >
-            <Plus className="h-4 w-4" /> Nuevo simulacro
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              className={`h-11 gap-2 px-5 font-bold ${paletaSaberPro.botonNeutro}`}
+              onClick={() => navigate('/saber-pro/ranking')}
+            >
+              <Trophy className="h-4 w-4" /> Ver ranking
+            </Button>
+            <Button
+              type="button"
+              className={`h-11 gap-2 px-5 font-bold shadow-md ${paletaSaberPro.botonAccion}`}
+              onClick={abrirCreacion}
+              disabled={!cursoSeleccionado}
+            >
+              <Plus className="h-4 w-4" /> Nuevo simulacro
+            </Button>
+          </div>
         </header>
 
         {cargandoCursos && (

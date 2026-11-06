@@ -36,6 +36,15 @@ from .serializador_resultados_simulacro_saber_pro import (
     SerializadorResultadosSimulacro,
     SerializadorResumenResultadosSimulacro,
 )
+from .serializador_comparacion_saber_pro import (
+    SerializadorCursoComparacion,
+    SerializadorDesempenoEstudiante,
+    SerializadorEstudianteRanking,
+    SerializadorFilaRanking,
+    SerializadorFiltroComparacion,
+    SerializadorRankingCurso,
+    SerializadorSimulacroFiltro,
+)
 from .serializador_simulacro_saber_pro import (
     SerializadorAfirmacionDisponibilidad,
     SerializadorCompetenciaDisponibilidad,
@@ -65,7 +74,14 @@ __all__ = [
     'SerializadorCompetenciaDisponibilidad',
     'SerializadorCompetenciaReferencia',
     'SerializadorCrearEditarSimulacro',
+    'SerializadorCursoComparacion',
     'SerializadorCursoSaberPro',
+    'SerializadorDesempenoEstudiante',
+    'SerializadorEstudianteRanking',
+    'SerializadorFilaRanking',
+    'SerializadorFiltroComparacion',
+    'SerializadorRankingCurso',
+    'SerializadorSimulacroFiltro',
     'SerializadorContenidoBanco',
     'SerializadorCriteriosArea',
     'SerializadorDisponibilidadSimulacro',

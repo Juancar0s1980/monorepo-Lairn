@@ -26,6 +26,7 @@ from apps.saber_pro.views import (
     VistaEstudiantesCursoSaberPro,
     VistaGenerarContenidoSaberPro,
     VistaPreguntasSimulacroSaberPro,
+    VistaRankingCursoSaberPro,
     VistaRegenerarCodigoCursoSaberPro,
     VistaResultadosSimulacroSaberPro,
     VistaRevisionPresentacionSaberPro,
@@ -69,6 +70,9 @@ urlpatterns = [
 
     # Preguntas asignadas al simulacro, en solo lectura y con respuestas correctas.
     path('docente/cursos/<int:curso_id>/simulacros/<int:simulacro_id>/preguntas/', VistaPreguntasSimulacroSaberPro.as_view(), name='preguntas_simulacro_saber_pro'),
+
+    # Ranking nominal del curso, filtrable por simulacro o área (HU-23).
+    path('docente/cursos/<int:curso_id>/ranking/', VistaRankingCursoSaberPro.as_view(), name='ranking_curso_saber_pro'),
 
     # Calificaciones de los estudiantes en escala 0.0-5.0 (HU-24).
     path('docente/cursos/<int:curso_id>/simulacros/<int:simulacro_id>/resultados/', VistaResultadosSimulacroSaberPro.as_view(), name='resultados_simulacro_saber_pro'),
