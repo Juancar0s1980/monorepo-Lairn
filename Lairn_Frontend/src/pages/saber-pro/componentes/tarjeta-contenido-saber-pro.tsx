@@ -30,9 +30,15 @@ interface TarjetaContenidoSaberProProps {
   contenido: ContenidoBancoSaberPro
   /** Se invoca tras aprobar, descartar o editar para refrescar el banco. */
   onCambio: () => void
+  /** Oculta estado y acciones: se usa para consultar preguntas ya asignadas. */
+  soloLectura?: boolean
 }
 
-export function TarjetaContenidoSaberPro({ contenido, onCambio }: TarjetaContenidoSaberProProps) {
+export function TarjetaContenidoSaberPro({
+  contenido,
+  onCambio,
+  soloLectura = false,
+}: TarjetaContenidoSaberProProps) {
   const [aprobando, setAprobando] = useState(false)
   const [descartando, setDescartando] = useState(false)
   const [confirmarDescarte, setConfirmarDescarte] = useState(false)
@@ -123,17 +129,18 @@ export function TarjetaContenidoSaberPro({ contenido, onCambio }: TarjetaConteni
             {etiquetaCriterio}
           </Badge>
         )}
-        {aprobado ? (
-          <Badge className="ml-auto gap-1.5 border-transparent bg-emerald-600/15 text-emerald-700 dark:text-emerald-300">
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            Aprobado
-          </Badge>
-        ) : (
-          <Badge variant="outline" className={`ml-auto gap-1.5 ${paletaSaberPro.badge}`}>
-            <span className={`h-1.5 w-1.5 rounded-full ${paletaSaberPro.separador}`} aria-hidden="true" />
-            Pendiente
-          </Badge>
-        )}
+        {!soloLectura &&
+          (aprobado ? (
+            <Badge className="ml-auto gap-1.5 border-transparent bg-emerald-600/15 text-emerald-700 dark:text-emerald-300">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Aprobado
+            </Badge>
+          ) : (
+            <Badge variant="outline" className={`ml-auto gap-1.5 ${paletaSaberPro.badge}`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${paletaSaberPro.separador}`} aria-hidden="true" />
+              Pendiente
+            </Badge>
+          ))}
       </header>
 
       {/* Jerarquía competencial (solo áreas estructuradas) */}
@@ -297,45 +304,47 @@ export function TarjetaContenidoSaberPro({ contenido, onCambio }: TarjetaConteni
       )}
 
       {/* Acciones: solo el contenido pendiente se puede revisar (HU-20.3). */}
-      <footer className={`mt-auto flex flex-wrap items-center gap-2 border-t pt-3 ${paletaSaberPro.borde}`}>
-        {aprobado ? (
-          <span className={`flex items-center gap-1.5 text-xs ${paletaSaberPro.apoyo}`}>
-            <Lock className="h-3.5 w-3.5" />
-            Aprobado y disponible para los simulacros
-          </span>
-        ) : (
-          <>
-            <Button
-              type="button"
-              className={`h-8 gap-1.5 px-3 text-xs font-bold ${paletaSaberPro.botonAccion}`}
-              onClick={aprobar}
-              disabled={aprobando || descartando}
-            >
-              {aprobando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-              Aprobar
-            </Button>
-            <Button
-              type="button"
-              className={`h-8 gap-1.5 px-3 text-xs ${paletaSaberPro.botonNeutro}`}
-              onClick={() => setEditarAbierto(true)}
-              disabled={aprobando || descartando}
-            >
-              <Pencil className="h-3.5 w-3.5" />
-              Editar
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="h-8 gap-1.5 px-3 text-xs text-destructive hover:text-destructive"
-              onClick={() => setConfirmarDescarte(true)}
-              disabled={aprobando || descartando}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              Descartar
-            </Button>
-          </>
-        )}
-      </footer>
+      {!soloLectura && (
+        <footer className={`mt-auto flex flex-wrap items-center gap-2 border-t pt-3 ${paletaSaberPro.borde}`}>
+          {aprobado ? (
+            <span className={`flex items-center gap-1.5 text-xs ${paletaSaberPro.apoyo}`}>
+              <Lock className="h-3.5 w-3.5" />
+              Aprobado y disponible para los simulacros
+            </span>
+          ) : (
+            <>
+              <Button
+                type="button"
+                className={`h-8 gap-1.5 px-3 text-xs font-bold ${paletaSaberPro.botonAccion}`}
+                onClick={aprobar}
+                disabled={aprobando || descartando}
+              >
+                {aprobando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                Aprobar
+              </Button>
+              <Button
+                type="button"
+                className={`h-8 gap-1.5 px-3 text-xs ${paletaSaberPro.botonNeutro}`}
+                onClick={() => setEditarAbierto(true)}
+                disabled={aprobando || descartando}
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                Editar
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-8 gap-1.5 px-3 text-xs text-destructive hover:text-destructive"
+                onClick={() => setConfirmarDescarte(true)}
+                disabled={aprobando || descartando}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Descartar
+              </Button>
+            </>
+          )}
+        </footer>
+      )}
 
       {/* Confirmación de descarte: acción irreversible sobre el banco. */}
       <Dialog open={confirmarDescarte} onOpenChange={(abre) => !abre && setConfirmarDescarte(false)}>

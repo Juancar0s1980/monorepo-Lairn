@@ -17,6 +17,8 @@ Tres contratos:
   para no dejar ítems imposibles en el banco.
 """
 
+import re
+
 from rest_framework import serializers
 
 from apps.saber_pro.models.afirmacion_saber_pro import AfirmacionSaberPro
@@ -28,6 +30,7 @@ from apps.saber_pro.services.catalogo_saber_pro import (
     ESTRUCTURA_COMPETENCIAS,
     ESTRUCTURA_CONSIGNA,
     ESTRUCTURA_PARTES,
+    MAX_PALABRAS_CONTEXTO_LECTURA_CRITICA,
     es_parte_relacion,
     opciones_de_parte,
     parte_exige_espacios,
@@ -257,6 +260,16 @@ class SerializadorEditarContenido(serializers.Serializer):
         contexto = str(attrs.get('contexto') or '').strip()
         if parte_usa_texto_comun(parte) and not contexto:
             raise serializers.ValidationError({'contexto': 'El texto base es obligatorio en esta parte de Inglés.'})
+        if parte_exige_espacios(parte):
+            marcas = set(re.findall(r'__(\d+)__', contexto))
+            faltantes = [numero for numero in range(1, esperadas + 1) if str(numero) not in marcas]
+            if faltantes:
+                raise serializers.ValidationError({
+                    'contexto': (
+                        'El texto base debe numerar los espacios __N__ del 1 al '
+                        f'{esperadas}; faltan: {", ".join(map(str, faltantes))}.'
+                    ),
+                })
 
         attrs['enunciado'] = enunciado
         attrs['preguntas'] = validadas
@@ -309,8 +322,16 @@ class SerializadorEditarContenido(serializers.Serializer):
             raise serializers.ValidationError({'respuesta_correcta': 'Debe coincidir con una de las opciones.'})
 
         contexto = str(attrs.get('contexto') or '').strip()
-        if contenido.area.nombre == AREA_LECTURA_CRITICA and not contexto:
-            raise serializers.ValidationError({'contexto': 'El texto base es obligatorio en Lectura Crítica.'})
+        if contenido.area.nombre == AREA_LECTURA_CRITICA:
+            if not contexto:
+                raise serializers.ValidationError({'contexto': 'El texto base es obligatorio en Lectura Crítica.'})
+            if len(contexto.split()) > MAX_PALABRAS_CONTEXTO_LECTURA_CRITICA:
+                raise serializers.ValidationError({
+                    'contexto': (
+                        'El texto base de Lectura Crítica no puede superar las '
+                        f'{MAX_PALABRAS_CONTEXTO_LECTURA_CRITICA} palabras.'
+                    ),
+                })
 
         attrs['opciones'] = opciones
         attrs['respuesta_correcta'] = correcta
