@@ -12,7 +12,9 @@
 // componente en ./componentes. Esta página solo orquesta layout + tabs.
 // Reusa la paleta institucional de src/index.css.
 
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useSearchParams, Link } from 'react-router-dom'
+import api from '@/services/api'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Select,
@@ -22,17 +24,41 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { BookOpen, GraduationCap, Landmark, ListChecks, Loader2, RefreshCw } from 'lucide-react'
+import { BarChart3, BellRing, BookOpen, GraduationCap, Landmark, ListChecks, Loader2, RefreshCw } from 'lucide-react'
 import { useAcademico } from './use-academico'
 import { TabProgramas } from './componentes/tab-programas'
 import { TabMalla } from './componentes/tab-malla'
 import { TabCompetencias } from './componentes/tab-competencias'
 import { TabMomentos } from './componentes/tab-momentos'
 import { TabIntegracion } from './componentes/tab-integracion'
+import { TabDesempenoRA } from './componentes/tab-desempeno-ra'
+import { TabAlertas } from './componentes/tab-alertas'
 import { ModalesAcademico } from './componentes/modales-academico'
 
 export default function PaginaAcademico() {
   const ac = useAcademico()
+  // Accesos directos (p. ej. desde el inicio del Coordinador): /academico?tab=alertas.
+  const [params] = useSearchParams()
+  const pestanaInicial = params.get('tab') ?? 'programas'
+  // HU-10.2: contador de alertas abiertas visible en la pestaña (la "notificación"
+  // del tablero del coordinador). Se carga al abrir la página y se actualiza en la pestaña.
+  const [alertasAbiertas, setAlertasAbiertas] = useState(0)
+  useEffect(() => {
+    if (!ac.programaId) return
+    let activo = true
+    const cargar = async () => {
+      try {
+        const res = await api.get<{ abiertas: number }>(`/evaluacion/programas/${ac.programaId}/alertas/?estado=abierta`)
+        if (activo) setAlertasAbiertas(res.data.abiertas)
+      } catch {
+        // El contador es informativo: si falla, la pestaña igual permite consultar.
+      }
+    }
+    cargar()
+    return () => {
+      activo = false
+    }
+  }, [ac.programaId])
 
   if (ac.cargando) {
     return (
@@ -96,10 +122,10 @@ export default function PaginaAcademico() {
         </CardHeader>
       </Card>
 
-      <Tabs defaultValue="programas" className="space-y-4">
+      <Tabs defaultValue={pestanaInicial} className="space-y-4">
         {/* En móvil las pestañas se desplazan horizontalmente en vez de comprimirse */}
         <TabsList
-          className={`flex w-full justify-start overflow-x-auto overflow-y-hidden bg-muted sm:grid sm:overflow-visible ${ac.esAdmin ? 'sm:grid-cols-5' : 'sm:grid-cols-4'}`}
+          className={`flex w-full justify-start overflow-x-auto overflow-y-hidden bg-muted sm:grid sm:overflow-visible ${ac.esAdmin ? 'sm:grid-cols-7' : 'sm:grid-cols-5'}`}
         >
           <TabsTrigger value="programas" className="gap-1.5">
             <Landmark className="h-3.5 w-3.5" />
@@ -124,6 +150,25 @@ export default function PaginaAcademico() {
               Importar
             </TabsTrigger>
           )}
+          <TabsTrigger value="alertas" className="gap-1.5">
+            <BellRing className="h-3.5 w-3.5" />
+            Alertas
+            {alertasAbiertas > 0 && (
+              <span
+                className="rounded-full bg-destructive px-1.5 text-[10px] font-semibold text-primary-foreground"
+                aria-label={`${alertasAbiertas} alertas abiertas`}
+              >
+                {alertasAbiertas}
+              </span>
+            )}
+          </TabsTrigger>
+          {/* HU-09.1: % de acierto por RA, solo Administrador */}
+          {ac.esAdmin && (
+            <TabsTrigger value="desempeno" className="gap-1.5">
+              <BarChart3 className="h-3.5 w-3.5" />
+              Desempeño por RA
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="programas" className="space-y-4">
@@ -145,6 +190,16 @@ export default function PaginaAcademico() {
         {ac.esAdmin && (
           <TabsContent value="integracion" className="space-y-4">
             <TabIntegracion ac={ac} />
+          </TabsContent>
+        )}
+
+        <TabsContent value="alertas" className="space-y-4">
+          <TabAlertas ac={ac} alCambiarAbiertas={setAlertasAbiertas} />
+        </TabsContent>
+
+        {ac.esAdmin && (
+          <TabsContent value="desempeno" className="space-y-4">
+            <TabDesempenoRA ac={ac} />
           </TabsContent>
         )}
       </Tabs>

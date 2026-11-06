@@ -31,6 +31,7 @@ const PaginaLogin = lazy(() => import('@/pages/auth/pagina-login'))
 const PaginaRecuperarContrasena = lazy(() => import('@/pages/auth/pagina-recuperar-contrasena'))
 const PaginaRestablecerContrasena = lazy(() => import('@/pages/auth/pagina-restablecer-contrasena'))
 const PaginaDashboardAdmin = lazy(() => import('@/pages/dashboard/pagina-dashboard-admin'))
+const PaginaDashboardCoordinador = lazy(() => import('@/pages/dashboard/pagina-dashboard-coordinador'))
 const PaginaDashboardDocente = lazy(() => import('@/pages/dashboard/pagina-dashboard-docente'))
 const PaginaDashboardEstudiante = lazy(() => import('@/pages/dashboard/pagina-dashboard-estudiante'))
 const PaginaUsuarios = lazy(() => import('@/pages/usuarios/pagina-usuarios'))
@@ -50,6 +51,19 @@ const PaginaTemaEstudioEstudiante = lazy(() => import('@/pages/examenes/pagina-t
 const PaginaPanelSaberPro = lazy(() => import('@/pages/saber-pro/pagina-panel-saber-pro'))
 const PaginaGestionCursosSaberPro = lazy(() => import('@/pages/saber-pro/pagina-gestion-cursos-saber-pro'))
 const PaginaBancoContenidoSaberPro = lazy(() => import('@/pages/saber-pro/pagina-banco-contenido-saber-pro'))
+const PaginaReporteInstitucional = lazy(() => import('@/pages/reporte/pagina-reporte-institucional'))
+const PaginaEvaluacionesEstudiante = lazy(() => import('@/pages/evaluaciones/pagina-evaluaciones-estudiante'))
+const PaginaPresentarEvaluacion = lazy(() => import('@/pages/evaluaciones/pagina-presentar-evaluacion'))
+const PaginaTareasDocente = lazy(() => import('@/pages/tareas/pagina-tareas-docente'))
+const PaginaTareasEstudiante = lazy(() => import('@/pages/tareas/pagina-tareas-estudiante'))
+const PaginaTareaEstudiante = lazy(() => import('@/pages/tareas/pagina-tarea-estudiante'))
+const PaginaEvaluacionFormal = lazy(() => import('@/pages/academico/pagina-evaluacion-formal'))
+const PaginaEstudiantes = lazy(() => import('@/pages/estudiantes/pagina-estudiantes'))
+const PaginaAyuda = lazy(() => import('@/pages/ayuda/pagina-ayuda'))
+const PaginaNotasMomento = lazy(() => import('@/pages/notas-momento/pagina-notas-momento'))
+const PaginaGuiaAyuda = lazy(() => import('@/pages/ayuda/pagina-guia-ayuda'))
+const PaginaSupervision = lazy(() => import('@/pages/supervision/pagina-supervision'))
+const PaginaLlamadoLista = lazy(() => import('@/pages/supervision/pagina-llamado-lista'))
 const PaginaBancoPreguntasDocente = lazy(() => import('@/pages/banco-preguntas/pagina-banco-preguntas-docente'))
 const PaginaSimulacrosSaberPro = lazy(() => import('@/pages/saber-pro/pagina-simulacros-saber-pro'))
 const PaginaSimulacrosEstudianteSaberPro = lazy(
@@ -88,8 +102,10 @@ function PaginaDashboardPorRol() {
   const { rol } = useAuth()
 
   if (rol === ROLES.ADMIN) return <PaginaDashboardAdmin />
-  // El Coordinador aún no tiene tablero propio: su espacio de trabajo es /academico.
-  if (rol === ROLES.COORDINADOR) return <Navigate to="/academico" replace />
+  // ADR-013: el Coordinador tiene su propio inicio con datos reales de sus programas.
+  if (rol === ROLES.COORDINADOR) return <PaginaDashboardCoordinador />
+  // El Vicerrector solo consulta el reporte institucional (HU-11).
+  if (rol === ROLES.VICERRECTOR) return <Navigate to="/reporte-institucional" replace />
   if (rol === ROLES.DOCENTE) return <PaginaDashboardDocente />
   if (rol === ROLES.ESTUDIANTE) return <PaginaDashboardEstudiante />
   return <Navigate to="/iniciar-sesion" replace />
@@ -210,6 +226,116 @@ function RutasPrivadas() {
             element={
               <RutaProtegida rolesPermitidos={[ROLES.DOCENTE]}>
                 <PaginaBancoContenidoSaberPro />
+              </RutaProtegida>
+            }
+          />
+          {/* HU-11: reporte ejecutivo institucional (solo lectura). */}
+          <Route
+            path="/reporte-institucional"
+            element={
+              <RutaProtegida rolesPermitidos={[ROLES.ADMIN, ROLES.VICERRECTOR, ROLES.COORDINADOR]}>
+                <PaginaReporteInstitucional />
+              </RutaProtegida>
+            }
+          />
+          {/* HU-07: el estudiante presenta la evaluación formal publicada. */}
+          <Route
+            path="/mis-evaluaciones"
+            element={
+              <RutaProtegida rolesPermitidos={[ROLES.ESTUDIANTE]}>
+                <PaginaEvaluacionesEstudiante />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/mis-evaluaciones/:evaluacionId"
+            element={
+              <RutaProtegida rolesPermitidos={[ROLES.ESTUDIANTE]}>
+                <PaginaPresentarEvaluacion />
+              </RutaProtegida>
+            }
+          />
+          {/* ADR-012: convocados e inscritos (Admin/Coordinador: todos; Docente: sus cursos y supervisiones). */}
+          <Route
+            path="/notas-momento"
+            element={
+              <RutaProtegida rolesPermitidos={[ROLES.ADMIN, ROLES.COORDINADOR, ROLES.VICERRECTOR]}>
+                <PaginaNotasMomento />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/ayuda"
+            element={
+              <RutaProtegida>
+                <PaginaAyuda />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/ayuda/:slug"
+            element={
+              <RutaProtegida>
+                <PaginaGuiaAyuda />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/estudiantes"
+            element={
+              <RutaProtegida rolesPermitidos={[ROLES.ADMIN, ROLES.COORDINADOR, ROLES.DOCENTE]}>
+                <PaginaEstudiantes />
+              </RutaProtegida>
+            }
+          />
+          {/* ADR-009: el docente supervisor hace el llamado a lista en sala. */}
+          <Route
+            path="/supervision"
+            element={
+              <RutaProtegida rolesPermitidos={[ROLES.DOCENTE]}>
+                <PaginaSupervision />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/supervision/:evaluacionId"
+            element={
+              <RutaProtegida rolesPermitidos={[ROLES.DOCENTE]}>
+                <PaginaLlamadoLista />
+              </RutaProtegida>
+            }
+          />
+          {/* HU-08B / HU-08A: tareas prácticas con rúbrica (docente crea y califica, estudiante entrega). */}
+          <Route
+            path="/tareas"
+            element={
+              <RutaProtegida rolesPermitidos={[ROLES.DOCENTE]}>
+                <PaginaTareasDocente />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/mis-tareas"
+            element={
+              <RutaProtegida rolesPermitidos={[ROLES.ESTUDIANTE]}>
+                <PaginaTareasEstudiante />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/mis-tareas/:tareaId"
+            element={
+              <RutaProtegida rolesPermitidos={[ROLES.ESTUDIANTE]}>
+                <PaginaTareaEstudiante />
+              </RutaProtegida>
+            }
+          />
+          {/* HU-06: ensamblado de la evaluación formal de un momento. */}
+          <Route
+            path="/academico/momentos/:momentoId/evaluaciones"
+            element={
+              <RutaProtegida rolesPermitidos={[ROLES.ADMIN, ROLES.COORDINADOR]}>
+                <PaginaEvaluacionFormal />
               </RutaProtegida>
             }
           />

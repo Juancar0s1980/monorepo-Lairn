@@ -71,6 +71,36 @@ Endpoints backend usados:
 - `POST /evaluacion/integracion/importar-json/` → `{datos, modo: 'simulacro'|'real', fuente?: 'archivo'|'pegado', huella?}` (archivo o JSON pegado)
 - `POST /evaluacion/integracion/importar-url/` → `{url, modo, huella?}`: el backend descarga el JSON (solo https, bloquea redes internas, 5 MB, 20/min). `modo: 'real'` exige la `huella` devuelta por la validación (`simulacro`); si la fuente cambió responde 409. Flujo en `use-importacion.ts` + `componentes/asistente-importacion.tsx`.
 
+### Evaluación formal por momento (`/academico/momentos/:momentoId/evaluaciones`, Admin y Coordinador — HU-06)
+- `GET/POST /evaluacion/momentos/{id}/evaluaciones/` → `{nombre, instrucciones, tipo: 'cuestionario', fecha_inicio, fecha_fin, duracion_minutos}` (tipo `tarea` responde 400 hasta HU-08B)
+- `GET /evaluacion/momentos/{id}/banco-elegible/` → RA del momento + preguntas aprobadas (sin las ya usadas en laboratorio)
+- `GET/PATCH/DELETE /evaluacion/evaluaciones/{id}/` · `GET/PUT .../preguntas/ {preguntas: [ids]}` · `POST .../publicar/` (publicada = 409 al editar)
+- Código: `pages/academico/pagina-evaluacion-formal.tsx` + `use-evaluacion-formal.ts`; tipos en `src/types/evaluacion-formal.ts`.
+
+### Reporte ejecutivo (`/reporte-institucional`, Vicerrector y Admin — HU-11)
+- `GET /evaluacion/reporte-ejecutivo/[?programa=id]` → institución con desglose por programa, o programa con desglose por materia (drill-down; el programa va en la URL `?programa=`).
+- `GET /evaluacion/reporte-ejecutivo/exportar/?formato=pdf|xlsx[&programa=id]` (reportlab / openpyxl en el backend).
+
+### Alerta temprana (`/academico` → pestaña "Alertas", Admin y Coordinador — HU-10)
+- `GET/PUT /evaluacion/alertas/regla/` `{porcentaje_minimo, actividades_minimas, activa}` (PUT solo Admin; reevalúa todo)
+- `GET /evaluacion/programas/{id}/alertas/?estado=abierta|atendida|resuelta&tipo=` (reevalúa el programa) · `POST /evaluacion/alertas/{id}/atender/ {nota}` · `GET .../alertas/exportar/` (CSV `;` + BOM, solo Admin)
+- Comando programable: `python manage.py evaluar_alertas`. Actividad = evaluación formal (% aciertos) o tarea calificada (nota/5).
+
+### Desempeño por RA (`/academico` → pestaña "Desempeño por RA", solo Administrador — HU-09.1)
+- `GET /evaluacion/programas/{id}/desempeno-ra/?momento=&evaluacion=` → `{resumen, grupal[], individual[], filtros, metrica}`
+- Métrica PROVISIONAL (pendiente con Vicerrectoría): aciertos ÷ preguntas presentadas del RA en intentos enviados de evaluaciones tipo cuestionario; sin responder = no acertada. Definida en un solo lugar: `backend_lairn/apps/evaluacion_resultados/services/servicio_desempeno_ra.py`.
+
+### Presentación de la evaluación formal (`/mis-evaluaciones`, solo Estudiante — HU-07)
+- `GET /evaluacion/estudiante/evaluaciones/` (activas convocadas + ya presentadas) · `GET .../evaluaciones/{id}/` (incluye `ahora_servidor`; preguntas solo con intento en curso, SIN respuesta correcta)
+- `POST .../evaluaciones/{id}/iniciar/` (intento único) · `PUT .../evaluaciones/{id}/respuestas/ {pregunta, opcion}` (se guarda al marcar) · `POST .../evaluaciones/{id}/enviar/`
+- Temporizador con el reloj del servidor; al llegar a 0 la página envía sola y el servidor cierra perezosamente cualquier intento vencido. Barra del temporizador `fixed` abajo (el `<main>` del layout tiene `overflow-auto`, así que `sticky` no es fiable).
+
+### Tareas prácticas con rúbrica (HU-08B docente `/tareas`, HU-08A estudiante `/mis-tareas`)
+- Docente: `GET/POST /evaluacion/docente/tareas/?asignatura=` · `POST .../tareas/generar/ {asignatura, resultado, fecha_limite, formatos_permitidos}` (IA) · `GET/PATCH/DELETE .../tareas/{id}/` (solo borrador) · `POST/DELETE .../tareas/{id}/archivos/[{aid}/]` · `POST .../tareas/{id}/publicar/` · `GET .../tareas/{id}/entregas/` · `GET .../entregas/{id}/archivo/` · `POST .../entregas/{id}/calificar/ {niveles_elegidos, observaciones}`
+- Estudiante: `GET /evaluacion/estudiante/tareas/[{id}/]` · `GET .../tareas/{id}/archivos/{aid}/` · `POST .../tareas/{id}/entregar/` (multipart `archivo`, envío único y definitivo) · `GET .../entregas/{id}/archivo/`
+- Rúbrica: criterios `{criterio, peso (suman 100), niveles: [{nombre, valor 0-5}]}`; nota = Σ peso/100 × valor. Archivos privados: se descargan con Axios `responseType: 'blob'` (`descargarArchivo` en `pages/tareas/utilidades-tareas.ts`), nunca por `/media/`.
+- Evaluación formal tipo `tarea`: `{tipo: 'tarea', tarea: id}` (tarea publicada de un RA del momento).
+
 ### Banco de preguntas por RA (`/banco-preguntas`, solo Docente — HU-04/05)
 - `GET /evaluacion/docente/asignaturas/` → asignaturas cuyo `curso_vinculado` es un curso del docente, con sus RA y competencias transversales
 - `POST /evaluacion/docente/banco/generar/` → `{asignatura, resultado, competencia_transversal?, cantidad 1-5}` → preguntas en estado `pendiente` (IA, 20-90 s, timeout 120 s, 10/min)
@@ -119,7 +149,8 @@ Patrón estándar para capturar y mostrar estos errores:
 
 ## Roles
 
-Cuatro roles como strings exactos: `Administrador`, `Coordinador`, `Docente`, `Estudiante`.
+Cinco roles como strings exactos: `Administrador`, `Coordinador`, `Vicerrector`, `Docente`, `Estudiante`.
+`Vicerrector` (HU-11): solo lectura; entra directo a `/reporte-institucional`. Backend: `EsLectorInstitucional` (Vicerrector o Admin, solo GET).
 `Coordinador` (HU-01.3 a HU-02.3): entra directo a `/academico`; consulta programas y gestiona malla, competencias, RA y momentos. No crea/edita programas ni ve Importar (`ac.esAdmin`). Backend: `EsGestorAcademico` / `EsAdministradorOLecturaCoordinador`.
 Deben coincidir exactamente con los datos del backend (case-sensitive).
 La sidebar en `src/app/layout.tsx` muestra navegación diferente por rol.

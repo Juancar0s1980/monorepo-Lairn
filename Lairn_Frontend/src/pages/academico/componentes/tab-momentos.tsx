@@ -1,13 +1,16 @@
-// Tab de Momentos: CRUD + vínculos a RA + tablero resumido.
+// Tab de Momentos: CRUD + vínculos a RA + tablero resumido + acceso a la
+// evaluación formal de cada momento (HU-06).
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Link2, Loader2, Pencil, Plus, Trash2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { ClipboardCheck, Link2, Loader2, Pencil, Plus, Sheet, Trash2 } from 'lucide-react'
 import type { Academico } from '../use-academico'
 
 export function TabMomentos({ ac }: { ac: Academico }) {
+  const navegar = useNavigate()
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
@@ -51,6 +54,24 @@ export function TabMomentos({ ac }: { ac: Academico }) {
                   <TableCell className="text-right">{m.total_ras}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navegar(`/academico/momentos/${m.id}/evaluaciones`)}
+                        title="Evaluación formal (fechas y preguntas)"
+                        aria-label={`Evaluación formal de ${m.nombre}`}
+                      >
+                        <ClipboardCheck className="h-4 w-4 text-primary" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navegar(`/notas-momento?momento=${m.id}`)}
+                        title="Notas del momento (por estudiante y Excel)"
+                        aria-label={`Notas del momento ${m.nombre}`}
+                      >
+                        <Sheet className="h-4 w-4 text-primary" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"

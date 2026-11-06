@@ -3,7 +3,7 @@
 //   - Header sticky con logo, navegación por rol, email del usuario,
 //     toggle de tema oscuro/claro y botón de cerrar sesión.
 //   - Área main que renderiza el contenido hijo (la página actual).
-// La navegación se adapta según el rol del usuario (Administrador, Coordinador, Docente, Estudiante).
+// La navegación se adapta según el rol del usuario (Administrador, Coordinador, Vicerrector, Docente, Estudiante).
 
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@/context/contexto-auth/use-auth'
@@ -33,21 +33,44 @@ const rutasPorRol: Record<string, RutaNav[]> = {
     { label: 'Início', ruta: '/' },
     { label: 'Usuarios', ruta: '/usuarios' },
     { label: 'Académico', ruta: '/academico' },
+    { label: 'Estudiantes', ruta: '/estudiantes' },
+    { label: 'Reporte', ruta: '/reporte-institucional' },
+    { label: 'Notas', ruta: '/notas-momento' },
     { label: 'Exámenes', ruta: '/examenes' },
     { label: 'Analítica', ruta: '/analitica' },
     { label: 'Redes', ruta: '/redes' },
     { label: 'Moderación', ruta: '/moderacion' },
+    { label: 'Ayuda', ruta: '/ayuda' },
   ],
-  Coordinador: [{ label: 'Académico', ruta: '/academico' }],
+  Coordinador: [
+    { label: 'Inicio', ruta: '/' },
+    { label: 'Académico', ruta: '/academico' },
+    { label: 'Estudiantes', ruta: '/estudiantes' },
+    { label: 'Analítica', ruta: '/reporte-institucional' },
+    { label: 'Notas', ruta: '/notas-momento' },
+    { label: 'Ayuda', ruta: '/ayuda' },
+  ],
+  Vicerrector: [
+    { label: 'Reporte institucional', ruta: '/reporte-institucional' },
+    { label: 'Notas del momento', ruta: '/notas-momento' },
+    { label: 'Ayuda', ruta: '/ayuda' },
+  ],
   Docente: [
     { label: 'Início', ruta: '/' },
     { label: 'Mis Cursos', ruta: '/mis-cursos' },
     { label: 'Banco de preguntas', ruta: '/banco-preguntas' },
+    { label: 'Tareas', ruta: '/tareas' },
+    { label: 'Supervisión', ruta: '/supervision' },
+    { label: 'Estudiantes', ruta: '/estudiantes' },
+    { label: 'Ayuda', ruta: '/ayuda' },
     { label: 'Saber Pro', ruta: '/saber-pro', destacado: true },
   ],
   Estudiante: [
     { label: 'Início', ruta: '/' },
     { label: 'Mis Cursos', ruta: '/mis-cursos' },
+    { label: 'Evaluaciones', ruta: '/mis-evaluaciones' },
+    { label: 'Tareas', ruta: '/mis-tareas' },
+    { label: 'Ayuda', ruta: '/ayuda' },
     { label: 'Saber Pro', ruta: '/saber-pro', destacado: true },
   ],
 }
