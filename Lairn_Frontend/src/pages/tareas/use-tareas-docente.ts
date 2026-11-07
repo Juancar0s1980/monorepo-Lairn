@@ -68,6 +68,9 @@ export function useTareasDocente() {
   const [versionEntregas, setVersionEntregas] = useState(0)
   const [calificando, setCalificando] = useState<FilaEntrega | null>(null)
   const [guardandoNota, setGuardandoNota] = useState(false)
+  // Entregas que la IA está analizando y avance del análisis en lote (HU-15.1).
+  const [analizando, setAnalizando] = useState<number[]>([])
+  const [progresoIA, setProgresoIA] = useState<{ hechas: number; total: number } | null>(null)
 
   const asignatura = useMemo(
     () => asignaturas.find((a) => String(a.id) === asignaturaId) ?? null,
@@ -287,12 +290,60 @@ export function useTareasDocente() {
     }
   }
 
+  // HU-15: propuesta de la IA para una entrega (solo la ve el docente). Reemplaza
+  // la fila en el panel y en el diálogo abierto. Devuelve false si falló.
+  const reemplazarFila = (fila: FilaEntrega) => {
+    setEntregas((actual) => actual.map((f) => (f.estudiante.id === fila.estudiante.id ? fila : f)))
+    setCalificando((actual) => (actual && actual.estudiante.id === fila.estudiante.id ? fila : actual))
+  }
+
+  const pedirPreevaluacion = async (entregaId: number, avisar: boolean) => {
+    try {
+      const res = await api.post<FilaEntrega>(`/evaluacion/docente/entregas/${entregaId}/preevaluar/`, {}, {
+        timeout: TIMEOUT_IA,
+      })
+      reemplazarFila(res.data)
+      if (avisar) toast.success('Propuesta de la IA lista: revísala antes de calificar')
+      return true
+    } catch (err: unknown) {
+      if (avisar) toast.error(mensajeError(err, 'No se pudo analizar la entrega'))
+      return false
+    }
+  }
+
+  const preevaluar = async (entregaId: number) => {
+    setAnalizando([entregaId])
+    await pedirPreevaluacion(entregaId, true)
+    setAnalizando([])
+  }
+
+  // Analiza, una a una, las entregas sin nota ni propuesta (HU-15.1).
+  const preevaluarPendientes = async () => {
+    const ids = entregas
+      .filter((f) => f.entrega && !f.entrega.calificacion && !f.entrega.preevaluacion)
+      .map((f) => f.entrega!.id)
+    if (!ids.length) return
+    setAnalizando(ids)
+    setProgresoIA({ hechas: 0, total: ids.length })
+    let fallidas = 0
+    for (const [i, id] of ids.entries()) {
+      if (!(await pedirPreevaluacion(id, false))) fallidas += 1
+      setProgresoIA({ hechas: i + 1, total: ids.length })
+    }
+    setAnalizando([])
+    setProgresoIA(null)
+    const listas = ids.length - fallidas
+    if (listas) toast.success(`${listas} propuesta(s) de la IA listas para revisar`)
+    if (fallidas) toast.warning(`${fallidas} entrega(s) no se pudieron analizar: califícalas a mano o inténtalo de nuevo`)
+  }
+
   return {
     asignaturas, asignaturaId, elegirAsignatura, asignatura, cargando, errorCarga,
     tareas, abiertaId, setAbiertaId, abierta, form, setForm,
     nueva, abrir, guardar, guardando, publicar, publicando, eliminar,
     generar, generando, subirGuia, subiendo, quitarGuia,
     entregas, calificando, setCalificando, calificar, guardandoNota,
+    preevaluar, preevaluarPendientes, analizando, progresoIA,
   }
 }
 
