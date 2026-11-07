@@ -132,14 +132,30 @@ class SerializadorTareaEstudiante(serializers.ModelSerializer):
         return _entrega(EntregaTarea.objects.filter(tarea=obj, estudiante=usuario).first())
 
 
+def preevaluacion_docente(entrega):
+    """Propuesta de la IA (HU-15.2). Solo se arma en respuestas del DOCENTE; nunca en las del estudiante."""
+    p = getattr(entrega, 'preevaluacion', None) if entrega is not None else None
+    if p is None:
+        return None
+    return {
+        'niveles_propuestos': p.niveles_propuestos, 'nota_propuesta': str(p.nota_propuesta),
+        'analisis': p.analisis, 'observaciones_propuestas': p.observaciones_propuestas,
+        'advertencias': p.advertencias, 'caracteres_analizados': p.caracteres_analizados,
+        'decision': p.decision, 'generada_en': p.generada_en, 'decidida_en': p.decidida_en,
+    }
+
+
 def fila_entrega_docente(estudiante, entrega):
     """Fila del panel de entregas (HU-08B.3): incluye a quien no ha entregado."""
+    fila_entrega = _entrega(entrega)
+    if fila_entrega is not None:
+        fila_entrega['preevaluacion'] = preevaluacion_docente(entrega)
     return {
         'estudiante': {
             'id': estudiante.id, 'email': estudiante.email,
             'nombre': f'{estudiante.first_name} {estudiante.first_last_name}'.strip(),
         },
-        'entrega': _entrega(entrega),
+        'entrega': fila_entrega,
         'estado': estado_entrega(entrega),
     }
 

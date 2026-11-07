@@ -23,6 +23,7 @@ from apps.evaluacion_resultados.views.docente import (
     VistaArchivoEntregaDocente,
     VistaArchivosGuia,
     VistaCalificarEntrega,
+    VistaPreevaluarEntrega,
     VistaDetalleArchivoGuia,
     VistaDetalleTarea,
     VistaEntregasTarea,
@@ -57,4 +58,5 @@ urlpatterns = [
          name='ev_supervision_resolver'),
     path('supervision/<int:pk>/asistencia/masiva/', VistaAsistenciaMasiva.as_view(), name='ev_supervision_masiva'),
     path('entregas/<int:entrega_id>/calificar/', VistaCalificarEntrega.as_view(), name='ev_entrega_calificar'),
+    path('entregas/<int:entrega_id>/preevaluar/', VistaPreevaluarEntrega.as_view(), name='ev_entrega_preevaluar'),
 ]

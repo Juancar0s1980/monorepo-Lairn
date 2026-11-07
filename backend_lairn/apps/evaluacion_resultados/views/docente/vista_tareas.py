@@ -11,9 +11,11 @@ docente; lo ajeno responde 404.
 - `POST docente/tareas/<id>/publicar/`          exige rúbrica válida, formatos y plazo futuro
 - `GET docente/tareas/<id>/entregas/`           panel: inscritos con su estado
 - `GET docente/entregas/<id>/archivo/`          descarga del archivo entregado
-- `POST docente/entregas/<id>/calificar/`       niveles por criterio -> nota ponderada
+- `POST docente/entregas/<id>/calificar/`       niveles por criterio -> nota ponderada (aprueba la propuesta IA)
+- `POST docente/entregas/<id>/preevaluar/`      propuesta de la IA solo para el docente (HU-15)
 """
 
+from django.db import transaction
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -25,7 +27,9 @@ from rest_framework.views import APIView
 from apps.evaluacion_resultados.models import (
     ArchivoGuiaTarea,
     EntregaTarea,
+    OpcionesDecisionPreevaluacion,
     OpcionesEstadoTarea,
+    PreevaluacionEntrega,
     ResultadoAprendizaje,
     TareaPractica,
 )
@@ -34,8 +38,11 @@ from apps.evaluacion_resultados.serializers.serializador_tarea import (
     SerializadorTarea,
     fila_entrega_docente,
 )
+from apps.evaluacion_resultados.services.agente_preevaluacion import preevaluar
 from apps.evaluacion_resultados.services.agente_preguntas_banco import ErrorGeneracion
 from apps.evaluacion_resultados.services.agente_tareas import generar_tarea
+from apps.evaluacion_resultados.services.extractor_entrega import EntregaSinTexto, texto_de_entrega
+from apps.evaluacion_resultados.services.extractor_pdf import calcular_hash_texto
 from apps.evaluacion_resultados.services.servicio_tareas import (
     EXTENSIONES_GUIA,
     TAMANO_MAX_GUIA,
@@ -209,7 +216,7 @@ class VistaEntregasTarea(APIView):
 
     def get(self, request, pk):
         tarea = get_object_or_404(tareas_del_docente(request.user), pk=pk)
-        entregas = {e.estudiante_id: e for e in tarea.entregas.all()}
+        entregas = {e.estudiante_id: e for e in tarea.entregas.select_related('preevaluacion')}
         return Response([fila_entrega_docente(est, entregas.get(est.id)) for est in estudiantes_de_tarea(tarea)])
 
 
@@ -228,6 +235,12 @@ class VistaArchivoEntregaDocente(APIView):
 
 
 class VistaCalificarEntrega(APIView):
+    """Calificación oficial: lo único que ve el estudiante (HU-08B.4).
+
+    Si hubo propuesta de la IA, calificar es la aprobación del docente
+    (HU-15.3): queda registrada como `aprobada` o `ajustada`.
+    """
+
     permission_classes = [EsDocente]
 
     def post(self, request, entrega_id):
@@ -238,11 +251,61 @@ class VistaCalificarEntrega(APIView):
             nota = calcular_nota(entrega.tarea.rubrica, serial.validated_data['niveles_elegidos'])
         except ValueError as exc:
             return Response({'niveles_elegidos': [str(exc)]}, status=400)
-        entrega.niveles_elegidos = serial.validated_data['niveles_elegidos']
-        entrega.nota = nota
-        entrega.observaciones = serial.validated_data['observaciones']
-        entrega.calificada_por = request.user
-        entrega.calificada_en = timezone.now()
-        entrega.save()
-        estudiante = entrega.estudiante
-        return Response(fila_entrega_docente(estudiante, entrega))
+        ahora = timezone.now()
+        with transaction.atomic():
+            entrega.niveles_elegidos = serial.validated_data['niveles_elegidos']
+            entrega.nota = nota
+            entrega.observaciones = serial.validated_data['observaciones']
+            entrega.calificada_por = request.user
+            entrega.calificada_en = ahora
+            entrega.save()
+            propuesta = PreevaluacionEntrega.objects.filter(entrega=entrega).first()
+            if propuesta is not None:
+                igual = (propuesta.niveles_propuestos == entrega.niveles_elegidos
+                         and propuesta.observaciones_propuestas.strip() == entrega.observaciones.strip())
+                propuesta.decision = (OpcionesDecisionPreevaluacion.APROBADA if igual
+                                      else OpcionesDecisionPreevaluacion.AJUSTADA)
+                propuesta.decidida_en = ahora
+                propuesta.save(update_fields=['decision', 'decidida_en'])
+        entrega.refresh_from_db()
+        return Response(fila_entrega_docente(entrega.estudiante, entrega))
+
+
+class VistaPreevaluarEntrega(APIView):
+    """`POST docente/entregas/<id>/preevaluar/`: propuesta de la IA solo para el docente (HU-15.1 / 15.2).
+
+    No toca la calificación oficial. Repetirla reemplaza la propuesta anterior
+    mientras la entrega no esté calificada.
+    """
+
+    permission_classes = [EsDocente]
+    throttle_classes = [ThrottleIA]
+    throttle_scope = 'ia'
+
+    def post(self, request, entrega_id):
+        entrega = _entrega_del_docente(request.user, entrega_id)
+        if entrega.nota is not None:
+            return Response({'detalle': 'La entrega ya está calificada: la propuesta de la IA ya no aplica.'},
+                            status=409)
+        try:
+            validar_rubrica(entrega.tarea.rubrica)
+        except ErrorRubrica as exc:
+            return Response({'detalle': str(exc)}, status=400)
+        try:
+            texto, advertencias = texto_de_entrega(entrega)
+        except EntregaSinTexto as exc:
+            return Response({'detalle': str(exc)}, status=422)
+        try:
+            propuesta = preevaluar(entrega.tarea, texto)
+        except ErrorGeneracion as exc:
+            return Response({'detalle': str(exc)}, status=502)
+        PreevaluacionEntrega.objects.update_or_create(entrega=entrega, defaults={
+            'niveles_propuestos': propuesta['niveles'], 'nota_propuesta': propuesta['nota'],
+            'analisis': propuesta['analisis'], 'observaciones_propuestas': propuesta['observaciones'],
+            'advertencias': advertencias + [f'Alerta de la IA: {a}' for a in propuesta['alertas']],
+            'hash_texto': calcular_hash_texto(texto), 'caracteres_analizados': len(texto),
+            'modelo': propuesta['modelo'][:100], 'generada_por': request.user,
+            'decision': OpcionesDecisionPreevaluacion.PENDIENTE, 'decidida_en': None,
+        })
+        entrega.refresh_from_db()
+        return Response(fila_entrega_docente(entrega.estudiante, entrega))
