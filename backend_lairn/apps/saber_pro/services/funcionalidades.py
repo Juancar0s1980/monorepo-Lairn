@@ -40,7 +40,7 @@ _FUNCIONALIDADES_DOCENTE = [
         'clave': 'analitica',
         'titulo': 'Analítica',
         'descripcion': 'Consulta el desempeño de tus estudiantes por área, competencia y afirmación en cada curso (HU-24).',
-        'disponible': False,
+        'disponible': True,
     },
     {
         'clave': 'ranking',

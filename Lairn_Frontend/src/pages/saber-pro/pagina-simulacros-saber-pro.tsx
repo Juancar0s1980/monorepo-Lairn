@@ -49,6 +49,7 @@ import { ModalPreguntasSimulacroSaberPro } from './componentes/modal-preguntas-s
 import { ModalResultadosSimulacroSaberPro } from './componentes/modal-resultados-simulacro-saber-pro'
 import { ModalSimulacroSaberPro } from './componentes/modal-simulacro-saber-pro'
 import { TarjetaSimulacro } from './componentes/tarjeta-simulacro-saber-pro'
+import { CampanaDesbloqueosSaberPro } from './componentes/campana-desbloqueos-saber-pro'
 
 
 function SkeletonSimulacros() {
@@ -187,7 +188,8 @@ export default function PaginaSimulacrosSaberPro() {
               de tu banco segun la distribucion que definas.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <CampanaDesbloqueosSaberPro />
             <Button
               type="button"
               className={`h-11 gap-2 px-5 font-bold ${paletaSaberPro.botonNeutro}`}

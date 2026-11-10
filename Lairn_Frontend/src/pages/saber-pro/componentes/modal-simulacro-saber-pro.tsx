@@ -27,7 +27,6 @@ import {
   Check,
   ClipboardList,
   Clock,
-  KeyRound,
   Layers,
   ListChecks,
   Loader2,
@@ -61,15 +60,6 @@ const esquemaSimulacro = z.object({
         !valor ||
         (Number.isInteger(Number(valor)) && Number(valor) >= 1 && Number(valor) <= 10000),
       'Usa un entero entre 1 y 10000'
-    ),
-  codigo_desbloqueo: z
-    .string()
-    .optional()
-    .refine(
-      (valor) =>
-        !valor ||
-        (valor.trim().length >= 6 && /^[A-Za-z0-9]+$/.test(valor.trim())),
-      'Minimo 6 caracteres alfanumericos'
     ),
 })
 
@@ -184,7 +174,6 @@ export function ModalSimulacroSaberPro({
       intentos_maximos: 1,
       fecha_limite: '',
       limite_palabras: '',
-      codigo_desbloqueo: '',
     },
   })
 
@@ -197,12 +186,6 @@ export function ModalSimulacroSaberPro({
   const numPreguntas = esIngles
     ? totalPreguntasIngles
     : Number(watch('num_preguntas')) || (esConsigna ? 1 : 40)
-  const codigoDesbloqueo = watch('codigo_desbloqueo') ?? ''
-  const tieneCodigo = Boolean(simulacro?.tiene_codigo_desbloqueo)
-  const codigoCompleto =
-    codigoDesbloqueo.trim().length >= 6 && /^[A-Za-z0-9]+$/.test(codigoDesbloqueo.trim())
-  const codigoInvalido = Boolean(codigoDesbloqueo.trim()) && !codigoCompleto
-  const faltaCodigo = (!tieneCodigo && !codigoCompleto) || codigoInvalido
 
   useEffect(() => {
     if (!abierta) return
@@ -218,7 +201,6 @@ export function ModalSimulacroSaberPro({
       intentos_maximos: simulacro?.intentos_maximos ?? 1,
       fecha_limite: aDatetimeLocal(simulacro?.fecha_limite),
       limite_palabras: simulacro?.limite_palabras ? String(simulacro.limite_palabras) : '',
-      codigo_desbloqueo: '',
     })
     const guardadas = simulacro?.distribuciones.map(claveDeDistribucion) ?? []
     const oficiales =
@@ -325,7 +307,6 @@ export function ModalSimulacroSaberPro({
     esIngles && Boolean(disponibilidad?.partes.some((parte) => parte.disponibles === 0))
   const bloqueado =
     enviando ||
-    faltaCodigo ||
     Boolean(errorDisponibilidad) ||
     (disponibilidad !== null && (esIngles ? faltanPartesIngles : totalAprobados === 0))
 
@@ -356,9 +337,6 @@ export function ModalSimulacroSaberPro({
         fecha_limite: aIso(datos.fecha_limite),
         limite_palabras:
           esConsigna && datos.limite_palabras ? Number(datos.limite_palabras) : null,
-        ...(datos.codigo_desbloqueo?.trim()
-          ? { codigo_desbloqueo: datos.codigo_desbloqueo.trim().toUpperCase() }
-          : {}),
         ...(esIngles ? {} : { distribuciones }),
       }
       if (simulacro) {
@@ -525,34 +503,6 @@ export function ModalSimulacroSaberPro({
               )}
               <p className={`text-[10px] leading-relaxed ${paletaSaberPro.apoyo}`}>
                 Al agotar este limite el estudiante no podra iniciar un intento nuevo.
-              </p>
-            </div>
-
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label htmlFor="codigo-desbloqueo-simulacro" className={`flex items-center gap-1.5 ${paletaSaberPro.titulo}`}>
-                <KeyRound className="h-3.5 w-3.5" /> Codigo de desbloqueo
-              </Label>
-              <Input
-                id="codigo-desbloqueo-simulacro"
-                maxLength={32}
-                autoComplete="off"
-                placeholder={
-                  tieneCodigo
-                    ? 'Dejar vacio para conservar el codigo actual'
-                    : 'Minimo 6 caracteres alfanumericos'
-                }
-                className="bg-white font-mono tracking-[0.18em] dark:bg-[#243A5E]"
-                {...register('codigo_desbloqueo')}
-              />
-              {errors.codigo_desbloqueo && (
-                <p className={`text-xs ${paletaSaberPro.accion}`}>
-                  {errors.codigo_desbloqueo.message}
-                </p>
-              )}
-              <p className={`text-[10px] leading-relaxed ${paletaSaberPro.apoyo}`}>
-                {tieneCodigo
-                  ? 'El simulacro ya tiene un codigo. Escribe uno nuevo solo si quieres cambiarlo.'
-                  : 'El estudiante necesitara este codigo si sale de la pantalla completa o cambia de pestana durante el simulacro.'}
               </p>
             </div>
 

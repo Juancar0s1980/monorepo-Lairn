@@ -90,16 +90,22 @@ function TarjetaSimulacroEstudiante({
   onIniciar: (simulacro: SimulacroEstudianteSaberPro) => void
 }) {
   const enProgreso = simulacro.intento_en_progreso
+  const cerradoPorSalida = simulacro.cerrado_por_salida
+  const anulada = simulacro.anulada
   const vencido = simulacro.vencido
-  const bloqueado = !simulacro.puede_presentar && !enProgreso
-  const agotado = bloqueado && !vencido
-  const textoBoton = enProgreso
-    ? 'Reanudar intento'
+  const bloqueado = !simulacro.puede_presentar
+  const agotado = !vencido && !enProgreso && simulacro.intentos_restantes <= 0
+  const textoBoton = anulada
+    ? 'Anulado por el docente'
     : vencido
       ? 'Plazo vencido'
-      : agotado
-        ? 'Intentos agotados'
-        : 'Presentar simulacro'
+      : enProgreso
+        ? 'Intento en curso'
+        : agotado
+          ? 'Intentos agotados'
+          : simulacro.intentos_realizados > 0
+            ? 'Presentar siguiente intento'
+            : 'Presentar simulacro'
 
   return (
     <article
@@ -127,10 +133,18 @@ function TarjetaSimulacroEstudiante({
             </Badge>
             {enProgreso && (
               <Badge variant="outline" className={cn('text-[10px]', paletaSaberPro.badge)}>
-                En progreso
+                En curso
               </Badge>
             )}
-            {agotado && (
+            {anulada && (
+              <Badge
+                variant="outline"
+                className="border-[#b8432a]/30 text-[10px] text-[#b8432a] dark:border-[#F29A52]/40 dark:text-[#F29A52]"
+              >
+                Anulado
+              </Badge>
+            )}
+            {agotado && !anulada && (
               <Badge
                 variant="outline"
                 className="border-[#b8432a]/30 text-[10px] text-[#b8432a] dark:border-[#F29A52]/40 dark:text-[#F29A52]"
@@ -196,18 +210,24 @@ function TarjetaSimulacroEstudiante({
         <p
           className={cn(
             'text-[11px] leading-relaxed',
-            agotado || (vencido && !enProgreso)
+            anulada || agotado || (vencido && !enProgreso)
               ? 'text-[#b8432a] dark:text-[#F29A52]'
               : paletaSaberPro.apoyo
           )}
         >
-          {enProgreso
-            ? 'Tienes un intento en curso: retómalo para no perder el tiempo restante.'
-            : vencido
-              ? 'La fecha límite de este simulacro ya pasó.'
-              : agotado
-                ? 'Ya utilizaste todos los intentos permitidos para este simulacro.'
-                : `Te queda${simulacro.intentos_restantes === 1 ? '' : 'n'} ${simulacro.intentos_restantes} de ${simulacro.intentos_maximos} intentos.`}
+          {anulada
+            ? 'Tu docente anuló este simulacro: la calificación queda en 0 y no puedes volver a presentarlo.'
+            : enProgreso
+              ? 'Hay un intento en curso; se cerrará automáticamente al salir de la prueba y no podrá reanudarse.'
+              : vencido
+                ? 'La fecha límite de este simulacro ya pasó.'
+                : agotado
+                  ? cerradoPorSalida
+                    ? 'El último intento se cerró al salir y ya no te quedan intentos disponibles.'
+                    : 'Ya utilizaste todos los intentos permitidos para este simulacro.'
+                  : cerradoPorSalida
+                    ? `El intento anterior se cerró al salir de la prueba. Te queda${simulacro.intentos_restantes === 1 ? '' : 'n'} ${simulacro.intentos_restantes} de ${simulacro.intentos_maximos} intentos.`
+                    : `Te queda${simulacro.intentos_restantes === 1 ? '' : 'n'} ${simulacro.intentos_restantes} de ${simulacro.intentos_maximos} intentos.`}
         </p>
 
         <Button

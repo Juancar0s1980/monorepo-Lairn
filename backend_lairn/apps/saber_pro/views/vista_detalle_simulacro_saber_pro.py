@@ -151,17 +151,14 @@ class VistaDetalleSimulacroSaberPro(APIView):
             return simulacro
 
         if simulacro.tiene_presentaciones_activas():
-            campos = set(request.data.keys())
-            if campos != {'codigo_desbloqueo'}:
-                return Response(
-                    {
-                        'detalle': (
-                            'El simulacro tiene presentaciones activas. Solo puedes '
-                            'cambiar el codigo de desbloqueo.'
-                        )
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+            return Response(
+                {
+                    'detalle': (
+                        'El simulacro tiene presentaciones activas y no puede editarse.'
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         serializador = SerializadorCrearEditarSimulacro(
             simulacro,

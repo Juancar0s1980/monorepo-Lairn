@@ -27,4 +27,7 @@ urlpatterns = [
 
     # Rutas accedidas por el rol Estudiante (HU-18): inscripción por código.
     path('', include('apps.saber_pro.urls.estudiante')),
+
+    # Rutas institucionales (HU-24.3/24.4): analítica consolidada de la institución.
+    path('', include('apps.saber_pro.urls.institucional')),
 ]

@@ -49,7 +49,6 @@ from apps.saber_pro.services.simulacros import (
     seleccionar_preguntas,
 )
 from django.utils import timezone
-from rest_framework import serializers
 
 
 class SerializadorDistribucionSimulacro(serializers.ModelSerializer):
@@ -67,7 +66,6 @@ class SerializadorSimulacro(serializers.ModelSerializer):
     area = SerializadorAreaSaberPro(source='curso.area', read_only=True)
     distribuciones = SerializadorDistribucionSimulacro(many=True, read_only=True)
     total_preguntas = serializers.SerializerMethodField()
-    tiene_codigo_desbloqueo = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Simulacro
@@ -83,7 +81,6 @@ class SerializadorSimulacro(serializers.ModelSerializer):
             'fecha_limite',
             'limite_palabras',
             'activo',
-            'tiene_codigo_desbloqueo',
             'total_preguntas',
             'distribuciones',
             'creado_en',
@@ -124,6 +121,8 @@ class SerializadorSimulacroEstudiante(serializers.ModelSerializer):
     intentos_realizados = serializers.SerializerMethodField()
     intentos_restantes = serializers.SerializerMethodField()
     intento_en_progreso = serializers.SerializerMethodField()
+    cerrado_por_salida = serializers.SerializerMethodField()
+    anulada = serializers.SerializerMethodField()
     puede_presentar = serializers.SerializerMethodField()
     vencido = serializers.SerializerMethodField()
 
@@ -142,6 +141,8 @@ class SerializadorSimulacroEstudiante(serializers.ModelSerializer):
             'intentos_realizados',
             'intentos_restantes',
             'intento_en_progreso',
+            'cerrado_por_salida',
+            'anulada',
             'puede_presentar',
             'fecha_limite',
             'limite_palabras',
@@ -169,16 +170,33 @@ class SerializadorSimulacroEstudiante(serializers.ModelSerializer):
             for presentacion in self._presentaciones(simulacro)
         )
 
+    def get_cerrado_por_salida(self, simulacro) -> bool:
+        """Indica si el intento más reciente terminó por salida del estudiante."""
+        presentaciones = self._presentaciones(simulacro)
+        if not presentaciones:
+            return False
+        ultima = max(presentaciones, key=lambda presentacion: presentacion.intento)
+        return ultima.motivo_finalizacion == 'salida'
+
+    def get_anulada(self, simulacro) -> bool:
+        """El docente anuló algún intento: no se permiten nuevos intentos."""
+        return any(
+            presentacion.anulada
+            for presentacion in self._presentaciones(simulacro)
+        )
+
     def get_vencido(self, simulacro) -> bool:
         return simulacro.esta_vencido()
 
     def get_puede_presentar(self, simulacro) -> bool:
+        """Un intento cerrado por salida no impide iniciar el siguiente."""
+        if self.get_anulada(simulacro):
+            return False
         if simulacro.esta_vencido():
             return False
-        return (
-            self.get_intento_en_progreso(simulacro)
-            or self.get_intentos_realizados(simulacro) < simulacro.intentos_maximos
-        )
+        if self.get_intento_en_progreso(simulacro):
+            return False
+        return self.get_intentos_realizados(simulacro) < simulacro.intentos_maximos
 
 
 class SerializadorDistribucionEntrada(serializers.Serializer):
@@ -229,16 +247,6 @@ class SerializadorCrearEditarSimulacro(serializers.Serializer):
         help_text='Máximo de palabras por consigna escrita; vacío significa sin límite.',
     )
     activo = serializers.BooleanField(required=False)
-    codigo_desbloqueo = serializers.CharField(
-        required=False,
-        allow_blank=True,
-        max_length=32,
-        trim_whitespace=True,
-        help_text=(
-            'Codigo que el docente usara para desbloquear un intento cuando el '
-            'estudiante salga de la pantalla completa o cambie de pestana.'
-        ),
-    )
     distribuciones = SerializadorDistribucionEntrada(
         many=True,
         required=False,
@@ -253,22 +261,6 @@ class SerializadorCrearEditarSimulacro(serializers.Serializer):
         curso = self.context['curso']
         instancia = self.instance
         estructura = obtener_estructura_area(curso.area)
-
-        codigo = attrs.get('codigo_desbloqueo')
-        if codigo is not None:
-            codigo = codigo.strip().upper()
-            if codigo and (len(codigo) < 6 or not codigo.isalnum()):
-                raise serializers.ValidationError({
-                    'codigo_desbloqueo': (
-                        'El codigo debe tener al menos 6 caracteres y solo puede '
-                        'contener letras y numeros.'
-                    ),
-                })
-            attrs['codigo_desbloqueo'] = codigo
-        if instancia is None and not codigo:
-            raise serializers.ValidationError({
-                'codigo_desbloqueo': 'Define un codigo de desbloqueo para el simulacro.',
-            })
 
         if attrs.get('limite_palabras') is not None and estructura != ESTRUCTURA_CONSIGNA:
             raise serializers.ValidationError({
@@ -516,7 +508,6 @@ class SerializadorCrearEditarSimulacro(serializers.Serializer):
 
     def create(self, validated_data):
         distribuciones = validated_data.pop('distribuciones_resueltas', []) or []
-        codigo_desbloqueo = validated_data.pop('codigo_desbloqueo', '')
         curso = self.context['curso']
         titulo = (validated_data.pop('titulo', '') or '').strip()
         simulacro = Simulacro.objects.create(
@@ -530,22 +521,16 @@ class SerializadorCrearEditarSimulacro(serializers.Serializer):
             limite_palabras=validated_data.pop('limite_palabras', None),
             activo=validated_data.pop('activo', True),
         )
-        if codigo_desbloqueo:
-            simulacro.establecer_codigo_desbloqueo(codigo_desbloqueo)
-            simulacro.save(update_fields=['codigo_desbloqueo_hash'])
         guardar_distribuciones(simulacro, distribuciones)
         seleccionar_preguntas(simulacro)
         return simulacro
 
     def update(self, instance, validated_data):
         distribuciones = validated_data.pop('distribuciones_resueltas', None)
-        codigo_desbloqueo = validated_data.pop('codigo_desbloqueo', None)
         num_anterior = instance.num_preguntas
 
         for campo, valor in validated_data.items():
             setattr(instance, campo, valor)
-        if codigo_desbloqueo:
-            instance.establecer_codigo_desbloqueo(codigo_desbloqueo)
         instance.save()
 
         cambio_distribucion = False

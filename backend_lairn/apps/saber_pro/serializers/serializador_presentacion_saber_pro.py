@@ -17,6 +17,9 @@ Los tres contratos públicos son:
 
 from rest_framework import serializers
 
+from apps.saber_pro.serializers.serializador_solicitud_desbloqueo import (
+    SerializadorSolicitudDesbloqueoEstudiante,
+)
 from apps.saber_pro.services.presentaciones import (
     presentacion_tiene_revision_pendiente,
 )
@@ -103,6 +106,7 @@ class SerializadorPreguntaPresentacion(serializers.Serializer):
 
 
 class SerializadorResultadoPresentacion(serializers.Serializer):
+    anulada = serializers.BooleanField(read_only=True)
     puntaje = serializers.FloatField(read_only=True)
     calificacion = serializers.SerializerMethodField()
     calificacion_docente = serializers.FloatField(read_only=True, allow_null=True)
@@ -126,8 +130,6 @@ class SerializadorResultadoPresentacion(serializers.Serializer):
     def get_revision_pendiente(self, presentacion) -> bool:
         return presentacion_tiene_revision_pendiente(presentacion)
 
-    
-
 
 class SerializadorEstadoPresentacion(serializers.Serializer):
     presentacion_id = serializers.IntegerField(source='id', read_only=True)
@@ -137,8 +139,9 @@ class SerializadorEstadoPresentacion(serializers.Serializer):
     area_nombre = serializers.CharField(source='simulacro.curso.area.nombre', read_only=True)
     intento = serializers.IntegerField(read_only=True)
     estado = serializers.CharField(read_only=True)
+    anulada = serializers.BooleanField(read_only=True)
     bloqueada = serializers.BooleanField(read_only=True)
-    requiere_codigo_desbloqueo = serializers.SerializerMethodField()
+    solicitud_desbloqueo = serializers.SerializerMethodField()
     motivo_finalizacion = serializers.CharField(read_only=True)
     iniciada_en = serializers.DateTimeField(read_only=True)
     expira_en = serializers.DateTimeField(read_only=True)
@@ -157,14 +160,19 @@ class SerializadorEstadoPresentacion(serializers.Serializer):
     pregunta = serializers.SerializerMethodField()
     resultado = serializers.SerializerMethodField()
 
-    def get_requiere_codigo_desbloqueo(self, presentacion) -> bool:
-        return presentacion.simulacro.tiene_codigo_desbloqueo
-
     def get_tiempo_limite_minutos(self, presentacion) -> int:
         return presentacion.simulacro.tiempo_limite_minutos
 
     def get_tiempo_restante_segundos(self, presentacion) -> int:
         return presentacion.tiempo_restante_segundos()
+
+    def get_solicitud_desbloqueo(self, presentacion):
+        solicitud = (
+            presentacion.solicitudes_desbloqueo.order_by('-creada_en', '-id').first()
+        )
+        if solicitud is None:
+            return None
+        return SerializadorSolicitudDesbloqueoEstudiante(solicitud).data
 
     def get_total_preguntas(self, presentacion) -> int:
         return presentacion.preguntas.count()
@@ -193,14 +201,6 @@ class SerializadorEstadoPresentacion(serializers.Serializer):
         if presentacion.esta_en_progreso():
             return None
         return SerializadorResultadoPresentacion(presentacion).data
-
-
-class SerializadorDesbloqueoPresentacion(serializers.Serializer):
-    codigo = serializers.CharField(
-        max_length=32,
-        trim_whitespace=True,
-        help_text='Codigo definido por el docente para reanudar el intento.',
-    )
 
 
 class SerializadorResponderPresentacion(serializers.Serializer):

@@ -1,11 +1,12 @@
 """
-Vista para bloquear una presentacion Saber Pro por una salida detectada (HU-22).
+Vista para cerrar una presentación Saber Pro cuando el estudiante sale (HU-22).
 
-Expone `POST /api/saber-pro/estudiante/presentaciones/<presentacion_id>/bloquear/`.
-El frontend la llama cuando el estudiante abandona la pantalla completa, cambia
-de pestana o minimiza la ventana. El backend solo marca el intento como
-bloqueado si el simulacro tiene un codigo de desbloqueo configurado; de lo
-contrario la advertencia sigue siendo visual y el estudiante no queda atrapado.
+Expone `POST /api/saber-pro/estudiante/presentaciones/<presentacion_id>/salir/`
+sin cuerpo. El frontend la llama cuando el estudiante cambia de pestaña, sale de
+la pantalla completa, intenta volver atrás o cierra la página. El intento se
+finaliza con motivo `salida` y no puede reanudarse; si al estudiante le quedan
+intentos disponibles, puede iniciar uno nuevo. Es idempotente: si ya terminó,
+retorna su resultado.
 """
 
 from django.db import transaction
@@ -18,7 +19,7 @@ from rest_framework.views import APIView
 from apps.saber_pro.models.presentacion_simulacro import PresentacionSimulacro
 from apps.saber_pro.serializers import SerializadorEstadoPresentacion
 from apps.saber_pro.services.presentaciones import (
-    bloquear_presentacion,
+    finalizar_por_salida,
     finalizar_si_vencida,
     pregunta_actual,
 )
@@ -27,28 +28,29 @@ from core.permissions.permisos_rol import EsEstudiante
 
 @extend_schema(
     tags=['Saber Pro - Estudiante'],
-    summary='Bloquear una presentacion por salida detectada',
+    summary='Cerrar una presentación por salida del estudiante',
     description=(
-        'Marca el intento como bloqueado cuando el estudiante sale de la pantalla '
-        'completa o cambia de pestana. Solo aplica si el docente configuro un codigo '
-        'de desbloqueo. La operacion es idempotente (HU-22).'
+        'Finaliza el intento con motivo `salida` cuando el estudiante abandona la '
+        'pantalla del simulacro (HU-22). El intento no se puede reanudar; si al '
+        'estudiante le quedan intentos disponibles, puede iniciar el siguiente. Es '
+        'idempotente.'
     ),
     parameters=[
         OpenApiParameter(
             'presentacion_id',
             OpenApiTypes.INT,
             OpenApiParameter.PATH,
-            description='ID de la presentacion del estudiante autenticado.',
+            description='ID de la presentación del estudiante autenticado.',
         ),
     ],
     request=None,
     responses={
         200: SerializadorEstadoPresentacion,
         403: OpenApiResponse(description='Solo los estudiantes pueden acceder'),
-        404: OpenApiResponse(description='Presentacion no encontrada'),
+        404: OpenApiResponse(description='Presentación no encontrada'),
     },
 )
-class VistaBloquearPresentacionSaberPro(APIView):
+class VistaSalirPresentacionSaberPro(APIView):
     permission_classes = [EsEstudiante]
 
     def post(self, request, presentacion_id):
@@ -61,12 +63,12 @@ class VistaBloquearPresentacionSaberPro(APIView):
             )
             if presentacion is None:
                 return Response(
-                    {'detalle': 'Presentacion no encontrada.'},
+                    {'detalle': 'Presentación no encontrada.'},
                     status=status.HTTP_404_NOT_FOUND,
                 )
-            finalizar_si_vencida(presentacion)
-            if presentacion.esta_en_progreso():
-                bloquear_presentacion(presentacion)
+
+            if not finalizar_si_vencida(presentacion):
+                finalizar_por_salida(presentacion)
 
         presentacion = (
             PresentacionSimulacro.objects.select_related('simulacro__curso__area')

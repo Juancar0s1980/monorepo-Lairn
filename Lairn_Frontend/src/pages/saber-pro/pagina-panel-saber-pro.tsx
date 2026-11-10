@@ -40,6 +40,7 @@ import { TarjetaFuncionalidad } from './componentes/tarjeta-funcionalidad'
 import { EstadoVacioSaberPro } from './componentes/estado-vacio-saber-pro'
 import { ModalUnirseCursoSaberPro } from './componentes/modal-unirse-curso-saber-pro'
 import { SeccionCursosEstudianteSaberPro } from './componentes/seccion-cursos-estudiante-saber-pro'
+import { CampanaDesbloqueosSaberPro } from './componentes/campana-desbloqueos-saber-pro'
 
 function SkeletonPanel() {
   return (
@@ -100,7 +101,9 @@ function SelloSaberPro() {
 }
 
 // Hero institucional del módulo: marca en Montserrat + sellos y chips de áreas.
-function HeroPanel() {
+// El docente ve además la campana de desbloqueos de simulacros (solo dentro del
+// módulo Saber Pro, nunca en el header global del sistema).
+function HeroPanel({ mostrarCampana }: { mostrarCampana: boolean }) {
   return (
     <header className="relative flex flex-col gap-10 lg:flex-row lg:items-center lg:justify-between">
       <div className="max-w-2xl">
@@ -134,7 +137,10 @@ function HeroPanel() {
           ))}
         </div>
       </div>
-      <SelloSaberPro />
+      <div className="flex items-center gap-3 lg:gap-4">
+        {mostrarCampana && <CampanaDesbloqueosSaberPro />}
+        <SelloSaberPro />
+      </div>
     </header>
   )
 }
@@ -399,6 +405,9 @@ export default function PaginaPanelSaberPro() {
     if (clave === 'desempeno') {
       navigate('/saber-pro/desempeno')
     }
+    if (clave === 'analitica') {
+      navigate('/saber-pro/analitica')
+    }
   }
 
   return (
@@ -420,7 +429,7 @@ export default function PaginaPanelSaberPro() {
         {error && <ErrorPanel error={error} />}
         {!error && panel && (
           <>
-            <HeroPanel />
+            <HeroPanel mostrarCampana={esDocente} />
             {panel.tiene_cursos ? (
               <SeccionMisCursosSaberPro
                 rol={panel.rol}

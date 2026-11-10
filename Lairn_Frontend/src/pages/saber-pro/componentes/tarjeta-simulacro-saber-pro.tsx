@@ -16,7 +16,6 @@ import {
   ClipboardList,
   Clock,
   Eye,
-  KeyRound,
   ListChecks,
   Pencil,
   Power,
@@ -147,13 +146,6 @@ export function TarjetaSimulacro({
             ))}
           </div>
         )}
-
-        <p className={cn('flex items-center gap-1.5 text-[11px]', paletaSaberPro.apoyo)}>
-          <KeyRound className="h-3.5 w-3.5" />
-          {simulacro.tiene_codigo_desbloqueo
-            ? 'Código de desbloqueo configurado'
-            : 'Sin código de desbloqueo'}
-        </p>
 
         <div className="mt-auto flex flex-wrap gap-1.5 border-t pt-3">
           {esEscrita && (

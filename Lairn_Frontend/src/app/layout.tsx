@@ -47,11 +47,13 @@ const rutasPorRol: Record<string, RutaNav[]> = {
     { label: 'Académico', ruta: '/academico' },
     { label: 'Estudiantes', ruta: '/estudiantes' },
     { label: 'Analítica', ruta: '/reporte-institucional' },
+    { label: 'Saber Pro', ruta: '/saber-pro/institucional/analitica' },
     { label: 'Notas', ruta: '/notas-momento' },
     { label: 'Ayuda', ruta: '/ayuda' },
   ],
   Vicerrector: [
     { label: 'Reporte institucional', ruta: '/reporte-institucional' },
+    { label: 'Saber Pro', ruta: '/saber-pro/institucional/analitica' },
     { label: 'Notas del momento', ruta: '/notas-momento' },
     { label: 'Ayuda', ruta: '/ayuda' },
   ],

@@ -10,15 +10,15 @@ solo define el mapeo URL→vista, como el resto del paquete `urls`.
 
 from django.urls import path
 from apps.saber_pro.views import (
-    VistaBloquearPresentacionSaberPro,
     VistaCursosEstudianteSaberPro,
-    VistaDesbloquearPresentacionSaberPro,
     VistaDesempenoEstudianteSaberPro,
     VistaEstadoPresentacionSaberPro,
     VistaFinalizarPresentacionSaberPro,
     VistaIniciarPresentacionSaberPro,
     VistaResponderPresentacionSaberPro,
+    VistaSalirPresentacionSaberPro,
     VistaSimulacrosEstudianteSaberPro,
+    VistaSolicitarDesbloqueoSaberPro,
     VistaUnirseCursoSaberPro,
 )
 
@@ -52,14 +52,14 @@ urlpatterns = [
         name='responder_presentacion_saber_pro',
     ),
     path(
-        'estudiante/presentaciones/<int:presentacion_id>/bloquear/',
-        VistaBloquearPresentacionSaberPro.as_view(),
-        name='bloquear_presentacion_saber_pro',
+        'estudiante/presentaciones/<int:presentacion_id>/salir/',
+        VistaSalirPresentacionSaberPro.as_view(),
+        name='salir_presentacion_saber_pro',
     ),
     path(
-        'estudiante/presentaciones/<int:presentacion_id>/desbloquear/',
-        VistaDesbloquearPresentacionSaberPro.as_view(),
-        name='desbloquear_presentacion_saber_pro',
+        'estudiante/presentaciones/<int:presentacion_id>/solicitar-desbloqueo/',
+        VistaSolicitarDesbloqueoSaberPro.as_view(),
+        name='solicitar_desbloqueo_presentacion_saber_pro',
     ),
     path(
         'estudiante/presentaciones/<int:presentacion_id>/finalizar/',

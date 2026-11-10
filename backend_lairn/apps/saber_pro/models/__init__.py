@@ -59,6 +59,9 @@ from apps.saber_pro.models.presentacion_simulacro import PresentacionSimulacro
 from apps.saber_pro.models.respuesta_presentacion import RespuestaPresentacion
 from apps.saber_pro.models.simulacro import Simulacro
 from apps.saber_pro.models.simulacro_pregunta import SimulacroPregunta
+from apps.saber_pro.models.solicitud_desbloqueo_simulacro import (
+    SolicitudDesbloqueoSimulacro,
+)
 
 __all__ = [
     'AfirmacionSaberPro',
@@ -74,4 +77,5 @@ __all__ = [
     'RespuestaPresentacion',
     'Simulacro',
     'SimulacroPregunta',
+    'SolicitudDesbloqueoSimulacro',
 ]

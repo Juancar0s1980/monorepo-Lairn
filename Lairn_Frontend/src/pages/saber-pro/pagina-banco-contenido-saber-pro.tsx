@@ -27,6 +27,7 @@ import { TarjetaContenidoSaberPro } from './componentes/tarjeta-contenido-saber-
 import { ModalGenerarContenidoSaberPro } from './componentes/modal-generar-contenido-saber-pro'
 import { FiltrosBancoContenido } from './componentes/filtros-banco-contenido'
 import { PaginacionBancoContenido } from './componentes/paginacion-banco-contenido'
+import { CampanaDesbloqueosSaberPro } from './componentes/campana-desbloqueos-saber-pro'
 
 const ELEMENTOS_POR_PAGINA = 9
 
@@ -147,16 +148,19 @@ export default function PaginaBancoContenidoSaberPro() {
               Genera preguntas y consignas con IA, revísalas por pestañas y filtra por competencia, afirmación, evidencia o parte para aprobarlas más rápido y ordenado.
             </p>
           </div>
-          {curso && (
-            <Button
-              type="button"
-              className={`h-11 gap-2 px-5 font-bold shadow-md ${paletaSaberPro.botonAccion}`}
-              onClick={() => setModalGenerarAbierto(true)}
-            >
-              <Plus className="h-4 w-4" />
-              Generar contenido
-            </Button>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            <CampanaDesbloqueosSaberPro />
+            {curso && (
+              <Button
+                type="button"
+                className={`h-11 gap-2 px-5 font-bold shadow-md ${paletaSaberPro.botonAccion}`}
+                onClick={() => setModalGenerarAbierto(true)}
+              >
+                <Plus className="h-4 w-4" />
+                Generar contenido
+              </Button>
+            )}
+          </div>
         </header>
 
         <main className="mt-8 space-y-6">
