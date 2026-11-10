@@ -1,9 +1,13 @@
 """
-Vista para desbloquear una presentacion Saber Pro con el codigo docente (HU-22).
+Vista para solicitar el desbloqueo de un simulacro Saber Pro.
 
-Expone `POST /api/saber-pro/estudiante/presentaciones/<presentacion_id>/desbloquear/`
-con `{ "codigo": "..." }`. Valida el codigo contra el hash configurado en el
-simulacro y reanuda el intento sin alterar sus respuestas ni su cronometro.
+Expone `POST /api/saber-pro/estudiante/presentaciones/<presentacion_id>/solicitar-desbloqueo/`.
+El frontend la llama cuando detecta cambio de pestaña, salida de pantalla
+completa o pérdida de foco. El intento se bloquea sin finalizarse y se crea una
+solicitud que el docente dueño del curso puede aprobar de forma remota.
+
+Es idempotente mientras exista una solicitud pendiente: volver a salir no crea
+solicitudes duplicadas ni altera el avance del intento.
 """
 
 from django.db import transaction
@@ -15,12 +19,14 @@ from rest_framework.views import APIView
 
 from apps.saber_pro.models.presentacion_simulacro import PresentacionSimulacro
 from apps.saber_pro.serializers import (
-    SerializadorDesbloqueoPresentacion,
     SerializadorEstadoPresentacion,
+    SerializadorSolicitarDesbloqueo,
+)
+from apps.saber_pro.services.desbloqueos import (
+    DesbloqueoInvalidoError,
+    solicitar_desbloqueo,
 )
 from apps.saber_pro.services.presentaciones import (
-    CodigoDesbloqueoInvalidoError,
-    desbloquear_presentacion,
     finalizar_si_vencida,
     pregunta_actual,
 )
@@ -29,37 +35,37 @@ from core.permissions.permisos_rol import EsEstudiante
 
 @extend_schema(
     tags=['Saber Pro - Estudiante'],
-    summary='Desbloquear una presentacion con el codigo docente',
+    summary='Solicitar desbloqueo de un simulacro bloqueado',
     description=(
-        'Valida el codigo definido por el docente y reanuda el intento bloqueado. '
-        'El cronometro sigue corriendo; el desbloqueo no otorga tiempo adicional '
-        '(HU-22).'
+        'Bloquea el intento cuando el estudiante cambia de pestaña, sale de pantalla '
+        'completa o pierde el foco, y crea una solicitud para que el docente la apruebe. '
+        'El intento conserva su avance y cronómetro; no se finaliza.'
     ),
     parameters=[
         OpenApiParameter(
             'presentacion_id',
             OpenApiTypes.INT,
             OpenApiParameter.PATH,
-            description='ID de la presentacion del estudiante autenticado.',
+            description='ID de la presentación del estudiante autenticado.',
         ),
     ],
-    request=SerializadorDesbloqueoPresentacion,
+    request=SerializadorSolicitarDesbloqueo,
     responses={
         200: SerializadorEstadoPresentacion,
-        400: OpenApiResponse(description='Codigo invalido o presentacion finalizada'),
+        400: OpenApiResponse(description='La presentación ya finalizó'),
         403: OpenApiResponse(description='Solo los estudiantes pueden acceder'),
-        404: OpenApiResponse(description='Presentacion no encontrada'),
+        404: OpenApiResponse(description='Presentación no encontrada'),
     },
 )
-class VistaDesbloquearPresentacionSaberPro(APIView):
+class VistaSolicitarDesbloqueoSaberPro(APIView):
     permission_classes = [EsEstudiante]
 
     def post(self, request, presentacion_id):
-        serializador = SerializadorDesbloqueoPresentacion(data=request.data)
+        serializador = SerializadorSolicitarDesbloqueo(data=request.data)
         if not serializador.is_valid():
             return Response(serializador.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        codigo = serializador.validated_data['codigo']
+        motivo = serializador.validated_data['motivo']
 
         with transaction.atomic():
             presentacion = (
@@ -70,15 +76,14 @@ class VistaDesbloquearPresentacionSaberPro(APIView):
             )
             if presentacion is None:
                 return Response(
-                    {'detalle': 'Presentacion no encontrada.'},
+                    {'detalle': 'Presentación no encontrada.'},
                     status=status.HTTP_404_NOT_FOUND,
                 )
 
-            finalizar_si_vencida(presentacion)
-            if presentacion.esta_en_progreso():
+            if not finalizar_si_vencida(presentacion):
                 try:
-                    desbloquear_presentacion(presentacion, codigo)
-                except CodigoDesbloqueoInvalidoError as error:
+                    solicitar_desbloqueo(presentacion, motivo)
+                except DesbloqueoInvalidoError as error:
                     return Response(
                         {'detalle': error.mensaje},
                         status=status.HTTP_400_BAD_REQUEST,
@@ -86,7 +91,7 @@ class VistaDesbloquearPresentacionSaberPro(APIView):
 
         presentacion = (
             PresentacionSimulacro.objects.select_related('simulacro__curso__area')
-            .prefetch_related('preguntas')
+            .prefetch_related('preguntas', 'solicitudes_desbloqueo')
             .get(pk=presentacion.pk)
         )
         return Response(

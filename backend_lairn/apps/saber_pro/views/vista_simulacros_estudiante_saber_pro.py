@@ -5,10 +5,16 @@ Expone `GET /api/saber-pro/estudiante/simulacros/` con filtro opcional
 `?curso_id=`. Solo devuelve simulacros activos de cursos activos a los que el
 estudiante está inscrito; un estudiante ajeno al curso nunca los visualiza.
 
+Antes de responder, cierra por salida cualquier intento que haya quedado activo.
+Así el listado nunca ofrece reanudar un examen abandonado: el intento se envía y
+solo se cierra ese intento; si quedan intentos disponibles, el estudiante puede
+iniciar el siguiente.
+
 La respuesta no incluye preguntas, opciones, respuestas correctas ni la
 distribución: la presentación y el detalle llegan en la HU-21.
 """
 
+from django.db import transaction
 from django.db.models import Prefetch
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
 from drf_spectacular.openapi import OpenApiTypes
@@ -19,6 +25,7 @@ from rest_framework.views import APIView
 from apps.saber_pro.models.presentacion_simulacro import PresentacionSimulacro
 from apps.saber_pro.models.simulacro import Simulacro
 from apps.saber_pro.serializers import SerializadorSimulacroEstudiante
+from apps.saber_pro.services.presentaciones import finalizar_por_salida
 from core.permissions.permisos_rol import EsEstudiante
 
 
@@ -77,5 +84,20 @@ class VistaSimulacrosEstudianteSaberPro(APIView):
                     {'detalle': 'El parámetro curso_id debe ser un número entero.'},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+
+        ids_simulacros = list(simulacros.values_list('id', flat=True))
+        if ids_simulacros:
+            with transaction.atomic():
+                activas = (
+                    PresentacionSimulacro.objects.select_for_update()
+                    .filter(
+                        estudiante=request.user,
+                        estado='en_progreso',
+                        simulacro_id__in=ids_simulacros,
+                    )
+                    .select_related('simulacro')
+                )
+                for presentacion in activas:
+                    finalizar_por_salida(presentacion)
 
         return Response(SerializadorSimulacroEstudiante(simulacros, many=True).data)

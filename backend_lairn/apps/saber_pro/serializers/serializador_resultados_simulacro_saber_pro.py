@@ -29,6 +29,7 @@ class SerializadorResultadoEstudianteSimulacro(serializers.ModelSerializer):
             'id',
             'estudiante',
             'intento',
+            'anulada',
             'calificacion',
             'aprobado',
             'puntaje',

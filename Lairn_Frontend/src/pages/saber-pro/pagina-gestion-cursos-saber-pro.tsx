@@ -16,6 +16,7 @@ import { useCursosSaberPro } from '@/hooks/use-cursos-saber-pro'
 import { paletaSaberPro } from './utilidades'
 import { ModalCrearCursoSaberPro } from './componentes/modal-crear-curso-saber-pro'
 import { TarjetaCursoSaberPro } from './componentes/tarjeta-curso-saber-pro'
+import { CampanaDesbloqueosSaberPro } from './componentes/campana-desbloqueos-saber-pro'
 
 function SkeletonCursos() {
   return (
@@ -83,14 +84,17 @@ export default function PaginaGestionCursosSaberPro() {
               tus estudiantes desde un solo lugar.
             </p>
           </div>
-          <Button
-            type="button"
-            className={`h-11 gap-2 px-5 font-bold shadow-md ${paletaSaberPro.botonAccion}`}
-            onClick={() => setModalCrearAbierto(true)}
-          >
-            <Plus className="h-4 w-4" />
-            Crear curso
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <CampanaDesbloqueosSaberPro />
+            <Button
+              type="button"
+              className={`h-11 gap-2 px-5 font-bold shadow-md ${paletaSaberPro.botonAccion}`}
+              onClick={() => setModalCrearAbierto(true)}
+            >
+              <Plus className="h-4 w-4" />
+              Crear curso
+            </Button>
+          </div>
         </header>
 
         <main className="mt-8">

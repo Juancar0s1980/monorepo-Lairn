@@ -1,10 +1,12 @@
 """
-Vista para iniciar o reanudar un simulacro Saber Pro (HU-21.1).
+Vista para iniciar un simulacro Saber Pro (HU-21.1).
 
 Expone `POST /api/saber-pro/estudiante/simulacros/<simulacro_id>/presentaciones/`
 sin cuerpo. Solo el estudiante inscrito en el curso puede iniciar el intento.
-Si ya existe una presentación activa se reanuda; si venció, se finaliza con
-motivo `tiempo_agotado` y se devuelve el resultado.
+
+Un intento activo nunca se reanuda: se cierra con motivo `salida` y se devuelve
+su resultado. Si el último intento se cerró por salida, se rechaza el inicio.
+Si el intento venció, se finaliza por tiempo agotado.
 
 La respuesta incluye el bloque actual sin respuestas correctas y el cronómetro
 calculado por el servidor.
@@ -30,11 +32,13 @@ from core.permissions.permisos_rol import EsEstudiante
 
 @extend_schema(
     tags=['Saber Pro - Estudiante'],
-    summary='Iniciar o reanudar un simulacro',
+    summary='Iniciar un simulacro',
     description=(
-        'Inicia un intento nuevo del simulacro o reanuda el intento activo del '
-        'estudiante autenticado (HU-21.1). El contenido se congela y el tiempo se '
-        'calcula en el servidor. No expone respuestas correctas.'
+        'Inicia un intento nuevo del simulacro para el estudiante autenticado '
+        '(HU-21.1). Un intento activo se cierra automáticamente por salida y no se '
+        'reanuda; si al estudiante le quedan intentos disponibles, puede iniciar '
+        'el siguiente. El contenido se congela y el tiempo se calcula en el '
+        'servidor. No expone respuestas correctas.'
     ),
     parameters=[
         OpenApiParameter(
@@ -68,18 +72,6 @@ class VistaIniciarPresentacionSaberPro(APIView):
         if simulacro is None:
             return Response(
                 {'detalle': 'Simulacro no encontrado.'},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        tiene_presentacion_activa = simulacro.presentaciones.filter(
-            estudiante=request.user,
-            estado='en_progreso',
-        ).exists()
-        if not tiene_presentacion_activa and (
-            not simulacro.activo or not simulacro.curso.activo
-        ):
-            return Response(
-                {'detalle': 'El simulacro no está disponible para presentar.'},
                 status=status.HTTP_404_NOT_FOUND,
             )
 

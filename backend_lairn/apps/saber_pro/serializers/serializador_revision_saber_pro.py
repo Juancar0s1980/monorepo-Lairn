@@ -73,6 +73,7 @@ class SerializadorDetalleRevision(serializers.Serializer):
     simulacro_titulo = serializers.CharField(source='simulacro.titulo', read_only=True)
     estudiante_nombre = serializers.SerializerMethodField()
     intento = serializers.IntegerField(read_only=True)
+    anulada = serializers.BooleanField(read_only=True)
     puntaje = serializers.FloatField(read_only=True)
     calificacion = serializers.SerializerMethodField()
     calificacion_docente = serializers.FloatField(read_only=True, allow_null=True)

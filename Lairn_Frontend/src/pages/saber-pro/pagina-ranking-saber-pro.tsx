@@ -48,6 +48,7 @@ import {
   selectItemLargo,
   selectTriggerAncho,
 } from './utilidades'
+import { CampanaDesbloqueosSaberPro } from './componentes/campana-desbloqueos-saber-pro'
 
 function ErrorEstado({ mensaje, reintentar }: { mensaje: string; reintentar: () => void }) {
   return (
@@ -209,14 +210,17 @@ export default function PaginaRankingSaberPro() {
               Los nombres solo están visibles para ti como docente del curso.
             </p>
           </div>
-          <span
-            className={cn(
-              'hidden h-16 w-16 items-center justify-center rounded-2xl sm:flex',
-              paletaSaberPro.chipGold
-            )}
-          >
-            <Trophy className="h-8 w-8" />
-          </span>
+          <div className="flex items-center gap-2">
+            <CampanaDesbloqueosSaberPro />
+            <span
+              className={cn(
+                'hidden h-16 w-16 items-center justify-center rounded-2xl sm:flex',
+                paletaSaberPro.chipGold
+              )}
+            >
+              <Trophy className="h-8 w-8" />
+            </span>
+          </div>
         </header>
 
         {cargandoCursos && (

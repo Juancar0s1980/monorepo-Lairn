@@ -1,11 +1,13 @@
 // Página de presentación cronometrada de un simulacro Saber Pro (HU-21 y HU-22).
 //
 // Flujo:
-//   1. inicia o reanuda el intento con `usePresentacionSimulacroSaberPro`;
+//   1. inicia el intento con `usePresentacionSimulacroSaberPro`; nunca lo reanuda;
 //   2. muestra un único bloque a la vez y no permite retroceder;
 //   3. envía la respuesta del bloque actual al backend;
-//   4. finaliza automáticamente cuando el contador llega a 0.
-//   5. aplica el modo seguro de HU-22 (copiar/pegar, foco y pantalla completa).
+//   4. finaliza automáticamente cuando el contador llega a 0;
+//   5. aplica el modo seguro de HU-22: copiar/pegar, foco, pantalla completa y
+//      salida. Si el estudiante sale o intenta volver atrás, el intento se envía
+//      automáticamente y no puede reanudarse.
 //
 // El backend nunca envía respuestas correctas. La calificación y el resultado
 // final llegan recién cuando el intento termina.
@@ -40,11 +42,12 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { usePresentacionSimulacroSaberPro } from '@/hooks/use-presentacion-simulacro-saber-pro'
 import { useProteccionExamen } from '@/hooks/use-proteccion-examen'
-import { solicitarPantallaCompleta } from '@/utilities/pantalla-completa'
+import { AvisoDesbloqueoSimulacro } from './componentes/aviso-desbloqueo-simulacro'
 import { AvisoProteccionSimulacro } from './componentes/aviso-proteccion-simulacro'
 import type {
   DatosRespuestaPresentacion,
   EstadoPresentacionSaberPro,
+  MotivoSolicitudDesbloqueo,
   PreguntaPresentacionSaberPro,
   ResultadoPresentacionSaberPro,
 } from '@/types/saber-pro'
@@ -77,6 +80,15 @@ function mensajeMotivo(resultado: ResultadoPresentacionSaberPro): string {
   }
   if (resultado.motivo_finalizacion === 'manual') {
     return 'Finalizaste el simulacro antes de que se agotara el tiempo.'
+  }
+  if (resultado.motivo_finalizacion === 'salida') {
+    return 'Saliste de la pantalla del simulacro y tus respuestas se enviaron automáticamente.'
+  }
+  if (resultado.motivo_finalizacion === 'rechazado') {
+    return 'El docente rechazó el desbloqueo y tus respuestas se enviaron automáticamente.'
+  }
+  if (resultado.motivo_finalizacion === 'anulado') {
+    return 'El docente rechazó el desbloqueo y anuló el simulacro: la calificación queda en 0 y no podrás volver a presentarlo.'
   }
   return 'Completaste todos los bloques del simulacro.'
 }
@@ -628,56 +640,68 @@ export default function PaginaPresentarSimulacroSaberPro() {
     error,
     responder,
     finalizar,
-    bloquear,
-    desbloquear,
+    salir,
+    salirInminente,
+    solicitarDesbloqueo,
     reintentar,
   } = usePresentacionSimulacroSaberPro(idSimulacro)
 
-  const [codigoDesbloqueo, setCodigoDesbloqueo] = useState('')
-  const [errorDesbloqueo, setErrorDesbloqueo] = useState<string | null>(null)
+  const [avisoSalidaVisible, setAvisoSalidaVisible] = useState(false)
 
   const pregunta = presentacion?.pregunta ?? null
   const resultado = presentacion?.resultado ?? null
   const finalizada = presentacion?.finalizada ?? false
-  const requiereCodigo = presentacion?.requiere_codigo_desbloqueo ?? false
+  const bloqueada = presentacion?.bloqueada ?? false
 
-  const manejarSalida = useCallback(() => {
-    if (presentacion?.requiere_codigo_desbloqueo) void bloquear()
-  }, [bloquear, presentacion?.requiere_codigo_desbloqueo])
+  const manejarBloqueo = useCallback(
+    (motivo: MotivoSolicitudDesbloqueo) => {
+      void solicitarDesbloqueo(motivo)
+    },
+    [solicitarDesbloqueo]
+  )
 
-  const { fueraDeFoco, reiniciarProteccion } = useProteccionExamen({
+  // Si el estudiante ya agotó sus intentos o el docente anuló el simulacro, el
+  // backend rechaza el inicio. Lo devolvemos al listado en vez de dejar un
+  // error sin salida.
+  useEffect(() => {
+    if (presentacion || !error) return
+    if (error.includes('alcanzaste el máximo') || error.includes('anuló')) {
+      navegar('/saber-pro/simulacros', { replace: true })
+    }
+  }, [error, presentacion, navegar])
+
+  const continuarEnElSimulacro = useCallback(() => {
+    setAvisoSalidaVisible(false)
+  }, [])
+
+  const volver = useCallback(
+    () => navegar('/saber-pro/simulacros', { replace: true }),
+    [navegar]
+  )
+
+  const manejarSalirYEnviar = useCallback(async () => {
+    const cerrado = await salir()
+    if (cerrado) volver()
+  }, [salir, volver])
+
+  // Con el intento bloqueado no tiene sentido abrir el aviso de salida sobre el
+  // diálogo de desbloqueo: intentar volver atrás cierra el intento directamente,
+  // tal como advierte el propio diálogo.
+  const manejarIntentoRetroceso = useCallback(() => {
+    if (bloqueada) {
+      void manejarSalirYEnviar()
+      return
+    }
+    setAvisoSalidaVisible(true)
+  }, [bloqueada, manejarSalirYEnviar])
+
+  useProteccionExamen({
     activo: Boolean(presentacion) && !finalizada,
-    onSalida: manejarSalida,
+    bloqueado: bloqueada,
+    onBloqueo: manejarBloqueo,
+    onIntentoRetroceso: manejarIntentoRetroceso,
+    onSalidaInminente: salirInminente,
   })
-
-  const bloqueada = Boolean(presentacion?.bloqueada) || fueraDeFoco
-
-  const manejarDesbloqueo = useCallback(async () => {
-    const codigo = codigoDesbloqueo.trim()
-    if (!codigo) {
-      setErrorDesbloqueo('Ingresa el código que te entregó tu docente.')
-      return
-    }
-
-    solicitarPantallaCompleta()
-    setErrorDesbloqueo(null)
-    const resultadoDesbloqueo = await desbloquear(codigo)
-    if (resultadoDesbloqueo.ok) {
-      setCodigoDesbloqueo('')
-      reiniciarProteccion()
-      return
-    }
-    setErrorDesbloqueo(
-      resultadoDesbloqueo.error ?? 'No se pudo desbloquear el examen. Intenta de nuevo.'
-    )
-  }, [codigoDesbloqueo, desbloquear, reiniciarProteccion])
-
-  const volverAlExamen = useCallback(() => {
-    setErrorDesbloqueo(null)
-    reiniciarProteccion()
-  }, [reiniciarProteccion])
-
-  const volver = useCallback(() => navegar('/saber-pro/simulacros'), [navegar])
 
   if (idSimulacro === null) {
     return (
@@ -820,15 +844,17 @@ export default function PaginaPresentarSimulacroSaberPro() {
           </aside>
         </main>
       </div>
+      <AvisoDesbloqueoSimulacro
+        abierto={bloqueada && !finalizada}
+        solicitud={presentacion.solicitud_desbloqueo}
+        enviando={enviando}
+        onSalir={() => void manejarSalirYEnviar()}
+      />
       <AvisoProteccionSimulacro
-        abierto={bloqueada}
-        requiereCodigo={requiereCodigo}
-        codigo={codigoDesbloqueo}
-        onCodigoChange={setCodigoDesbloqueo}
-        onDesbloquear={() => void manejarDesbloqueo()}
-        onVolver={volverAlExamen}
-        desbloqueando={enviando}
-        error={errorDesbloqueo}
+        abierto={avisoSalidaVisible}
+        enviando={enviando}
+        onContinuar={continuarEnElSimulacro}
+        onSalir={() => void manejarSalirYEnviar()}
       />
     </div>
   )

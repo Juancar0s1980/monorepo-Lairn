@@ -234,7 +234,6 @@ export interface SimulacroSaberPro {
   fecha_limite: string | null
   limite_palabras: number | null
   activo: boolean
-  tiene_codigo_desbloqueo: boolean
   total_preguntas: number
   distribuciones: DistribucionSimulacro[]
   creado_en: string
@@ -277,6 +276,8 @@ export interface SimulacroEstudianteSaberPro {
   intentos_realizados: number
   intentos_restantes: number
   intento_en_progreso: boolean
+  cerrado_por_salida: boolean
+  anulada: boolean
   puede_presentar: boolean
   fecha_limite: string | null
   limite_palabras: number | null
@@ -300,7 +301,6 @@ export interface DatosSimulacroSaberPro {
   fecha_limite?: string | null
   limite_palabras?: number | null
   activo?: boolean
-  codigo_desbloqueo?: string
   distribuciones?: DatosDistribucionSimulacro[]
 }
 
@@ -376,6 +376,56 @@ export type MotivoFinalizacionPresentacion =
   | 'manual'
   | 'tiempo_agotado'
   | 'fecha_limite'
+  | 'salida'
+  | 'rechazado'
+  | 'anulado'
+
+// Motivo por el que la protección del examen bloqueó el intento. El intento no
+// se finaliza: queda a la espera de que el docente lo desbloquee remotamente.
+export type MotivoSolicitudDesbloqueo =
+  | 'cambio_pestana'
+  | 'pantalla_completa'
+  | 'perdida_foco'
+
+export type EstadoSolicitudDesbloqueo =
+  | 'pendiente'
+  | 'aprobada'
+  | 'rechazada'
+  | 'cancelada'
+
+export interface SolicitudDesbloqueoEstudiante {
+  id: number
+  estado: EstadoSolicitudDesbloqueo
+  motivo: MotivoSolicitudDesbloqueo
+  creada_en: string
+  atendida_en: string | null
+}
+
+// Solicitud que recibe el docente en la campana de notificaciones.
+export interface SolicitudDesbloqueoDocente {
+  id: number
+  presentacion_id: number
+  intento: number
+  simulacro_id: number
+  simulacro_titulo: string
+  curso_id: number
+  curso_nombre: string
+  area_nombre: string
+  estudiante: {
+    id: number
+    nombre_completo: string
+    email: string
+  }
+  motivo: MotivoSolicitudDesbloqueo
+  estado: EstadoSolicitudDesbloqueo
+  creada_en: string
+  atendida_en: string | null
+}
+
+export interface ListaSolicitudesDesbloqueo {
+  total: number
+  solicitudes: SolicitudDesbloqueoDocente[]
+}
 
 export interface RetroalimentacionRespuestaSaberPro {
   respuesta_id: number
@@ -389,6 +439,7 @@ export interface RetroalimentacionRespuestaSaberPro {
 }
 
 export interface ResultadoPresentacionSaberPro {
+  anulada: boolean
   puntaje: number
   calificacion: number
   correctas: number
@@ -413,6 +464,7 @@ export interface ResultadoEstudianteSimulacroSaberPro {
     email: string
   }
   intento: number
+  anulada: boolean
   calificacion: number
   aprobado: boolean
   puntaje: number
@@ -451,8 +503,9 @@ export interface EstadoPresentacionSaberPro {
   area_nombre: string
   intento: number
   estado: 'en_progreso' | 'finalizada'
+  anulada: boolean
   bloqueada: boolean
-  requiere_codigo_desbloqueo: boolean
+  solicitud_desbloqueo: SolicitudDesbloqueoEstudiante | null
   motivo_finalizacion: MotivoFinalizacionPresentacion
   iniciada_en: string
   expira_en: string
@@ -583,4 +636,214 @@ export interface RankingCursoSaberPro {
   total_estudiantes: number
   total_inscritos: number
   ranking: FilaRankingSaberPro[]
+}
+
+// ---------------------------------------------------------------------------
+// Contratos de la HU-24 (analítica de resultados).
+//
+// El docente consulta un curso (resultados individuales + agregados); la
+// coordinación y la vicerrectoría consultan la institución completa (solo
+// agregados, sin resultados individuales). El periodo académico (AAAA-1 o
+// AAAA-2) se deriva de la fecha de finalización de cada intento.
+// ---------------------------------------------------------------------------
+
+export interface ReferenciaAnaliticaSaberPro {
+  id: number
+  nombre: string
+}
+
+export interface ProgramaReferenciaAnaliticaSaberPro {
+  id: number
+  nombre: string
+}
+
+export interface SimulacroReferenciaAnaliticaSaberPro {
+  id: number
+  titulo: string
+}
+
+// Parte del examen de Inglés (1 a 7) usada en filtros y desgloses.
+export interface ParteReferenciaAnaliticaSaberPro {
+  numero: number
+  nombre: string
+}
+
+// Filtros efectivamente aplicados por el backend a la consulta.
+export interface FiltroAnaliticaSaberPro {
+  curso: CursoComparacionSaberPro | null
+  programa: ProgramaReferenciaAnaliticaSaberPro | null
+  area: AreaSaberPro | null
+  competencia: ReferenciaAnaliticaSaberPro | null
+  afirmacion: ReferenciaAnaliticaSaberPro | null
+  parte: ParteReferenciaAnaliticaSaberPro | null
+  simulacro: SimulacroReferenciaAnaliticaSaberPro | null
+  periodo: string | null
+}
+
+export interface ResumenAnaliticaSaberPro {
+  total_estudiantes: number
+  total_intentos: number
+  total_cursos: number
+  total_programas: number
+  total_preguntas: number
+  aciertos: number
+  porcentaje_acierto: number
+  promedio_puntaje: number
+  promedio_calificacion: number
+  aprobados: number
+  tasa_aprobacion: number
+}
+
+export interface DistribucionCalificacionAnaliticaSaberPro {
+  rango: string
+  cantidad: number
+  porcentaje: number
+}
+
+export interface ResultadoIndividualAnaliticaSaberPro {
+  estudiante: {
+    id: number
+    nombre_completo: string
+    email: string
+  }
+  curso: CursoComparacionSaberPro
+  simulacro: SimulacroReferenciaAnaliticaSaberPro | null
+  intento: number
+  puntaje: number
+  calificacion: number
+  correctas: number
+  aciertos: number
+  total_evaluables: number
+  total_preguntas: number
+  porcentaje_acierto: number
+  aprobado: boolean
+  anulada: boolean
+  finalizada_en: string | null
+}
+
+export interface DesgloseAreaAnaliticaSaberPro {
+  area: AreaSaberPro
+  total_estudiantes: number
+  aciertos: number
+  total_preguntas: number
+  porcentaje_acierto: number
+}
+
+export interface DesgloseCompetenciaAnaliticaSaberPro {
+  competencia: ReferenciaAnaliticaSaberPro
+  area: AreaSaberPro
+  total_estudiantes: number
+  aciertos: number
+  total_preguntas: number
+  porcentaje_acierto: number
+}
+
+export interface DesgloseAfirmacionAnaliticaSaberPro {
+  afirmacion: ReferenciaAnaliticaSaberPro
+  competencia: ReferenciaAnaliticaSaberPro
+  area: AreaSaberPro
+  total_estudiantes: number
+  aciertos: number
+  total_preguntas: number
+  porcentaje_acierto: number
+}
+
+// Desempeño agregado de una parte del examen de Inglés.
+export interface DesgloseParteAnaliticaSaberPro {
+  parte: ParteReferenciaAnaliticaSaberPro
+  total_estudiantes: number
+  aciertos: number
+  total_preguntas: number
+  porcentaje_acierto: number
+}
+
+// Criterio con menor porcentaje de acierto (HU-24.2.5).
+export interface FocoBajoAnaliticaSaberPro {
+  tipo: 'area' | 'competencia' | 'afirmacion' | 'parte'
+  id: number
+  nombre: string
+  porcentaje_acierto: number
+  total_preguntas: number
+}
+
+// Respuesta de GET /saber-pro/docente/cursos/{id}/analitica/ (HU-24.1/24.2).
+export interface AnaliticaCursoSaberPro {
+  curso: CursoComparacionSaberPro
+  filtro: FiltroAnaliticaSaberPro
+  periodos_disponibles: string[]
+  partes_disponibles: ParteReferenciaAnaliticaSaberPro[]
+  resumen: ResumenAnaliticaSaberPro
+  distribucion_calificaciones: DistribucionCalificacionAnaliticaSaberPro[]
+  resultados_individuales: ResultadoIndividualAnaliticaSaberPro[]
+  por_area: DesgloseAreaAnaliticaSaberPro[]
+  por_competencia: DesgloseCompetenciaAnaliticaSaberPro[]
+  por_afirmacion: DesgloseAfirmacionAnaliticaSaberPro[]
+  por_parte: DesgloseParteAnaliticaSaberPro[]
+  focos_bajos: FocoBajoAnaliticaSaberPro[]
+}
+
+// Métricas compartidas por las comparativas institucionales.
+export interface MetricasGrupoAnaliticaSaberPro {
+  total_estudiantes: number
+  total_intentos: number
+  promedio_puntaje: number
+  promedio_calificacion: number
+  porcentaje_acierto: number
+  aprobados: number
+  tasa_aprobacion: number
+}
+
+export interface CursoInstitucionalAnaliticaSaberPro extends MetricasGrupoAnaliticaSaberPro {
+  curso: CursoComparacionSaberPro
+}
+
+export interface ProgramaInstitucionalAnaliticaSaberPro extends MetricasGrupoAnaliticaSaberPro {
+  programa: ProgramaReferenciaAnaliticaSaberPro
+}
+
+export interface PeriodoInstitucionalAnaliticaSaberPro extends MetricasGrupoAnaliticaSaberPro {
+  periodo: string
+}
+
+// Respuesta de GET /saber-pro/institucional/analitica/ (HU-24.3/24.4).
+export interface AnaliticaInstitucionalSaberPro {
+  filtro: FiltroAnaliticaSaberPro
+  periodos_disponibles: string[]
+  partes_disponibles: ParteReferenciaAnaliticaSaberPro[]
+  resumen: ResumenAnaliticaSaberPro
+  distribucion_calificaciones: DistribucionCalificacionAnaliticaSaberPro[]
+  por_area: DesgloseAreaAnaliticaSaberPro[]
+  por_competencia: DesgloseCompetenciaAnaliticaSaberPro[]
+  por_afirmacion: DesgloseAfirmacionAnaliticaSaberPro[]
+  por_parte: DesgloseParteAnaliticaSaberPro[]
+  por_curso: CursoInstitucionalAnaliticaSaberPro[]
+  por_programa: ProgramaInstitucionalAnaliticaSaberPro[]
+  por_periodo: PeriodoInstitucionalAnaliticaSaberPro[]
+  focos_bajos: FocoBajoAnaliticaSaberPro[]
+}
+
+// Respuesta de GET /saber-pro/institucional/catalogo/.
+export interface CatalogoInstitucionalSaberPro {
+  areas: AreaSaberPro[]
+  programas: ProgramaReferenciaAnaliticaSaberPro[]
+  cursos: CursoComparacionSaberPro[]
+}
+
+// Parámetros de consulta de la analítica. `null` significa "sin filtro".
+export interface ParametrosAnaliticaCursoSaberPro {
+  simulacro_id: number | null
+  periodo: string | null
+  competencia_id: number | null
+  afirmacion_id: number | null
+  parte: number | null
+}
+
+export interface ParametrosAnaliticaInstitucionalSaberPro {
+  curso_id: number | null
+  programa_id: number | null
+  area_id: number | null
+  competencia_id: number | null
+  afirmacion_id: number | null
+  parte: number | null
+  periodo: string | null
 }

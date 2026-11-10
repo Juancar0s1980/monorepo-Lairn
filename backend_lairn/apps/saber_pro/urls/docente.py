@@ -15,7 +15,9 @@ registran debajo del recurso sin conflictos de nombre.
 from django.urls import path
 
 from apps.saber_pro.views import (
+    VistaAnaliticaCursoSaberPro,
     VistaAprobarContenidoBancoSaberPro,
+    VistaAprobarSolicitudDesbloqueoSaberPro,
     VistaContenidoBancoSaberPro,
     VistaCrearCursoSaberPro,
     VistaCriteriosAreaSaberPro,
@@ -24,13 +26,17 @@ from apps.saber_pro.views import (
     VistaDetalleSimulacroSaberPro,
     VistaDisponibilidadSimulacroSaberPro,
     VistaEstudiantesCursoSaberPro,
+    VistaExportarAnaliticaCursoSaberPro,
     VistaGenerarContenidoSaberPro,
     VistaPreguntasSimulacroSaberPro,
     VistaRankingCursoSaberPro,
+    VistaRechazarSolicitudDesbloqueoSaberPro,
+    VistaRechazarYAnularSolicitudDesbloqueoSaberPro,
     VistaRegenerarCodigoCursoSaberPro,
     VistaResultadosSimulacroSaberPro,
     VistaRevisionPresentacionSaberPro,
     VistaSimulacrosCursoSaberPro,
+    VistaSolicitudesDesbloqueoSaberPro,
 )
 
 urlpatterns = [
@@ -74,9 +80,21 @@ urlpatterns = [
     # Ranking nominal del curso, filtrable por simulacro o área (HU-23).
     path('docente/cursos/<int:curso_id>/ranking/', VistaRankingCursoSaberPro.as_view(), name='ranking_curso_saber_pro'),
 
+    # Analítica del curso: resultados individuales/agregados y desgloses (HU-24.1/24.2).
+    path('docente/cursos/<int:curso_id>/analitica/', VistaAnaliticaCursoSaberPro.as_view(), name='analitica_curso_saber_pro'),
+
+    # Exportación .xlsx de la analítica del curso con los mismos filtros (HU-24.5).
+    path('docente/cursos/<int:curso_id>/analitica/exportar/', VistaExportarAnaliticaCursoSaberPro.as_view(), name='exportar_analitica_curso_saber_pro'),
+
     # Calificaciones de los estudiantes en escala 0.0-5.0 (HU-24).
     path('docente/cursos/<int:curso_id>/simulacros/<int:simulacro_id>/resultados/', VistaResultadosSimulacroSaberPro.as_view(), name='resultados_simulacro_saber_pro'),
 
     # Revisión y calificación de respuestas abiertas de un intento (HU-24).
     path('docente/cursos/<int:curso_id>/simulacros/<int:simulacro_id>/resultados/<int:presentacion_id>/revision/', VistaRevisionPresentacionSaberPro.as_view(), name='revision_presentacion_saber_pro'),
+
+    # Notificaciones de desbloqueo: solicitudes pendientes y decisión remota.
+    path('docente/solicitudes-desbloqueo/', VistaSolicitudesDesbloqueoSaberPro.as_view(), name='solicitudes_desbloqueo_saber_pro'),
+    path('docente/solicitudes-desbloqueo/<int:solicitud_id>/aprobar/', VistaAprobarSolicitudDesbloqueoSaberPro.as_view(), name='aprobar_solicitud_desbloqueo_saber_pro'),
+    path('docente/solicitudes-desbloqueo/<int:solicitud_id>/rechazar/', VistaRechazarSolicitudDesbloqueoSaberPro.as_view(), name='rechazar_solicitud_desbloqueo_saber_pro'),
+    path('docente/solicitudes-desbloqueo/<int:solicitud_id>/rechazar-anular/', VistaRechazarYAnularSolicitudDesbloqueoSaberPro.as_view(), name='rechazar_anular_solicitud_desbloqueo_saber_pro'),
 ]

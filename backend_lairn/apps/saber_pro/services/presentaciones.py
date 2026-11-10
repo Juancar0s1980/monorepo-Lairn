@@ -3,13 +3,24 @@ Servicio de presentación de simulacros Saber Pro (HU-21 y HU-22).
 
 Centraliza las reglas que no deben vivir en las vistas:
 
-- iniciar o reanudar el intento activo de un estudiante;
+- iniciar un intento nuevo, cerrando como salida cualquier intento activo;
 - congelar el contenido, aleatorizar preguntas y opciones, y fijar el cronómetro;
 - entregar únicamente la pregunta actual y sin respuestas correctas;
 - registrar respuestas en orden, sin retroceso, y calificarlas;
-- finalizar manualmente, al responder el último bloque, al vencer el tiempo o
-  al cumplirse la fecha límite del simulacro;
+- finalizar manualmente, al responder el último bloque, al vencer el tiempo, al
+  cumplirse la fecha límite del simulacro, cuando el estudiante sale o cuando el
+  docente rechaza el desbloqueo de un intento bloqueado;
 - guardar la revisión docente de las consignas abiertas.
+
+Durante un intento, cambiar de pestaña, salir de pantalla completa o perder el
+foco bloquea la presentación y genera una solicitud de desbloqueo: el intento
+no se cierra y el estudiante espera a que su docente lo reanude. Si el docente
+rechaza la solicitud, el intento se finaliza y se envía automáticamente.
+
+Un intento nunca se reanuda por navegación. Si el estudiante vuelve a la
+pantalla del examen, el intento activo se cierra por salida; cerrar un intento
+solo lo finaliza a él y, si aún quedan intentos disponibles, el estudiante puede
+iniciar el siguiente.
 
 HU-22.4: durante la presentación no se invoca ningún servicio de IA ni se
 entrega retroalimentación; las respuestas correctas solo se usan al calificar.
@@ -42,6 +53,9 @@ MOTIVO_COMPLETADA = 'completada'
 MOTIVO_MANUAL = 'manual'
 MOTIVO_TIEMPO_AGOTADO = 'tiempo_agotado'
 MOTIVO_FECHA_LIMITE = 'fecha_limite'
+MOTIVO_SALIDA = 'salida'
+MOTIVO_RECHAZADO = 'rechazado'
+MOTIVO_ANULADO = 'anulado'
 
 
 class PresentacionNoDisponibleError(Exception):
@@ -54,14 +68,6 @@ class PresentacionNoDisponibleError(Exception):
 
 class RespuestaInvalidaError(Exception):
     """La respuesta no corresponde al bloque actual o a su estructura."""
-
-    def __init__(self, mensaje):
-        self.mensaje = mensaje
-        super().__init__(mensaje)
-
-
-class CodigoDesbloqueoInvalidoError(Exception):
-    """El codigo docente no permite reanudar el intento bloqueado."""
 
     def __init__(self, mensaje):
         self.mensaje = mensaje
@@ -112,10 +118,15 @@ def presentacion_tiene_revision_pendiente(presentacion) -> bool:
 def _calcular_puntaje(presentacion) -> float:
     """Calcula el puntaje 0-100 del intento.
 
-    Mientras el docente no califique, se conserva el puntaje automático sobre
-    los ítems evaluables. Cuando califica, la nota 0.0-5.0 del docente aporta su
-    fracción a los ítems abiertos del intento (los que no se califican solos).
+    Un intento anulado por el docente siempre vale 0, sin importar el avance ni
+    las respuestas registradas. Mientras el docente no califique, se conserva el
+    puntaje automático sobre los ítems evaluables. Cuando califica, la nota
+    0.0-5.0 del docente aporta su fracción a los ítems abiertos del intento (los
+    que no se califican solos).
     """
+    if presentacion.anulada:
+        return 0
+
     if presentacion.requiere_revision and presentacion.calificacion_docente is not None:
         total = presentacion.total_items
         if not total:
@@ -131,13 +142,19 @@ def _calcular_puntaje(presentacion) -> float:
 
 @transaction.atomic
 def crear_presentacion(simulacro, estudiante) -> PresentacionSimulacro:
-    """Inicia un intento nuevo o reanuda el activo del estudiante.
+    """Inicia un intento nuevo; nunca reanuda el intento activo.
 
     Se bloquea el simulacro para serializar inicios concurrentes y respetar el
-    consecutivo de intentos. Si el intento activo ya venció, se finaliza por
-    tiempo agotado y se devuelve ese mismo intento finalizado.
+    consecutivo de intentos. Si existe un intento activo, se cierra por salida y
+    se devuelve ese mismo intento finalizado para que el estudiante vea su
+    resultado sin reanudarlo. Salir solo finaliza ese intento: si al estudiante
+    le quedan intentos disponibles, puede iniciar el siguiente.
+
+    Si el intento activo ya venció, se finaliza por tiempo agotado.
     """
-    simulacro = Simulacro.objects.select_for_update().get(pk=simulacro.pk)
+    simulacro = Simulacro.objects.select_for_update().select_related('curso').get(
+        pk=simulacro.pk
+    )
 
     activa = (
         PresentacionSimulacro.objects.select_for_update()
@@ -148,7 +165,23 @@ def crear_presentacion(simulacro, estudiante) -> PresentacionSimulacro:
     if activa is not None:
         if activa.esta_vencida():
             finalizar_presentacion(activa, _motivo_vencimiento(simulacro, timezone.now()))
+        else:
+            finalizar_presentacion(activa, MOTIVO_SALIDA)
         return activa
+
+    if PresentacionSimulacro.objects.filter(
+        simulacro=simulacro,
+        estudiante=estudiante,
+        anulada=True,
+    ).exists():
+        raise PresentacionNoDisponibleError(
+            'El docente anuló este simulacro para ti; no puedes presentarlo de nuevo.'
+        )
+
+    if not simulacro.activo or not simulacro.curso.activo:
+        raise PresentacionNoDisponibleError(
+            'El simulacro no está disponible para presentar.'
+        )
 
     ahora = timezone.now()
     if simulacro.fecha_limite is not None and ahora >= simulacro.fecha_limite:
@@ -335,7 +368,7 @@ def registrar_respuesta(
 
     if presentacion.bloqueada:
         raise RespuestaInvalidaError(
-            'El examen está bloqueado. Ingresa el código de desbloqueo del docente para continuar.'
+            'El intento está bloqueado. Solicita a tu docente que lo desbloquee.'
         )
 
     actual = pregunta_actual(presentacion)
@@ -404,6 +437,10 @@ def finalizar_presentacion(
             'actualizado_en',
         ]
     )
+    presentacion.solicitudes_desbloqueo.filter(estado='pendiente').update(
+        estado='cancelada',
+        atendida_en=timezone.now(),
+    )
     return presentacion
 
 
@@ -418,48 +455,13 @@ def finalizar_si_vencida(presentacion: PresentacionSimulacro) -> bool:
     return True
 
 
-def bloquear_presentacion(
+def finalizar_por_salida(
     presentacion: PresentacionSimulacro,
 ) -> PresentacionSimulacro:
-    """Marca el intento como bloqueado si el simulacro tiene codigo docente.
-
-    Sin codigo configurado no se bloquea en backend: la advertencia visual sigue
-    funcionando, pero el estudiante no queda atrapado sin forma de desbloquear.
-    """
+    """Cierra el intento por salida del estudiante; es idempotente."""
     if not presentacion.esta_en_progreso():
         return presentacion
-    if not presentacion.simulacro.tiene_codigo_desbloqueo:
-        return presentacion
-    if presentacion.bloqueada:
-        return presentacion
-
-    presentacion.bloqueada = True
-    presentacion.save(update_fields=['bloqueada', 'actualizado_en'])
-    return presentacion
-
-
-def desbloquear_presentacion(
-    presentacion: PresentacionSimulacro,
-    codigo: str,
-) -> PresentacionSimulacro:
-    """Valida el codigo docente y reanuda el intento bloqueado."""
-    if not presentacion.esta_en_progreso():
-        raise CodigoDesbloqueoInvalidoError(
-            'La presentación ya fue finalizada y no se puede desbloquear.'
-        )
-    if not presentacion.simulacro.tiene_codigo_desbloqueo:
-        raise CodigoDesbloqueoInvalidoError(
-            'El docente no ha configurado un código de desbloqueo para este simulacro.'
-        )
-    if not presentacion.simulacro.verificar_codigo_desbloqueo(codigo):
-        raise CodigoDesbloqueoInvalidoError(
-            'El código de desbloqueo no es correcto.'
-        )
-
-    if presentacion.bloqueada:
-        presentacion.bloqueada = False
-        presentacion.save(update_fields=['bloqueada', 'actualizado_en'])
-    return presentacion
+    return finalizar_presentacion(presentacion, MOTIVO_SALIDA)
 
 
 @transaction.atomic
@@ -471,6 +473,10 @@ def registrar_revision(presentacion, calificacion, retroalimentacion, docente) -
     """
     presentacion = PresentacionSimulacro.objects.select_for_update().get(pk=presentacion.pk)
 
+    if presentacion.anulada:
+        raise RevisionInvalidaError(
+            'El intento fue anulado por el docente y su calificación queda en 0.'
+        )
     if presentacion.esta_en_progreso():
         raise RevisionInvalidaError('El intento debe estar finalizado para calificarlo.')
     if not presentacion.requiere_revision:

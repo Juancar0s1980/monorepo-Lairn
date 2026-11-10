@@ -25,7 +25,6 @@ from .serializador_curso_saber_pro import (
 )
 from .serializador_estudiante_inscrito import SerializadorEstudianteInscrito
 from .serializador_presentacion_saber_pro import (
-    SerializadorDesbloqueoPresentacion,
     SerializadorEstadoPresentacion,
     SerializadorPreguntaPresentacion,
     SerializadorResponderPresentacion,
@@ -45,6 +44,26 @@ from .serializador_comparacion_saber_pro import (
     SerializadorRankingCurso,
     SerializadorSimulacroFiltro,
 )
+from .serializador_analitica_saber_pro import (
+    SerializadorAnaliticaCurso,
+    SerializadorAnaliticaInstitucional,
+    SerializadorCatalogoInstitucional,
+    SerializadorCursoCatalogo,
+    SerializadorCursoInstitucional,
+    SerializadorDesgloseAfirmacion,
+    SerializadorDesgloseArea,
+    SerializadorDesgloseCompetencia,
+    SerializadorDistribucionCalificacion,
+    SerializadorFiltroAnalitica,
+    SerializadorFocoBajo,
+    SerializadorMetricasGrupo,
+    SerializadorPeriodoInstitucional,
+    SerializadorProgramaInstitucional,
+    SerializadorProgramaReferencia,
+    SerializadorReferenciaAnalitica,
+    SerializadorResultadoIndividualAnalitica,
+    SerializadorResumenAnalitica,
+)
 from .serializador_simulacro_saber_pro import (
     SerializadorAfirmacionDisponibilidad,
     SerializadorCompetenciaDisponibilidad,
@@ -57,6 +76,12 @@ from .serializador_simulacro_saber_pro import (
     SerializadorPreguntasSimulacro,
     SerializadorSimulacro,
     SerializadorSimulacroEstudiante,
+)
+from .serializador_solicitud_desbloqueo import (
+    SerializadorListaSolicitudesDesbloqueo,
+    SerializadorSolicitarDesbloqueo,
+    SerializadorSolicitudDesbloqueoDocente,
+    SerializadorSolicitudDesbloqueoEstudiante,
 )
 from .serializador_unirse_curso_saber_pro import (
     SerializadorInscripcionCursoSaberPro,
@@ -85,7 +110,6 @@ __all__ = [
     'SerializadorContenidoBanco',
     'SerializadorCriteriosArea',
     'SerializadorDisponibilidadSimulacro',
-    'SerializadorDesbloqueoPresentacion',
     'SerializadorDistribucionEntrada',
     'SerializadorDistribucionSimulacro',
     'SerializadorEditarContenido',
@@ -109,5 +133,27 @@ __all__ = [
     'SerializadorResumenResultadosSimulacro',
     'SerializadorSimulacro',
     'SerializadorSimulacroEstudiante',
+    'SerializadorListaSolicitudesDesbloqueo',
+    'SerializadorSolicitarDesbloqueo',
+    'SerializadorSolicitudDesbloqueoDocente',
+    'SerializadorSolicitudDesbloqueoEstudiante',
     'SerializadorUnirseCursoSaberPro',
+    'SerializadorAnaliticaCurso',
+    'SerializadorAnaliticaInstitucional',
+    'SerializadorCatalogoInstitucional',
+    'SerializadorCursoCatalogo',
+    'SerializadorCursoInstitucional',
+    'SerializadorDesgloseAfirmacion',
+    'SerializadorDesgloseArea',
+    'SerializadorDesgloseCompetencia',
+    'SerializadorDistribucionCalificacion',
+    'SerializadorFiltroAnalitica',
+    'SerializadorFocoBajo',
+    'SerializadorMetricasGrupo',
+    'SerializadorPeriodoInstitucional',
+    'SerializadorProgramaInstitucional',
+    'SerializadorProgramaReferencia',
+    'SerializadorReferenciaAnalitica',
+    'SerializadorResultadoIndividualAnalitica',
+    'SerializadorResumenAnalitica',
 ]

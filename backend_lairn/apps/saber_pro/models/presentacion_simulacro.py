@@ -9,14 +9,21 @@ no altere un examen ya iniciado.
 Reglas de negocio:
 
 - Solo puede existir una presentación `en_progreso` por estudiante y simulacro.
-  Al iniciar de nuevo se reanuda el intento activo; si ya venció, se finaliza
-  automáticamente por tiempo agotado.
+  Un intento activo nunca se reanuda: si el estudiante vuelve a iniciar, el
+  intento se cierra automáticamente por salida. Si ya venció, se finaliza por
+  tiempo agotado.
+- Cerrar un intento por salida solo finaliza ese intento: si al estudiante le
+  quedan intentos disponibles, puede iniciar el siguiente.
 - `expira_en` se fija al iniciar con `Simulacro.tiempo_limite_minutos`. El
   vencimiento se evalúa de forma perezosa en cada operación, sin depender de un
   proceso externo.
 - Al finalizar se conserva el motivo (`completada`, `manual`, `tiempo_agotado`,
-  `fecha_limite`) para que la HU-24 pueda distinguir intentos completos de
-  abandonos o cierres por plazo.
+  `fecha_limite`, `salida`, `rechazado`, `anulado`) para que la HU-24 pueda
+  distinguir intentos completos de abandonos, cierres por plazo o desbloqueos
+  rechazados.
+- Un intento `anulada` fue rechazado con la acción "rechazar y anular": su nota
+  es siempre 0 sin importar el avance ni las respuestas, y el estudiante no
+  puede iniciar nuevos intentos de ese simulacro aunque le quedaran disponibles.
 """
 
 from django.conf import settings
@@ -35,6 +42,9 @@ MOTIVO_FINALIZACION_CHOICES = [
     ('manual', 'Finalizada manualmente'),
     ('tiempo_agotado', 'Tiempo agotado'),
     ('fecha_limite', 'Fecha límite vencida'),
+    ('salida', 'Cerrado por salir de la prueba'),
+    ('rechazado', 'Cerrado por desbloqueo rechazado'),
+    ('anulado', 'Anulado por desbloqueo rechazado'),
 ]
 
 
@@ -59,9 +69,16 @@ class PresentacionSimulacro(models.Model):
         choices=ESTADO_PRESENTACION_CHOICES,
         default='en_progreso',
     )
+    anulada = models.BooleanField(
+        default=False,
+        help_text=(
+            'El docente rechazó y anuló el intento: su nota es 0 y el estudiante '
+            'no puede iniciar nuevos intentos de este simulacro.'
+        ),
+    )
     bloqueada = models.BooleanField(
         default=False,
-        help_text='El intento se bloqueo por una salida detectada y espera el codigo docente.',
+        help_text='El intento se bloqueó por una salida detectada y espera aprobación docente.',
     )
     motivo_finalizacion = models.CharField(
         max_length=20,
