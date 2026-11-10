@@ -33,6 +33,27 @@ export interface Calificacion {
   calificada_en: string
 }
 
+// Propuesta de la IA (HU-15): solo llega en respuestas del docente, nunca al estudiante.
+export type DecisionPreevaluacion = 'pendiente' | 'aprobada' | 'ajustada'
+
+export interface AnalisisCriterio {
+  criterio: string
+  nivel: number
+  justificacion: string
+}
+
+export interface Preevaluacion {
+  niveles_propuestos: number[]
+  nota_propuesta: string
+  analisis: AnalisisCriterio[]
+  observaciones_propuestas: string
+  advertencias: string[]
+  caracteres_analizados: number
+  decision: DecisionPreevaluacion
+  generada_en: string
+  decidida_en: string | null
+}
+
 export interface Entrega {
   id: number
   nombre: string
@@ -41,6 +62,8 @@ export interface Entrega {
   con_retraso: boolean
   estado: EstadoEntrega
   calificacion: Calificacion | null
+  // Solo en el panel del docente.
+  preevaluacion?: Preevaluacion | null
 }
 
 // Vista del docente.
