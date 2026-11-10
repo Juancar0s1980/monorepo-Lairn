@@ -16,6 +16,8 @@ from .modelo_evaluacion_formal import (
 from .modelo_tarea import (
     ArchivoGuiaTarea,
     EntregaTarea,
+    OpcionesDecisionPreevaluacion,
+    PreevaluacionEntrega,
     OpcionesEstadoTarea,
     TareaPractica,
 )
@@ -81,6 +83,8 @@ __all__ = [
     'TareaPractica',
     'ArchivoGuiaTarea',
     'EntregaTarea',
+    'OpcionesDecisionPreevaluacion',
+    'PreevaluacionEntrega',
     'OpcionesEstadoTarea',
     'IntentoEvaluacion',
     'OpcionesIntegridad',

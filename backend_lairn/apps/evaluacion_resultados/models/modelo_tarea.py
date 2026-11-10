@@ -107,3 +107,41 @@ class EntregaTarea(models.Model):
             # Envío definitivo: una sola entrega por estudiante y tarea (HU-08A.2).
             models.UniqueConstraint(fields=['tarea', 'estudiante'], name='uq_ev_entrega_tarea_estudiante'),
         ]
+
+
+class OpcionesDecisionPreevaluacion(models.TextChoices):
+    PENDIENTE = 'pendiente', 'Pendiente de revisión docente'
+    APROBADA = 'aprobada', 'Aprobada sin cambios'
+    AJUSTADA = 'ajustada', 'Aprobada con ajustes del docente'
+
+
+class PreevaluacionEntrega(models.Model):
+    """Propuesta de la IA para calificar una entrega (HU-15.1 / 15.2 / 15.3).
+
+    Es un borrador SOLO para el docente: el estudiante nunca la ve. La nota
+    oficial sigue siendo la de `EntregaTarea`, que solo se escribe cuando el
+    docente aprueba (con o sin ajustes) desde "Calificar". Aquí queda la
+    trazabilidad: qué propuso la IA, con qué texto y qué decidió el docente.
+
+    `analisis`: [{"criterio": str, "nivel": int, "justificacion": str}] en el orden de la rúbrica.
+    """
+
+    entrega = models.OneToOneField('EntregaTarea', on_delete=models.CASCADE, related_name='preevaluacion')
+    niveles_propuestos = models.JSONField(default=list)
+    nota_propuesta = models.DecimalField(max_digits=3, decimal_places=2)
+    analisis = models.JSONField(default=list)
+    observaciones_propuestas = models.TextField(blank=True, default='')
+    advertencias = models.JSONField(default=list, blank=True, help_text='Límites del análisis (texto recortado, etc.).')
+    hash_texto = models.CharField(max_length=64, help_text='SHA-256 del texto analizado.')
+    caracteres_analizados = models.PositiveIntegerField(default=0)
+    modelo = models.CharField(max_length=100, blank=True, default='')
+    generada_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='+')
+    generada_en = models.DateTimeField(auto_now=True)
+    decision = models.CharField(
+        max_length=20, choices=OpcionesDecisionPreevaluacion.choices,
+        default=OpcionesDecisionPreevaluacion.PENDIENTE, db_index=True,
+    )
+    decidida_en = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'ev_tareas_preevaluaciones'
