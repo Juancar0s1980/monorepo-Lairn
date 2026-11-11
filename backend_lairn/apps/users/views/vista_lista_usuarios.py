@@ -34,7 +34,8 @@ class VistaListaUsuarios(APIView):
 
     # Lista todos los usuarios del sistema junto con su rol.
     def get(self, request):
-        usuarios = User.objects.select_related('role').all().order_by('email')
+        # Las cuentas sin rol son solicitudes administrativas sin aprobar: se gestionan en su propia bandeja.
+        usuarios = User.objects.select_related('role').filter(role__isnull=False).order_by('email')
         serializador = SerializadorGestionUsuario(usuarios, many=True)
         return Response(serializador.data)
 
