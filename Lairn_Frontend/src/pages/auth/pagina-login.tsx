@@ -14,6 +14,8 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/contexto-auth/use-auth";
+import { BotonGoogle } from "./acceso-institucional";
+import { useConfigAcceso } from "./use-config-acceso";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,7 +57,11 @@ const features = [
 type Modo = "login" | "registro";
 
 export default function PaginaLogin() {
-  const { iniciarSesion, registrar } = useAuth();
+  const { iniciarSesion, iniciarSesionGoogle, registrar } = useAuth();
+  // HU-26: acceso con Google institucional (y si el sistema está en modo solo institucional).
+  const configAcceso = useConfigAcceso();
+  const soloInstitucional = !!configAcceso?.solo_institucional;
+  const hayGoogle = !!configAcceso?.google_client_id;
   const navigate = useNavigate();
 
   // Estado del formulario
@@ -152,7 +158,21 @@ export default function PaginaLogin() {
     }
   };
 
-  const esLogin = modo === "login";
+  // Ingreso con Google: el backend verifica el token y responde con el motivo si lo rechaza.
+  const manejarGoogle = async (credential: string) => {
+    setCargando(true);
+    try {
+      await iniciarSesionGoogle(credential);
+      navigate("/");
+    } catch (err: unknown) {
+      const detalle = (err as { response?: { data?: { detalle?: string } } }).response?.data?.detalle;
+      toast.error(detalle ?? "No se pudo iniciar sesión con Google");
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  const esLogin = modo === "login" || soloInstitucional;
 
   return (
     <div className="flex h-screen w-screen items-center justify-center overflow-hidden bg-background p-[clamp(0.5rem,2vh,1rem)]">
@@ -346,15 +366,43 @@ export default function PaginaLogin() {
             {/* Título dinámico según modo */}
             <div className="space-y-1.5">
               <h2 className="font-heading text-[clamp(1.25rem,3.5vh,1.5rem)] text-foreground tracking-tight">
-                {esLogin ? "Bienvenido de vuelta" : "Crea tu cuenta"}
+                {soloInstitucional ? "Ingresa con tu cuenta institucional" : esLogin ? "Bienvenido de vuelta" : "Crea tu cuenta"}
               </h2>
               <p className="text-sm text-muted-foreground">
-                {esLogin
-                  ? "Inicia sesión para continuar con tu aprendizaje"
-                  : "Regístrate para empezar a aprender con IA"}
+                {soloInstitucional
+                  ? "El acceso a PseudoTutor es solo con tu correo de Google de la universidad"
+                  : esLogin
+                    ? "Inicia sesión para continuar con tu aprendizaje"
+                    : "Regístrate para empezar a aprender con IA"}
               </p>
             </div>
 
+            {/* HU-26: botón de Google institucional */}
+            {esLogin && hayGoogle && configAcceso && (
+              <BotonGoogle
+                clientId={configAcceso.google_client_id}
+                dominios={configAcceso.dominios}
+                alIngresar={(c) => void manejarGoogle(c)}
+                deshabilitado={cargando}
+              />
+            )}
+            {soloInstitucional && !hayGoogle && (
+              <p className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm text-warning">
+                El inicio de sesión con Google aún no está configurado en este servidor. Comunícate con soporte.
+              </p>
+            )}
+            {esLogin && hayGoogle && !soloInstitucional && (
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-card px-3 text-muted-foreground">o con correo y contraseña</span>
+                </div>
+              </div>
+            )}
+
+            {!soloInstitucional && (<>
             {/* Formulario: key={modo} fuerza re-mount al cambiar de modo */}
             <form
               key={modo}
@@ -589,6 +637,7 @@ export default function PaginaLogin() {
                 <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover/link:translate-x-0.5" />
               </button>
             </div>
+            </>)}
           </div>
         </div>
       </div>

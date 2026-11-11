@@ -19,7 +19,8 @@ import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import api from '@/services/api'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import {
+import { TabVinculacionMalla } from './componentes/tab-vinculacion-malla'
+import { Link2,
   FileText,
   Users,
   BarChart3,
@@ -504,6 +505,10 @@ export default function PaginaExamenesCursoDocente() {
             <Users className="h-4 w-4" />
             Estudiantes
           </TabsTrigger>
+          <TabsTrigger value="malla">
+            <Link2 className="h-4 w-4" />
+            Malla
+          </TabsTrigger>
           <TabsTrigger value="campo-estudio">
             <Lightbulb className="h-4 w-4" />
             Campo de Estudio
@@ -520,6 +525,11 @@ export default function PaginaExamenesCursoDocente() {
             onExamenActualizado={actualizarExamenEnLista}
             onExamenEliminado={eliminarExamenDeLista}
           />
+        </TabsContent>
+
+        {/* HU-01.10: vínculo del curso con la asignatura de la malla */}
+        <TabsContent value="malla">
+          <TabVinculacionMalla cursoId={Number(id)} />
         </TabsContent>
 
         {/* Tab de Objetivos */}

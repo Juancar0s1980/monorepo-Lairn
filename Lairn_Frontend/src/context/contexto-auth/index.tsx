@@ -71,6 +71,14 @@ export function ProveedorAuth({ children }: { children: ReactNode }) {
     await cargarUsuario()
   }
 
+  // HU-26: login con la cuenta Google institucional (el backend verifica el token con Google).
+  const iniciarSesionGoogle = async (credential: string) => {
+    const { data } = await api.post<LoginResponse>('/usuarios/iniciar-sesion-google/', { credential })
+    localStorage.setItem('access_token', data.access)
+    localStorage.setItem('refresh_token', data.refresh)
+    await cargarUsuario()
+  }
+
   // Registro: crea la cuenta y automáticamente hace login con las mismas credenciales.
   const registrar = async (datos: RegistroRequest) => {
     await api.post('/usuarios/registrar/', datos)
@@ -94,7 +102,7 @@ export function ProveedorAuth({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ ...estado, iniciarSesion, registrar, cerrarSesion }}>
+    <AuthContext.Provider value={{ ...estado, iniciarSesion, iniciarSesionGoogle, registrar, cerrarSesion }}>
       {children}
     </AuthContext.Provider>
   )
