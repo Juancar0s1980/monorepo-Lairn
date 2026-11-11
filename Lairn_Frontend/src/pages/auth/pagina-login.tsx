@@ -14,7 +14,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/contexto-auth/use-auth";
-import { BotonGoogle } from "./acceso-institucional";
+import { BotonGoogle, BotonGoogleSinConfigurar } from "./acceso-institucional";
 import { useConfigAcceso } from "./use-config-acceso";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,8 @@ import {
   User,
   GraduationCap,
   ArrowRight,
+  Briefcase,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { MascotaRobot } from "@/components/mascota-robot";
@@ -56,12 +58,21 @@ const features = [
 
 type Modo = "login" | "registro";
 
-export default function PaginaLogin() {
+// HU-26: dos accesos con Google institucional.
+//   /iniciar-sesion           estudiantes: la cuenta se crea como Estudiante en el primer ingreso.
+//   /iniciar-sesion/personal  docentes y administrativos: eligen su rol la primera vez. Docente entra de una;
+//                             Coordinador, Vicerrector y Administrador esperan la aprobación del Administrador.
+type Portal = "estudiantes" | "personal";
+
+export default function PaginaLogin({ portal = "estudiantes" }: { portal?: Portal }) {
   const { iniciarSesion, iniciarSesionGoogle, registrar } = useAuth();
   // HU-26: acceso con Google institucional (y si el sistema está en modo solo institucional).
   const configAcceso = useConfigAcceso();
   const soloInstitucional = !!configAcceso?.solo_institucional;
   const hayGoogle = !!configAcceso?.google_client_id;
+  const esPersonal = portal === "personal";
+  const [rol, setRol] = useState("");
+  const [pendiente, setPendiente] = useState<string | null>(null);
   const navigate = useNavigate();
 
   // Estado del formulario
@@ -162,7 +173,11 @@ export default function PaginaLogin() {
   const manejarGoogle = async (credential: string) => {
     setCargando(true);
     try {
-      await iniciarSesionGoogle(credential);
+      const mensajePendiente = await iniciarSesionGoogle(credential, { portal, rol: esPersonal ? rol || undefined : undefined });
+      if (mensajePendiente) {
+        setPendiente(mensajePendiente);
+        return;
+      }
       navigate("/");
     } catch (err: unknown) {
       const detalle = (err as { response?: { data?: { detalle?: string } } }).response?.data?.detalle;
@@ -363,34 +378,81 @@ export default function PaginaLogin() {
               </p>
             </div>
 
-            {/* Título dinámico según modo */}
+            {/* Título según el acceso (estudiantes o personal) */}
             <div className="space-y-1.5">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                {esPersonal ? <Briefcase className="h-3.5 w-3.5" aria-hidden /> : <GraduationCap className="h-3.5 w-3.5" aria-hidden />}
+                {esPersonal ? "Acceso para docentes y administrativos" : "Acceso para estudiantes"}
+              </span>
               <h2 className="font-heading text-[clamp(1.25rem,3.5vh,1.5rem)] text-foreground tracking-tight">
-                {soloInstitucional ? "Ingresa con tu cuenta institucional" : esLogin ? "Bienvenido de vuelta" : "Crea tu cuenta"}
+                {soloInstitucional || esPersonal ? "Ingresa con tu cuenta institucional" : esLogin ? "Bienvenido de vuelta" : "Crea tu cuenta"}
               </h2>
               <p className="text-sm text-muted-foreground">
-                {soloInstitucional
-                  ? "El acceso a PseudoTutor es solo con tu correo de Google de la universidad"
+                {soloInstitucional || esPersonal
+                  ? "Entra o crea tu cuenta con tu correo de Google de la universidad. No necesitas contraseña."
                   : esLogin
                     ? "Inicia sesión para continuar con tu aprendizaje"
                     : "Regístrate para empezar a aprender con IA"}
               </p>
             </div>
 
-            {/* HU-26: botón de Google institucional */}
-            {esLogin && hayGoogle && configAcceso && (
+            {/* Cuenta administrativa recién solicitada: queda esperando al Administrador */}
+            {pendiente && (
+              <div role="status" className="flex items-start gap-2.5 rounded-xl border border-primary/30 bg-primary/5 p-3.5 text-sm">
+                <Clock className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+                <div className="space-y-1">
+                  <p className="font-semibold text-foreground">Solicitud enviada</p>
+                  <p className="text-muted-foreground">{pendiente}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Acceso de personal: rol con el que se crea la cuenta la primera vez */}
+            {esPersonal && configAcceso && configAcceso.roles_personal.length > 0 && (
+              <fieldset className="space-y-2">
+                <legend className="text-sm font-medium text-foreground">¿Cuál es tu rol?</legend>
+                <p className="text-xs text-muted-foreground">Solo se usa la primera vez, para crear tu cuenta.</p>
+                <div className="grid grid-cols-2 gap-2" role="radiogroup">
+                  {configAcceso.roles_personal.map((r) => (
+                    <button
+                      key={r.rol}
+                      type="button"
+                      role="radio"
+                      aria-checked={rol === r.rol}
+                      onClick={() => setRol(r.rol)}
+                      className={`rounded-xl border p-2.5 text-left transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none ${
+                        rol === r.rol ? "border-primary bg-primary/10" : "border-border hover:bg-muted"
+                      }`}
+                    >
+                      <span className="block text-sm font-semibold text-foreground">{r.rol}</span>
+                      <span className="block text-[11px] text-muted-foreground">
+                        {r.requiere_aprobacion ? "Requiere aprobación del Administrador" : "Ingreso inmediato"}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+            )}
+
+            {/* HU-26: botón de Google institucional (o su respaldo si falta GOOGLE_CLIENT_ID) */}
+            {(esLogin || esPersonal) && configAcceso && (hayGoogle ? (
               <BotonGoogle
                 clientId={configAcceso.google_client_id}
                 dominios={configAcceso.dominios}
                 alIngresar={(c) => void manejarGoogle(c)}
                 deshabilitado={cargando}
               />
-            )}
-            {soloInstitucional && !hayGoogle && (
-              <p className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm text-warning">
-                El inicio de sesión con Google aún no está configurado en este servidor. Comunícate con soporte.
-              </p>
-            )}
+            ) : (soloInstitucional || esPersonal) && (
+              <BotonGoogleSinConfigurar dominios={configAcceso.dominios} />
+            ))}
+
+            {/* Enlace al otro acceso */}
+            <p className="text-center text-sm text-muted-foreground">
+              {esPersonal ? "¿Eres estudiante? " : "¿Eres docente o administrativo? "}
+              <Link to={esPersonal ? "/iniciar-sesion" : "/iniciar-sesion/personal"} className="font-semibold text-primary hover:underline">
+                {esPersonal ? "Ingresa por el acceso de estudiantes" : "Ingresa por el acceso de personal"}
+              </Link>
+            </p>
             {esLogin && hayGoogle && !soloInstitucional && (
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
