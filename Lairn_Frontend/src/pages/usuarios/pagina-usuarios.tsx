@@ -37,6 +37,7 @@ import {
 } from '@/components/ui/table'
 import { Loader2, Search, Trash2, UserPlus, Users } from 'lucide-react'
 import { DialogoNuevaCuenta } from './dialogo-nueva-cuenta'
+import { TarjetaSolicitudesCuenta } from './tarjeta-solicitudes-cuenta'
 import { toast } from 'sonner'
 import type { Rol } from '@/types/usuario'
 
@@ -74,6 +75,7 @@ export default function PaginaUsuarios() {
   const [usuarioAEliminar, setUsuarioAEliminar] = useState<{ id: number; nombre: string } | null>(null)
   const [eliminando, setEliminando] = useState(false)
   const [creando, setCreando] = useState(false)
+  const [recarga, setRecarga] = useState(0)
 
   // Carga los usuarios y los roles disponibles al montar el componente.
   useEffect(() => {
@@ -92,7 +94,7 @@ export default function PaginaUsuarios() {
       }
     }
     cargarDatos()
-  }, [])
+  }, [recarga])
 
   // Filtra por nombre/email y por rol en el cliente (la lista de usuarios es pequeña).
   const usuariosFiltrados = useMemo(() => {
@@ -188,6 +190,7 @@ export default function PaginaUsuarios() {
         roles={roles}
         alCrear={(u) => setUsuarios((prev) => [...prev, u].sort((a, b) => a.email.localeCompare(b.email)))}
       />
+      <TarjetaSolicitudesCuenta alAprobar={() => setRecarga((n) => n + 1)} />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
         <Select value={filtroRol} onValueChange={(valor) => valor && setFiltroRol(valor)}>
           <SelectTrigger className="w-full sm:w-40">

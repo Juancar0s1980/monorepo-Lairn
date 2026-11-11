@@ -8,9 +8,15 @@ import type { LoginRequest, RegistroRequest, AuthState } from '@/types/auth'
 export interface AuthContextType extends AuthState {
   iniciarSesion: (credenciales: LoginRequest) => Promise<void>
   // HU-26: credencial (ID token) de Google Identity Services.
-  iniciarSesionGoogle: (credential: string) => Promise<void>
+  iniciarSesionGoogle: (credential: string, opciones?: OpcionesAccesoGoogle) => Promise<string | null>
   registrar: (datos: RegistroRequest) => Promise<void>
   cerrarSesion: () => Promise<void>
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null)
+
+// HU-26: acceso de estudiantes o de personal (docentes y administrativos) y rol elegido en el primer ingreso.
+export interface OpcionesAccesoGoogle {
+  portal?: 'estudiantes' | 'personal'
+  rol?: string
+}

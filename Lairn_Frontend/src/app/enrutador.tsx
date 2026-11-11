@@ -2,7 +2,8 @@
 // Define todas las rutas y componentes selectores por rol (*PorRol).
 //
 // Estructura de rutas:
-//   /iniciar-sesion  → PaginaLogin (pública)
+//   /iniciar-sesion           → PaginaLogin, acceso de estudiantes (pública)
+//   /iniciar-sesion/personal  → PaginaLogin, acceso de docentes y administrativos (pública)
 //   /*               → RutasPrivadas (requiere autenticación)
 //     /                  → Dashboard (vista diferente por rol)
 //     /usuarios          → Solo Administrador
@@ -459,7 +460,8 @@ export function Enrutador() {
       <ProveedorAuth>
         <Suspense fallback={<CargandoPagina />}>
           <Routes>
-            <Route path="/iniciar-sesion" element={<PaginaLogin />} />
+            <Route path="/iniciar-sesion" element={<PaginaLogin key="estudiantes" portal="estudiantes" />} />
+            <Route path="/iniciar-sesion/personal" element={<PaginaLogin key="personal" portal="personal" />} />
             <Route path="/recuperar-contrasena" element={<PaginaRecuperarContrasena />} />
             <Route path="/restablecer-contrasena/:uid/:token" element={<PaginaRestablecerContrasena />} />
             <Route path="/*" element={<RutasPrivadas />} />

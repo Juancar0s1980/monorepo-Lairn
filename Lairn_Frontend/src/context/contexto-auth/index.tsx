@@ -9,7 +9,7 @@ import api from '@/services/api'
 import type { Usuario } from '@/types/usuario'
 import type { LoginRequest, LoginResponse, RegistroRequest, AuthState } from '@/types/auth'
 import { obtenerRolDelToken } from '@/utilities/token'
-import { AuthContext } from './contexto'
+import { AuthContext, type OpcionesAccesoGoogle } from './contexto'
 
 // Proveedor que envuelve la app y gestiona el estado de autenticación.
 export function ProveedorAuth({ children }: { children: ReactNode }) {
@@ -72,11 +72,16 @@ export function ProveedorAuth({ children }: { children: ReactNode }) {
   }
 
   // HU-26: login con la cuenta Google institucional (el backend verifica el token con Google).
-  const iniciarSesionGoogle = async (credential: string) => {
-    const { data } = await api.post<LoginResponse>('/usuarios/iniciar-sesion-google/', { credential })
-    localStorage.setItem('access_token', data.access)
-    localStorage.setItem('refresh_token', data.refresh)
+  // Si la cuenta nueva queda pendiente de aprobación (202), retorna el mensaje y no inicia sesión.
+  const iniciarSesionGoogle = async (credential: string, opciones: OpcionesAccesoGoogle = {}) => {
+    const r = await api.post<LoginResponse & { detalle?: string }>('/usuarios/iniciar-sesion-google/', {
+      credential, portal: opciones.portal ?? 'estudiantes', rol: opciones.rol,
+    })
+    if (r.status === 202 || !r.data.access) return r.data.detalle ?? 'Solicitud enviada.'
+    localStorage.setItem('access_token', r.data.access)
+    localStorage.setItem('refresh_token', r.data.refresh)
     await cargarUsuario()
+    return null
   }
 
   // Registro: crea la cuenta y automáticamente hace login con las mismas credenciales.
