@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { BarChart3, BellRing, BookOpen, GraduationCap, Landmark, ListChecks, Loader2, RefreshCw } from 'lucide-react'
+import { BarChart3, BellRing, BookOpen, GraduationCap, Inbox, Landmark, ListChecks, Loader2, RefreshCw } from 'lucide-react'
 import { useAcademico } from './use-academico'
 import { TabProgramas } from './componentes/tab-programas'
 import { TabMalla } from './componentes/tab-malla'
@@ -33,6 +33,7 @@ import { TabMomentos } from './componentes/tab-momentos'
 import { TabIntegracion } from './componentes/tab-integracion'
 import { TabDesempenoRA } from './componentes/tab-desempeno-ra'
 import { TabAlertas } from './componentes/tab-alertas'
+import { TabSolicitudesVinculacion } from './componentes/tab-solicitudes-vinculacion'
 import { ModalesAcademico } from './componentes/modales-academico'
 
 export default function PaginaAcademico() {
@@ -43,6 +44,18 @@ export default function PaginaAcademico() {
   // HU-10.2: contador de alertas abiertas visible en la pestaña (la "notificación"
   // del tablero del coordinador). Se carga al abrir la página y se actualiza en la pestaña.
   const [alertasAbiertas, setAlertasAbiertas] = useState(0)
+  // HU-01.10: solicitudes de vinculación de cursos pendientes (contador de la pestaña).
+  const [solicitudesPendientes, setSolicitudesPendientes] = useState(0)
+  useEffect(() => {
+    let activo = true
+    api
+      .get<{ pendientes: number }>('/evaluacion/vinculacion/solicitudes/?estado=pendiente')
+      .then((r) => activo && setSolicitudesPendientes(r.data.pendientes))
+      .catch(() => undefined)
+    return () => {
+      activo = false
+    }
+  }, [])
   useEffect(() => {
     if (!ac.programaId) return
     let activo = true
@@ -162,6 +175,18 @@ export default function PaginaAcademico() {
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="solicitudes" className="gap-1.5">
+            <Inbox className="h-3.5 w-3.5" />
+            Solicitudes
+            {solicitudesPendientes > 0 && (
+              <span
+                className="rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground"
+                aria-label={`${solicitudesPendientes} solicitudes pendientes`}
+              >
+                {solicitudesPendientes}
+              </span>
+            )}
+          </TabsTrigger>
           {/* HU-09.1: % de acierto por RA, solo Administrador */}
           {ac.esAdmin && (
             <TabsTrigger value="desempeno" className="gap-1.5">
@@ -192,6 +217,10 @@ export default function PaginaAcademico() {
             <TabIntegracion ac={ac} />
           </TabsContent>
         )}
+
+        <TabsContent value="solicitudes" className="space-y-4">
+          <TabSolicitudesVinculacion alCambiarPendientes={setSolicitudesPendientes} />
+        </TabsContent>
 
         <TabsContent value="alertas" className="space-y-4">
           <TabAlertas ac={ac} alCambiarAbiertas={setAlertasAbiertas} />

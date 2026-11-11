@@ -7,6 +7,8 @@ import type { LoginRequest, RegistroRequest, AuthState } from '@/types/auth'
 // Forma del contexto: estado de auth + funciones para login/registro/logout.
 export interface AuthContextType extends AuthState {
   iniciarSesion: (credenciales: LoginRequest) => Promise<void>
+  // HU-26: credencial (ID token) de Google Identity Services.
+  iniciarSesionGoogle: (credential: string) => Promise<void>
   registrar: (datos: RegistroRequest) => Promise<void>
   cerrarSesion: () => Promise<void>
 }

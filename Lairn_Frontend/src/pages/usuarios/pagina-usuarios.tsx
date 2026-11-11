@@ -35,7 +35,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Loader2, Search, Trash2, Users } from 'lucide-react'
+import { Loader2, Search, Trash2, UserPlus, Users } from 'lucide-react'
+import { DialogoNuevaCuenta } from './dialogo-nueva-cuenta'
 import { toast } from 'sonner'
 import type { Rol } from '@/types/usuario'
 
@@ -72,6 +73,7 @@ export default function PaginaUsuarios() {
   const [filtroRol, setFiltroRol] = useState('todos')
   const [usuarioAEliminar, setUsuarioAEliminar] = useState<{ id: number; nombre: string } | null>(null)
   const [eliminando, setEliminando] = useState(false)
+  const [creando, setCreando] = useState(false)
 
   // Carga los usuarios y los roles disponibles al montar el componente.
   useEffect(() => {
@@ -173,6 +175,18 @@ export default function PaginaUsuarios() {
         eyebrow="Panel del administrador"
         titulo="Usuarios"
         subtitulo="Gestión de usuarios del sistema"
+        accion={
+          <Button onClick={() => setCreando(true)}>
+            <UserPlus className="mr-1.5 h-4 w-4" aria-hidden />
+            Nueva cuenta
+          </Button>
+        }
+      />
+      <DialogoNuevaCuenta<UsuarioAdmin>
+        abierto={creando}
+        alCerrar={() => setCreando(false)}
+        roles={roles}
+        alCrear={(u) => setUsuarios((prev) => [...prev, u].sort((a, b) => a.email.localeCompare(b.email)))}
       />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
         <Select value={filtroRol} onValueChange={(valor) => valor && setFiltroRol(valor)}>
