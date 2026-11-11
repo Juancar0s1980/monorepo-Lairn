@@ -83,14 +83,19 @@ IMPORTACION_JSON_HOSTS_PERMITIDOS = [
 # GOOGLE_CLIENT_ID: ID de cliente OAuth (aplicación web) creado en Google Cloud Console.
 # DOMINIOS_INSTITUCIONALES: dominios de Google Workspace aceptados (separados por comas).
 # AUTENTICACION_SOLO_INSTITUCIONAL: True = solo Google institucional (sin contraseña, registro ni
-# recuperación). Por defecto activo fuera de desarrollo (DEBUG=False).
+# recuperación). Activo por defecto; ponlo en False solo para entrar con los usuarios de prueba.
+# ADMINISTRADORES_INICIALES: correos institucionales que, al entrar por primera vez con Google, quedan
+# como Administrador activo. Son quienes aprueban las cuentas de Coordinador, Vicerrector y Administrador.
 GOOGLE_CLIENT_ID = config("GOOGLE_CLIENT_ID", default="")
 DOMINIOS_INSTITUCIONALES = [
     d.strip().lower().lstrip("@")
     for d in config("DOMINIOS_INSTITUCIONALES", default="uniautonoma.edu.co").split(",")
     if d.strip()
 ]
-AUTENTICACION_SOLO_INSTITUCIONAL = config("AUTENTICACION_SOLO_INSTITUCIONAL", default=not DEBUG, cast=bool)
+AUTENTICACION_SOLO_INSTITUCIONAL = config("AUTENTICACION_SOLO_INSTITUCIONAL", default=True, cast=bool)
+ADMINISTRADORES_INICIALES = [
+    c.strip().lower() for c in config("ADMINISTRADORES_INICIALES", default="").split(",") if c.strip()
+]
 
 # Application definition
 

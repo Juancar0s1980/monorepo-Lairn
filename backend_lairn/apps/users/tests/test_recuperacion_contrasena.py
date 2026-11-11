@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 from django.contrib.auth.tokens import default_token_generator
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from rest_framework.test import APIClient
@@ -9,6 +9,7 @@ from rest_framework.test import APIClient
 from apps.users.models.user import User
 
 
+@override_settings(AUTENTICACION_SOLO_INSTITUCIONAL=False)
 class SolicitarRecuperacionTests(TestCase):
     def setUp(self):
         self.client = APIClient()
@@ -41,6 +42,7 @@ class SolicitarRecuperacionTests(TestCase):
         self.assertEqual(respuesta.status_code, 400)
 
 
+@override_settings(AUTENTICACION_SOLO_INSTITUCIONAL=False)
 class RestablecerContrasenaTests(TestCase):
     def setUp(self):
         self.client = APIClient()

@@ -10,6 +10,7 @@ from apps.users.views.vista_detalle_usuario_admin import VistaDetalleUsuarioAdmi
 from apps.users.views.vista_lista_roles import VistaListaRoles
 from apps.users.views.vista_solicitar_recuperacion import VistaSolicitarRecuperacion
 from apps.users.views.vista_restablecer_contrasena import VistaRestablecerContrasena
+from apps.users.views.vista_solicitudes_cuenta import VistaResolverSolicitudCuenta, VistaSolicitudesCuenta
 
 urlpatterns = [
     path('registrar/', VistaRegistrar.as_view(), name='registrar'),
@@ -25,5 +26,8 @@ urlpatterns = [
     # Rutas accedidas por el rol Administrador (gestión de usuarios y roles).
     path('administracion/usuarios/', VistaListaUsuarios.as_view(), name='lista-usuarios'),
     path('administracion/usuarios/<int:usuario_id>/', VistaDetalleUsuarioAdmin.as_view(), name='detalle-usuario-admin'),
+    path('administracion/solicitudes-cuenta/', VistaSolicitudesCuenta.as_view(), name='solicitudes-cuenta'),
+    path('administracion/solicitudes-cuenta/<int:pk>/<str:accion>/', VistaResolverSolicitudCuenta.as_view(),
+         name='resolver-solicitud-cuenta'),
     path('roles/', VistaListaRoles.as_view(), name='lista-roles'),
 ]

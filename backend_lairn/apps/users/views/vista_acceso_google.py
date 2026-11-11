@@ -2,7 +2,8 @@
 Acceso institucional con Google (HU-26).
 
 - `GET  usuarios/config-acceso/`            público: si el acceso es solo institucional, client_id y dominios
-- `POST usuarios/iniciar-sesion-google/`    {credential: ID token de Google} → {access, refresh}
+- `POST usuarios/iniciar-sesion-google/`    {credential, portal: estudiantes|personal, rol?} → {access, refresh}
+  Si la cuenta nueva requiere aprobación responde 202 {detalle, codigo: 'solicitud_enviada'}.
 """
 
 from django.conf import settings
@@ -12,7 +13,9 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from apps.users.services.autenticacion_google import ErrorAcceso, autenticar_con_google, emitir_tokens
+from apps.users.services.autenticacion_google import (
+    PORTAL_ESTUDIANTES, PORTAL_PERSONAL, ROLES_PERSONAL, ErrorAcceso, autenticar_con_google, emitir_tokens,
+)
 
 MENSAJE_SOLO_INSTITUCIONAL = 'El acceso es solo con tu cuenta Google institucional.'
 
@@ -31,6 +34,7 @@ class VistaConfigAcceso(APIView):
             'solo_institucional': solo_institucional(),
             'google_client_id': settings.GOOGLE_CLIENT_ID,
             'dominios': settings.DOMINIOS_INSTITUCIONALES,
+            'roles_personal': [{'rol': r, 'requiere_aprobacion': a} for r, a in ROLES_PERSONAL.items()],
         })
 
 
@@ -43,7 +47,12 @@ class VistaIniciarSesionGoogle(APIView):
     @extend_schema(tags=['Usuarios'], summary='Iniciar sesión con Google institucional', auth=[])
     def post(self, request):
         try:
-            usuario = autenticar_con_google(request.data.get('credential'))
+            portal = request.data.get('portal')
+            usuario = autenticar_con_google(
+                request.data.get('credential'),
+                portal=PORTAL_PERSONAL if portal == PORTAL_PERSONAL else PORTAL_ESTUDIANTES,
+                rol=request.data.get('rol') or None,
+            )
         except ErrorAcceso as exc:
             return Response({'detalle': exc.mensaje, 'codigo': exc.codigo}, status=exc.estado)
         return Response(emitir_tokens(usuario))
