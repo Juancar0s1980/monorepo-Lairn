@@ -243,3 +243,43 @@ class PruebasEsquemaExcelPermisos(BaseNotas):
                                           format='json').status_code, 403)
         momentos = self.cliente.get(f'{URL}momentos/').data
         self.assertEqual([m['id'] for m in momentos], [self.momento.id])
+
+
+class PruebasFiltrosMomentos(BaseNotas):
+    """Selector de momentos: filtros por programa, periodo, fechas y texto (pedido del dueño del proyecto)."""
+
+    def setUp(self):
+        super().setUp()
+        self.momento.periodo = '2026-2'
+        self.momento.save(update_fields=['periodo'])
+        otro = ProgramaAcademico.objects.create(codigo='DER', nombre='Derecho')
+        self.viejo = MomentoEvaluacion.objects.create(programa=otro, semestre_referencia=2, nombre='Parcial', periodo='2025-1')
+        hace_un_anio = timezone.now() - timedelta(days=365)
+        EvaluacionFormal.objects.create(momento=self.viejo, nombre='Antigua', fecha_inicio=hace_un_anio,
+                                        fecha_fin=hace_un_anio + timedelta(days=1), duracion_minutos=30, estado='publicada')
+        # Un momento sin evaluaciones publicadas nunca aparece.
+        MomentoEvaluacion.objects.create(programa=otro, semestre_referencia=3, nombre='Borrador')
+        self.cliente.force_authenticate(_u('vice@x.co', 'Vicerrector'))
+
+    def ids(self, **filtros):
+        r = self.cliente.get(f'{URL}momentos/', filtros)
+        self.assertEqual(r.status_code, 200)
+        return sorted(m['id'] for m in r.data)
+
+    def test_rango_de_fechas_y_total(self):
+        m = next(x for x in self.cliente.get(f'{URL}momentos/').data if x['id'] == self.momento.id)
+        self.assertEqual(m['total_evaluaciones'], 3)  # E1, E2 y la de trabajo
+        self.assertIsNotNone(m['fecha_inicio'])
+        self.assertIsNotNone(m['fecha_fin'])
+
+    def test_filtros(self):
+        todos = sorted([self.momento.id, self.viejo.id])
+        self.assertEqual(self.ids(), todos)
+        self.assertEqual(self.ids(programa=self.viejo.programa_id), [self.viejo.id])
+        self.assertEqual(self.ids(periodo='2026-2'), [self.momento.id])
+        hoy = timezone.localdate()
+        self.assertEqual(self.ids(desde=(hoy - timedelta(days=30)).isoformat()), [self.momento.id])
+        self.assertEqual(self.ids(hasta=(hoy - timedelta(days=30)).isoformat()), [self.viejo.id])
+        self.assertEqual(self.ids(q='derecho'), [self.viejo.id])
+        self.assertEqual(self.ids(q='m1'), [self.momento.id])
+        self.assertEqual(self.ids(desde='no-es-fecha'), todos)  # fecha inválida = sin filtro
