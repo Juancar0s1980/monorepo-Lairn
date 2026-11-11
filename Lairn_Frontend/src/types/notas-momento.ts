@@ -94,4 +94,8 @@ export interface MomentoConNotas {
   semestre_referencia: number
   programa_id: number
   programa: string
+  // Rango de fechas de sus evaluaciones publicadas (para filtrar por fecha).
+  fecha_inicio: string | null
+  fecha_fin: string | null
+  total_evaluaciones: number
 }

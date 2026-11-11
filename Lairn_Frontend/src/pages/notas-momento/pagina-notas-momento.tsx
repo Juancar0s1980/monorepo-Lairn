@@ -20,7 +20,15 @@ import { cn } from '@/lib/utils'
 import type { FilaNotas, MomentoConNotas, NotasMomento } from '@/types/notas-momento'
 import { mensajeError } from '@/pages/academico/academico-utils'
 import { descargarArchivo } from '@/pages/tareas/utilidades-tareas'
-import { CLASE_NIVEL, FILTROS_ESTADO, coma, coincideFiltro } from './notas-momento-utils'
+import {
+  CLASE_NIVEL,
+  FILTROS_ESTADO,
+  type FiltrosMomento,
+  coma,
+  coincideFiltro,
+  filtrarMomentos,
+  rangoFechas,
+} from './notas-momento-utils'
 
 const BASE = '/evaluacion/notas-momento'
 
@@ -50,10 +58,13 @@ export default function PaginaNotasMomento() {
     }
   }, [momentoId, version])
 
+  // Actualizaciones funcionales: cada cambio parte de la URL vigente, no de la del último render.
   const elegir = (id: string) => {
-    const nuevos = new URLSearchParams(params)
-    nuevos.set('momento', id)
-    setParams(nuevos, { replace: true })
+    setParams((actual) => {
+      const nuevos = new URLSearchParams(actual)
+      nuevos.set('momento', id)
+      return nuevos
+    }, { replace: true })
   }
 
   const cargando = !!momentoId && (!datos || String(datos.momento.id) !== momentoId)
@@ -76,10 +87,57 @@ export default function PaginaNotasMomento() {
     }
   }
 
-  const items = (momentos ?? []).map((m) => ({
-    value: String(m.id),
-    label: `${m.programa} · ${m.nombre}${m.periodo ? ` (${m.periodo})` : ''}`,
-  }))
+  // Filtros del selector (pedido del dueño del proyecto): viven en la URL para poder
+  // recargar o compartir la vista con los mismos filtros.
+  const filtros: FiltrosMomento = {
+    q: params.get('q') ?? '',
+    programa: params.get('programa') ?? '',
+    periodo: params.get('periodo') ?? '',
+    desde: params.get('desde') ?? '',
+    hasta: params.get('hasta') ?? '',
+  }
+  const hayFiltros = Object.values(filtros).some(Boolean)
+  const cambiarFiltro = (clave: keyof FiltrosMomento, valor: string) => {
+    setParams((actual) => {
+      const nuevos = new URLSearchParams(actual)
+      if (valor) nuevos.set(clave, valor)
+      else nuevos.delete(clave)
+      return nuevos
+    }, { replace: true })
+  }
+  const limpiarFiltros = () => {
+    setParams((actual) => {
+      const nuevos = new URLSearchParams()
+      const momento = actual.get('momento')
+      if (momento) nuevos.set('momento', momento)
+      return nuevos
+    }, { replace: true })
+  }
+
+  const programas = useMemo(() => {
+    const unicos = new Map<number, string>()
+    for (const m of momentos ?? []) unicos.set(m.programa_id, m.programa)
+    return [...unicos].map(([id, nombre]) => ({ value: String(id), label: nombre }))
+  }, [momentos])
+  const periodos = useMemo(
+    () => [...new Set((momentos ?? []).map((m) => m.periodo).filter(Boolean))].sort().reverse(),
+    [momentos],
+  )
+  const { q, programa, periodo, desde, hasta } = filtros
+  const filtrados = useMemo(
+    () => filtrarMomentos(momentos ?? [], { q, programa, periodo, desde, hasta }),
+    [momentos, q, programa, periodo, desde, hasta],
+  )
+
+  const items = filtrados.map((m) => {
+    const rango = rangoFechas(m)
+    return {
+      value: String(m.id),
+      label: `${m.programa} · ${m.nombre}${m.periodo ? ` (${m.periodo})` : ''}${rango ? ` · ${rango}` : ''}`,
+    }
+  })
+  const opcionesPrograma = [{ value: '', label: 'Todos los programas' }, ...programas]
+  const opcionesPeriodo = [{ value: '', label: 'Todos los periodos' }, ...periodos.map((p) => ({ value: p, label: p }))]
 
   return (
     <div className="space-y-6">
@@ -98,28 +156,103 @@ export default function PaginaNotasMomento() {
       />
 
       <Card>
-        <CardContent className="grid gap-3 p-4 sm:grid-cols-[1fr_auto] sm:items-end">
-          <div className="min-w-0 space-y-1">
-            <Label htmlFor="notas-momento">Momento</Label>
-            {momentos === null ? (
-              <Loader2 className="h-5 w-5 animate-spin text-primary" aria-label="Cargando momentos" />
-            ) : momentos.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Aún no hay momentos con evaluaciones publicadas.</p>
-            ) : (
-              <Select value={momentoId} onValueChange={(v) => v && elegir(String(v))} items={items}>
-                <SelectTrigger id="notas-momento" className="w-full min-w-0">
-                  <SelectValue placeholder="Elige un momento" />
-                </SelectTrigger>
-                <SelectContent>
-                  {items.map((i) => (
-                    <SelectItem key={i.value} value={i.value}>
-                      {i.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
+        <CardContent className="space-y-4 p-4">
+          {momentos === null ? (
+            <Loader2 className="h-5 w-5 animate-spin text-primary" aria-label="Cargando momentos" />
+          ) : momentos.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Aún no hay momentos con evaluaciones publicadas.</p>
+          ) : (
+            <>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)_minmax(0,1fr)_auto_auto] lg:items-end">
+                <div className="min-w-0 space-y-1">
+                  <Label htmlFor="buscar-momento">Buscar</Label>
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+                    <Input
+                      id="buscar-momento"
+                      value={filtros.q}
+                      onChange={(e) => cambiarFiltro('q', e.target.value)}
+                      placeholder="Momento, programa o periodo"
+                      className="pl-8"
+                    />
+                  </div>
+                </div>
+                <div className="min-w-0 space-y-1">
+                  <Label htmlFor="filtro-programa">Programa</Label>
+                  <Select value={filtros.programa} onValueChange={(v) => cambiarFiltro('programa', String(v ?? ''))} items={opcionesPrograma}>
+                    <SelectTrigger id="filtro-programa" className="w-full min-w-0">
+                      <SelectValue placeholder="Todos los programas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {opcionesPrograma.map((o) => (
+                        <SelectItem key={o.value || 'todos'} value={o.value}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="min-w-0 space-y-1">
+                  <Label htmlFor="filtro-periodo">Periodo</Label>
+                  <Select value={filtros.periodo} onValueChange={(v) => cambiarFiltro('periodo', String(v ?? ''))} items={opcionesPeriodo}>
+                    <SelectTrigger id="filtro-periodo" className="w-full min-w-0">
+                      <SelectValue placeholder="Todos los periodos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {opcionesPeriodo.map((o) => (
+                        <SelectItem key={o.value || 'todos'} value={o.value}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="filtro-desde">Desde</Label>
+                  <Input id="filtro-desde" type="date" value={filtros.desde} max={filtros.hasta || undefined}
+                    onChange={(e) => cambiarFiltro('desde', e.target.value)} />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="filtro-hasta">Hasta</Label>
+                  <Input id="filtro-hasta" type="date" value={filtros.hasta} min={filtros.desde || undefined}
+                    onChange={(e) => cambiarFiltro('hasta', e.target.value)} />
+                </div>
+              </div>
+
+              <div className="min-w-0 space-y-1">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <Label htmlFor="notas-momento">Momento</Label>
+                  <span className="text-xs text-muted-foreground" aria-live="polite">
+                    {filtrados.length} de {momentos.length} momento(s)
+                    {hayFiltros && (
+                      <>
+                        {' · '}
+                        <button type="button" onClick={limpiarFiltros} className="font-medium text-primary hover:underline">
+                          Limpiar filtros
+                        </button>
+                      </>
+                    )}
+                  </span>
+                </div>
+                {filtrados.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Ningún momento coincide con los filtros.</p>
+                ) : (
+                  <Select value={momentoId} onValueChange={(v) => v && elegir(String(v))} items={items}>
+                    <SelectTrigger id="notas-momento" className="w-full min-w-0">
+                      <SelectValue placeholder="Elige un momento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {items.map((i) => (
+                        <SelectItem key={i.value} value={i.value}>
+                          {i.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
