@@ -14,7 +14,7 @@
 
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ClipboardList, Sparkles, BarChart3, Trophy, FlaskConical, Target, ArrowUpRight, Lock } from 'lucide-react'
+import { ClipboardList, Sparkles, BarChart3, FlaskConical, Target, ArrowUpRight, Lock } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { FuncionalidadSaberPro } from '@/types/saber-pro'
@@ -25,7 +25,6 @@ const iconoPorClave: Record<string, LucideIcon> = {
   simulacros: ClipboardList,
   banco_contenido: Sparkles,
   analitica: BarChart3,
-  ranking: Trophy,
   desempeno: Target,
   laboratorio_practica: FlaskConical,
 }

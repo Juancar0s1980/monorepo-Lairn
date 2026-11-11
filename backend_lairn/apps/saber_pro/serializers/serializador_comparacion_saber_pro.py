@@ -32,6 +32,17 @@ class SerializadorSimulacroFiltro(serializers.Serializer):
     titulo = serializers.CharField(allow_blank=True)
 
 
+class SerializadorOpcionCursoDesempeno(serializers.Serializer):
+    """Un curso donde el estudiante tiene resultados, con sus simulacros presentados.
+
+    Base de los filtros de "Mi desempeño": el estudiante solo puede elegir
+    entre combinaciones donde ya tiene intentos calificados propios.
+    """
+
+    curso = SerializadorCursoComparacion()
+    simulacros = SerializadorSimulacroFiltro(many=True)
+
+
 class SerializadorFiltroComparacion(serializers.Serializer):
     """Filtro efectivo de la comparación: por simulacro o por área del curso."""
 

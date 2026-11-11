@@ -156,6 +156,24 @@ class SerializadorFocoBajo(serializers.Serializer):
     total_preguntas = serializers.IntegerField()
 
 
+class SerializadorAccionAnalisis(serializers.Serializer):
+    """Acción recomendada por el análisis con IA de la analítica del curso."""
+
+    titulo = serializers.CharField()
+    descripcion = serializers.CharField()
+    prioridad = serializers.ChoiceField(choices=['alta', 'media', 'baja'])
+
+
+class SerializadorAnalisisAcciones(serializers.Serializer):
+    """Respuesta del análisis de acciones con IA de un curso (docente)."""
+
+    curso = SerializadorCursoComparacion()
+    filtro = SerializadorFiltroAnalitica()
+    generado_en = serializers.DateTimeField()
+    resumen = serializers.CharField()
+    acciones = SerializadorAccionAnalisis(many=True)
+
+
 class SerializadorAnaliticaCurso(serializers.Serializer):
     """Respuesta de la analítica de un curso para el docente."""
 

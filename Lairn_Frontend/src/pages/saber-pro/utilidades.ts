@@ -85,7 +85,7 @@ export function obtenerPasosInicio(rol: string) {
       {
         titulo: 'Crea un curso Saber Pro',
         descripcion:
-          'Elige el área de Saber Pro, define el nombre del curso y el sistema generará automáticamente el código de acceso (HU-17).',
+          'Elige el área de Saber Pro, define el nombre del curso y el sistema generará automáticamente el código de acceso.',
       },
       {
         titulo: 'Comparte el código con tus estudiantes',
@@ -95,7 +95,7 @@ export function obtenerPasosInicio(rol: string) {
       {
         titulo: 'Prepara y evalúa a tu curso',
         descripcion:
-          'Genera contenido con IA, crea simulacros y consulta la analítica y el ranking de tu grupo (HU-19 a HU-24).',
+          'Genera contenido con IA, crea simulacros y consulta la analítica de tu grupo para decidir el refuerzo.',
       },
     ]
   }
@@ -103,7 +103,7 @@ export function obtenerPasosInicio(rol: string) {
     {
       titulo: 'Recibe el código de tu docente',
       descripcion:
-        'Pídele a tu docente el código de acceso vigente de su curso Saber Pro de preparación (HU-18).',
+        'Pídele a tu docente el código de acceso vigente de su curso Saber Pro de preparación.',
     },
     {
       titulo: 'Únete con el código',
@@ -113,7 +113,7 @@ export function obtenerPasosInicio(rol: string) {
     {
       titulo: 'Prepárate con simulacros',
       descripcion:
-        'Presenta simulacros con temporizador y consulta tu percentil de desempeño frente a tu curso (HU-21 a HU-23).',
+        'Presenta simulacros con temporizador y consulta tu percentil de desempeño frente a tu curso.',
     },
   ]
 }

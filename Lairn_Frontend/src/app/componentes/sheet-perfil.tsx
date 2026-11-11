@@ -1,10 +1,11 @@
 // Sheet lateral para mostrar el perfil del usuario autenticado.
-// Muestra: avatar con iniciales, nombre completo y email.
-// Datos obtenidos de GET /usuarios/mis-datos/.
+// Muestra: avatar con iniciales, nombre completo, email y el rol de la sesión.
+// Datos obtenidos de GET /usuarios/mis-datos/ (el rol viene del contexto auth).
 // Diseñado para futura edición de datos.
 
 import { useEffect, useState } from 'react'
 import api from '@/services/api'
+import { useAuth } from '@/context/contexto-auth/use-auth'
 import {
   Sheet,
   SheetContent,
@@ -32,6 +33,7 @@ interface SheetPerfilProps {
 }
 
 export function SheetPerfil({ abierto, onCerrar }: SheetPerfilProps) {
+  const { rol } = useAuth()
   const [datos, setDatos] = useState<DatosPerfil | null>(null)
   const [cargando, setCargando] = useState(false)
 
@@ -98,6 +100,11 @@ export function SheetPerfil({ abierto, onCerrar }: SheetPerfilProps) {
               <p className="text-sm text-muted-foreground">
                 {datos.email}
               </p>
+              {rol && (
+                <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/80">
+                  {rol}
+                </p>
+              )}
             </div>
 
             {/* Datos en tarjeta */}

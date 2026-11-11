@@ -58,8 +58,10 @@ export function notaPonderada(rubrica: CriterioRubrica[], niveles: (number | nul
 }
 
 // Los archivos son privados: se piden con el token (Axios) y se guardan como blob.
-export async function descargarArchivo(ruta: string, nombre: string) {
-  const res = await api.get<Blob>(ruta, { responseType: 'blob', timeout: 60000 })
+// `timeoutMs` permite alargar la espera en descargas que generan contenido con
+// IA en el backend (p. ej. el Excel de analítica con acciones recomendadas).
+export async function descargarArchivo(ruta: string, nombre: string, timeoutMs = 60000) {
+  const res = await api.get<Blob>(ruta, { responseType: 'blob', timeout: timeoutMs })
   const url = URL.createObjectURL(res.data)
   const enlace = document.createElement('a')
   enlace.href = url

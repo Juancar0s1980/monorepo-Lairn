@@ -1,6 +1,6 @@
 // Layout compartido para todas las rutas autenticadas.
 // Incluye:
-//   - Header sticky con logo, navegación por rol, email del usuario,
+//   - Header sticky con logo, navegación por rol, email del usuario con su rol,
 //     toggle de tema oscuro/claro y botón de cerrar sesión.
 //   - Área main que renderiza el contenido hijo (la página actual).
 // La navegación se adapta según el rol del usuario (Administrador, Coordinador, Vicerrector, Docente, Estudiante).
@@ -15,16 +15,13 @@ import { LogoMarca } from '@/components/logo-marca'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { useState } from 'react'
-import { cn } from '@/lib/utils'
 import { SheetPerfil } from './componentes/sheet-perfil'
 
-// Entrada de navegación. El ítem "destacado" (Saber Pro) se pinta como píldora
-// institucional (beige/navy con acento dorado y punto naranja) para resaltar que
-// es un módulo propio, distinto de los cursos académicos regulares (HU-16.1).
+// Entrada de navegación del header. Todos los módulos (incluido Saber Pro)
+// se pintan igual: enlace subrayado en desktop y fila simple en móvil.
 interface RutaNav {
   label: string
   ruta: string
-  destacado?: boolean
 }
 
 // Mapa de rutas visibles en la barra de navegación, filtradas por rol.
@@ -65,7 +62,7 @@ const rutasPorRol: Record<string, RutaNav[]> = {
     { label: 'Supervisión', ruta: '/supervision' },
     { label: 'Estudiantes', ruta: '/estudiantes' },
     { label: 'Ayuda', ruta: '/ayuda' },
-    { label: 'Saber Pro', ruta: '/saber-pro', destacado: true },
+    { label: 'Saber Pro', ruta: '/saber-pro' },
   ],
   Estudiante: [
     { label: 'Início', ruta: '/' },
@@ -73,7 +70,7 @@ const rutasPorRol: Record<string, RutaNav[]> = {
     { label: 'Evaluaciones', ruta: '/mis-evaluaciones' },
     { label: 'Tareas', ruta: '/mis-tareas' },
     { label: 'Ayuda', ruta: '/ayuda' },
-    { label: 'Saber Pro', ruta: '/saber-pro', destacado: true },
+    { label: 'Saber Pro', ruta: '/saber-pro' },
   ],
 }
 
@@ -104,24 +101,6 @@ export function Layout({ children }: { children: ReactNode }) {
           <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-7 rounded-full bg-card px-6 py-3.5 shadow-sm">
             {rutas.map((ruta) => {
               const activo = location.pathname === ruta.ruta || (ruta.ruta !== '/' && location.pathname.startsWith(ruta.ruta + '/'))
-              if (ruta.destacado) {
-                // Ítem destacado (Saber Pro): píldora institucional con punto naranja.
-                return (
-                  <Link
-                    key={ruta.ruta}
-                    to={ruta.ruta}
-                    className={cn(
-                      'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.08em] transition-colors duration-200',
-                      activo
-                        ? 'bg-[#1e3a5f] text-[#F3EDE1] dark:bg-[#E3C063] dark:text-[#172A45]'
-                        : 'bg-[#f3ede1] text-[#1e3a5f] ring-1 ring-[#c89b14]/40 hover:bg-[#ede6d8] dark:bg-[#243A5E] dark:text-[#F5EFE0] dark:ring-[#E3C063]/40 dark:hover:bg-[#1E3351]'
-                    )}
-                  >
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#e8740e] dark:bg-[#F29A52]" aria-hidden="true" />
-                    {ruta.label}
-                  </Link>
-                )
-              }
               return (
                 <Link
                   key={ruta.ruta}
@@ -142,9 +121,16 @@ export function Layout({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-2 md:gap-3">
             <button
               onClick={() => setPerfilAbierto(true)}
-              className="text-xs font-medium text-muted-foreground hidden sm:inline-block hover:text-foreground transition-colors cursor-pointer"
+              className="hidden flex-col items-start text-left cursor-pointer sm:flex"
             >
-              {usuario?.email}
+              <span className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground">
+                {usuario?.email}
+              </span>
+              {usuario?.rol?.name && (
+                <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/80">
+                  {usuario.rol.name}
+                </span>
+              )}
             </button>
             <ModeToggle />
 
@@ -164,25 +150,6 @@ export function Layout({ children }: { children: ReactNode }) {
                 <nav className="flex flex-col gap-2 mt-8">
                   {rutas.map((ruta) => {
                     const activo = location.pathname === ruta.ruta || (ruta.ruta !== '/' && location.pathname.startsWith(ruta.ruta + '/'))
-                    if (ruta.destacado) {
-                      // Ítem destacado (Saber Pro): píldora institucional en el menú móvil.
-                      return (
-                        <Link
-                          key={ruta.ruta}
-                          to={ruta.ruta}
-                          onClick={() => setMenuAbierto(false)}
-                          className={cn(
-                            'inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all',
-                            activo
-                              ? 'bg-[#1e3a5f] text-[#F3EDE1] dark:bg-[#E3C063] dark:text-[#172A45]'
-                              : 'bg-[#f3ede1] text-[#1e3a5f] hover:bg-[#ede6d8] dark:bg-[#243A5E] dark:text-[#F5EFE0] dark:hover:bg-[#1E3351]'
-                          )}
-                        >
-                          <span className="h-1.5 w-1.5 rounded-full bg-[#e8740e] dark:bg-[#F29A52]" aria-hidden="true" />
-                          {ruta.label}
-                        </Link>
-                      )
-                    }
                     return (
                       <Link
                         key={ruta.ruta}
@@ -212,6 +179,11 @@ export function Layout({ children }: { children: ReactNode }) {
                   </Button>
                   <span className="px-4 text-xs text-muted-foreground">
                     {usuario?.email}
+                    {usuario?.rol?.name && (
+                      <span className="mt-0.5 block text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/80">
+                        {usuario.rol.name}
+                      </span>
+                    )}
                   </span>
                   <Button
                     variant="ghost"
