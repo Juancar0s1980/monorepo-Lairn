@@ -13,6 +13,7 @@ from .modelo_evaluacion_formal import (
     OpcionesEstadoEvaluacion,
     OpcionesTipoEvaluacion,
 )
+from .modelo_vinculacion import OpcionesEstadoSolicitud, SolicitudVinculacion
 from .modelo_tarea import (
     ArchivoGuiaTarea,
     EntregaTarea,
@@ -83,6 +84,8 @@ __all__ = [
     'TareaPractica',
     'ArchivoGuiaTarea',
     'EntregaTarea',
+    'OpcionesEstadoSolicitud',
+    'SolicitudVinculacion',
     'OpcionesDecisionPreevaluacion',
     'PreevaluacionEntrega',
     'OpcionesEstadoTarea',
