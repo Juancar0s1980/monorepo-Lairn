@@ -16,6 +16,7 @@ from django.urls import path
 
 from apps.saber_pro.views import (
     VistaAnaliticaCursoSaberPro,
+    VistaAnalisisAccionesSaberPro,
     VistaAprobarContenidoBancoSaberPro,
     VistaAprobarSolicitudDesbloqueoSaberPro,
     VistaContenidoBancoSaberPro,
@@ -85,6 +86,9 @@ urlpatterns = [
 
     # Exportación .xlsx de la analítica del curso con los mismos filtros (HU-24.5).
     path('docente/cursos/<int:curso_id>/analitica/exportar/', VistaExportarAnaliticaCursoSaberPro.as_view(), name='exportar_analitica_curso_saber_pro'),
+
+    # Análisis de acciones recomendadas con IA sobre la analítica del curso (HU-24).
+    path('docente/cursos/<int:curso_id>/analitica/acciones/', VistaAnalisisAccionesSaberPro.as_view(), name='analisis_acciones_curso_saber_pro'),
 
     # Calificaciones de los estudiantes en escala 0.0-5.0 (HU-24).
     path('docente/cursos/<int:curso_id>/simulacros/<int:simulacro_id>/resultados/', VistaResultadosSimulacroSaberPro.as_view(), name='resultados_simulacro_saber_pro'),

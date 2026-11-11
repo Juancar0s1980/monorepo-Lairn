@@ -5,6 +5,11 @@
 // backend solo contiene sus propios agregados: no hay nombres, correos ni
 // posiciones de otros estudiantes (HU-23.4). La página lo comunica de forma
 // explícita con una nota de privacidad.
+//
+// Los filtros se construyen con GET /saber-pro/estudiante/desempeno/opciones/:
+// solo cursos donde el estudiante tiene resultados calificados y, por curso,
+// solo los simulacros que presentó. Nunca se ofrece comparar algo sin
+// resultados propios.
 
 import { useMemo, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -13,9 +18,8 @@ import {
   ArrowLeft,
   BarChart3,
   ClipboardList,
-  GraduationCap,
-  Lock,
   Loader2,
+  Lock,
   Sparkles,
   Target,
   Trophy,
@@ -30,9 +34,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useCursosEstudianteSaberPro } from '@/hooks/use-cursos-estudiante-saber-pro'
 import { useDesempenoSaberPro } from '@/hooks/use-desempeno-saber-pro'
-import { useSimulacrosEstudianteSaberPro } from '@/hooks/use-simulacros-estudiante-saber-pro'
+import { useOpcionesDesempenoSaberPro } from '@/hooks/use-opciones-desempeno-saber-pro'
 import { cn } from '@/lib/utils'
 import {
   paletaSaberPro,
@@ -86,26 +89,23 @@ function DatoDesempeno({
 export default function PaginaDesempenoEstudianteSaberPro() {
   const navigate = useNavigate()
   const {
-    inscripciones,
-    cargando: cargandoCursos,
-    error: errorCursos,
-    recargar: recargarCursos,
-  } = useCursosEstudianteSaberPro()
-  const { simulacros, cargando: cargandoSimulacros } = useSimulacrosEstudianteSaberPro()
+    opciones,
+    cargando: cargandoOpciones,
+    error: errorOpciones,
+    recargar: recargarOpciones,
+  } = useOpcionesDesempenoSaberPro()
   const [cursoId, setCursoId] = useState<number | null>(null)
   const [simulacroId, setSimulacroId] = useState<number | null>(null)
 
-  const cursos = useMemo(
-    () => inscripciones.map((inscripcion) => inscripcion.curso),
-    [inscripciones]
-  )
+  // Solo cursos donde el estudiante ya tiene resultados calificados.
+  const cursos = useMemo(() => opciones.map((opcion) => opcion.curso), [opciones])
   const cursoSeleccionado = cursos.find((curso) => curso.id === cursoId) ?? cursos[0] ?? null
+  // Solo simulacros que el estudiante presentó en el curso elegido.
   const simulacrosDelCurso = useMemo(
     () =>
-      simulacros.filter(
-        (simulacro) => simulacro.curso.id === (cursoSeleccionado?.id ?? -1)
-      ),
-    [cursoSeleccionado?.id, simulacros]
+      opciones.find((opcion) => opcion.curso.id === (cursoSeleccionado?.id ?? -1))
+        ?.simulacros ?? [],
+    [cursoSeleccionado?.id, opciones]
   )
   const simulacroSeleccionado =
     simulacrosDelCurso.find((simulacro) => simulacro.id === simulacroId) ?? null
@@ -163,19 +163,19 @@ export default function PaginaDesempenoEstudianteSaberPro() {
           </span>
         </header>
 
-        {cargandoCursos && (
+        {cargandoOpciones && (
           <div className={cn('mt-8 flex items-center gap-2 text-sm', paletaSaberPro.apoyo)}>
-            <Loader2 className="h-4 w-4 animate-spin" /> Cargando tus cursos...
+            <Loader2 className="h-4 w-4 animate-spin" /> Cargando tus resultados...
           </div>
         )}
 
-        {!cargandoCursos && errorCursos && (
+        {!cargandoOpciones && errorOpciones && (
           <div className="mt-8">
-            <ErrorEstado mensaje={errorCursos} reintentar={() => void recargarCursos()} />
+            <ErrorEstado mensaje={errorOpciones} reintentar={() => void recargarOpciones()} />
           </div>
         )}
 
-        {!cargandoCursos && !errorCursos && cursos.length === 0 && (
+        {!cargandoOpciones && !errorOpciones && cursos.length === 0 && (
           <section
             className={cn(
               'mt-8 flex flex-col items-center rounded-3xl border border-dashed p-12 text-center',
@@ -183,27 +183,27 @@ export default function PaginaDesempenoEstudianteSaberPro() {
               paletaSaberPro.borde
             )}
           >
-            <span className={cn('flex h-16 w-16 items-center justify-center rounded-full', paletaSaberPro.chipAccion)}>
-              <GraduationCap className="h-8 w-8" />
+            <span className={cn('flex h-16 w-16 items-center justify-center rounded-full', paletaSaberPro.chipGold)}>
+              <ClipboardList className="h-8 w-8" />
             </span>
             <h2 className={cn('mt-4 text-lg font-bold', paletaSaberPro.titulo)}>
-              Aún no tienes cursos Saber Pro
+              Aún no tienes resultados para comparar
             </h2>
             <p className={cn('mt-2 max-w-md text-sm leading-relaxed', paletaSaberPro.texto)}>
-              Únete con el código de tu docente para presentar simulacros y comparar tu
-              desempeño con el grupo.
+              Presenta un simulacro de tus cursos Saber Pro y, cuando quede calificado,
+              aquí podrás ver tu percentil frente a tu curso.
             </p>
             <Button
               type="button"
-              className={cn('mt-5', paletaSaberPro.botonAccion)}
-              onClick={() => navigate('/saber-pro')}
+              className={cn('mt-5 gap-2', paletaSaberPro.botonAccion)}
+              onClick={() => navigate('/saber-pro/simulacros')}
             >
-              Ir al panel Saber Pro
+              <Sparkles className="h-4 w-4" /> Ir a mis simulacros
             </Button>
           </section>
         )}
 
-        {!cargandoCursos && !errorCursos && cursoSeleccionado && (
+        {!cargandoOpciones && !errorOpciones && cursoSeleccionado && (
           <main className="mt-8">
             <section
               className={cn('rounded-2xl border p-4 md:p-5', paletaSaberPro.superficie, paletaSaberPro.borde)}
@@ -270,9 +270,9 @@ export default function PaginaDesempenoEstudianteSaberPro() {
                       ))}
                     </SelectContent>
                   </Select>
-                  {cargandoSimulacros && (
-                    <p className={cn('text-[11px]', paletaSaberPro.apoyo)}>Cargando simulacros...</p>
-                  )}
+                  <p className={cn('text-[11px]', paletaSaberPro.apoyo)}>
+                    Solo verás simulacros que hayas presentado y estén calificados.
+                  </p>
                 </div>
               </div>
 

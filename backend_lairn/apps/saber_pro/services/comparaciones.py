@@ -14,6 +14,9 @@ estudiante compartan exactamente el mismo cálculo:
 - `resolver_curso_estudiante`: resuelve el curso a comparar a partir de la
   inscripción del estudiante y de los filtros `curso_id`, `area_id` y
   `simulacro_id`, rechazando combinaciones incoherentes.
+- `opciones_desempeno_estudiante`: cursos inscritos y simulacros presentados
+  con resultados calificados: la base de los filtros de "Mi desempeño", para
+  que el estudiante solo pueda compararse donde tiene resultados.
 
 Solo se consideran intentos `finalizada` y sin revisión pendiente. Así un
 intento con consignas abiertas aún no calificadas no altera el ranking ni el
@@ -325,3 +328,58 @@ def resolver_curso_estudiante(estudiante, curso_id=None, area_id=None, simulacro
     if inscripcion is None:
         raise CursoNoEncontradoError('Aún no perteneces a ningún curso Saber Pro.')
     return inscripcion.curso, None
+
+
+def opciones_desempeno_estudiante(estudiante):
+    """Cursos y simulacros comparables por el estudiante, para sus filtros.
+
+    Base del listado de filtros de "Mi desempeño": solo se ofrecen los cursos
+    inscritos donde el estudiante tiene al menos un intento elegible y, dentro
+    de cada curso, solo los simulacros que presentó y ya están calificados (con
+    el mismo criterio de `_presentaciones_elegibles`, para que el filtro nunca
+    ofrezca una combinación sin resultados propios).
+
+    Devuelve una lista de diccionarios `{'curso': CursoSaberPro, 'simulacros':
+    [Simulacro, ...]}`: cursos ordenados por nombre y simulacros del más
+    reciente al más antiguo (el orden por defecto del modelo).
+    """
+    ids_cursos_inscritos = set(
+        InscripcionCursoSaberPro.objects.filter(estudiante=estudiante).values_list(
+            'curso_id', flat=True
+        )
+    )
+    presentaciones = (
+        PresentacionSimulacro.objects.filter(
+            estudiante=estudiante,
+            estado='finalizada',
+        )
+        .filter(Q(requiere_revision=False) | Q(calificacion_docente__isnull=False))
+        .select_related('simulacro__curso__area')
+        .order_by(
+            'simulacro__curso__nombre',
+            'simulacro__curso__id',
+            '-simulacro__creado_en',
+            '-simulacro__id',
+        )
+    )
+
+    opciones = []
+    indice_por_curso = {}
+    ids_simulacros_por_curso = {}
+    for presentacion in presentaciones:
+        curso = presentacion.simulacro.curso
+        if curso.id not in ids_cursos_inscritos:
+            continue
+
+        opcion = indice_por_curso.get(curso.id)
+        if opcion is None:
+            opcion = indice_por_curso[curso.id] = {'curso': curso, 'simulacros': []}
+            ids_simulacros_por_curso[curso.id] = set()
+            opciones.append(opcion)
+
+        ids_vistos = ids_simulacros_por_curso[curso.id]
+        if presentacion.simulacro_id not in ids_vistos:
+            ids_vistos.add(presentacion.simulacro_id)
+            opcion['simulacros'].append(presentacion.simulacro)
+
+    return opciones

@@ -18,7 +18,6 @@ import {
   Loader2,
   Plus,
   Trash2,
-  Trophy,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -190,13 +189,6 @@ export default function PaginaSimulacrosSaberPro() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <CampanaDesbloqueosSaberPro />
-            <Button
-              type="button"
-              className={`h-11 gap-2 px-5 font-bold ${paletaSaberPro.botonNeutro}`}
-              onClick={() => navigate('/saber-pro/ranking')}
-            >
-              <Trophy className="h-4 w-4" /> Ver ranking
-            </Button>
             <Button
               type="button"
               className={`h-11 gap-2 px-5 font-bold shadow-md ${paletaSaberPro.botonAccion}`}

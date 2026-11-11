@@ -15,6 +15,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.saber_pro.services.agente_analitica import generar_analisis_acciones_curso
 from apps.saber_pro.services.analitica import (
     AfirmacionNoEncontradaError,
     CompetenciaNoEncontradaError,
@@ -43,8 +44,9 @@ CONTENT_TYPE_XLSX = (
     description=(
         'Genera un libro .xlsx con los mismos datos y filtros de la consulta '
         'de analítica del curso, incluidos los resultados individuales de los '
-        'estudiantes y el filtro por parte en Inglés. Solo el docente '
-        'propietario del curso puede descargarlo.'
+        'estudiantes, el filtro por parte en Inglés y una hoja de acciones '
+        'recomendadas generada con IA. Solo el docente propietario del curso '
+        'puede descargarlo.'
     ),
     parameters=[
         OpenApiParameter('curso_id', OpenApiTypes.INT, OpenApiParameter.PATH, description='ID del curso Saber Pro'),
@@ -84,8 +86,19 @@ class VistaExportarAnaliticaCursoSaberPro(APIView):
         except (CursoNoEncontradoError, SimulacroNoEncontradoError) as error:
             return Response({'detalle': error.mensaje}, status=status.HTTP_404_NOT_FOUND)
 
+        # El Excel incluye el análisis de acciones con IA con los mismos
+        # filtros. Si la IA falla (o el curso no tiene intentos elegibles) la
+        # exportación continúa y la hoja "Acciones recomendadas" lleva una
+        # nota informativa en vez del análisis.
+        analisis = None
+        if payload['resumen']['total_intentos'] > 0:
+            try:
+                analisis = generar_analisis_acciones_curso(payload)
+            except ValueError:
+                analisis = None
+
         respuesta = HttpResponse(
-            a_excel_analitica_curso(payload),
+            a_excel_analitica_curso(payload, analisis),
             content_type=CONTENT_TYPE_XLSX,
         )
         nombre = f'analitica_curso_{curso_id}_{timezone.localdate():%Y%m%d}.xlsx'

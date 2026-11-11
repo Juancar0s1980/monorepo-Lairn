@@ -5,7 +5,9 @@
 //   - resultados individuales de sus estudiantes (nombres visibles solo aquí),
 //   - indicadores generales y distribución de calificaciones,
 //   - desempeño por área, competencia y afirmación,
-//   - focos de refuerzo (criterios con menor porcentaje de acierto).
+//   - focos de refuerzo (criterios con menor porcentaje de acierto),
+//   - análisis de acciones con IA: un plan sugerido a partir de los informes
+//     y los filtros aplicados (también incluido en el Excel exportado).
 // Puede filtrar por simulacro y periodo académico (AAAA-1/AAAA-2). Los filtros
 // de competencia/afirmación refinan únicamente los desgloses, no el resumen ni
 // los resultados individuales. En Inglés, que no usa competencias, el filtro es
@@ -23,6 +25,7 @@ import {
   FileSpreadsheet,
   GraduationCap,
   Loader2,
+  Sparkles,
   Target,
   Users,
 } from 'lucide-react'
@@ -43,11 +46,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import api from '@/services/api'
 import { useAnaliticaCursoSaberPro } from '@/hooks/use-analitica-curso-saber-pro'
 import { useCriteriosAreaSaberPro } from '@/hooks/use-criterios-area-saber-pro'
 import { useCursosSaberPro } from '@/hooks/use-cursos-saber-pro'
 import { useSimulacrosSaberPro } from '@/hooks/use-simulacros-saber-pro'
-import type { ResultadoIndividualAnaliticaSaberPro } from '@/types/saber-pro'
+import type {
+  AccionAnalisisSaberPro,
+  AnalisisAccionesSaberPro,
+  ResultadoIndividualAnaliticaSaberPro,
+} from '@/types/saber-pro'
 import { cn } from '@/lib/utils'
 import { mensajeError } from '@/pages/academico/academico-utils'
 import { descargarArchivo } from '@/pages/tareas/utilidades-tareas'
@@ -194,6 +202,139 @@ function TablaResultadosIndividuales({ resultados }: { resultados: ResultadoIndi
   )
 }
 
+// Color del badge de prioridad según la paleta institucional: naranja para
+// alta (acción urgente), dorado para media y muted para baja.
+function PrioridadAccion({ prioridad }: { prioridad: AccionAnalisisSaberPro['prioridad'] }) {
+  const estilo =
+    prioridad === 'alta'
+      ? paletaSaberPro.accion
+      : prioridad === 'media'
+        ? paletaSaberPro.apoyoTitulo
+        : paletaSaberPro.apoyo
+  return (
+    <Badge
+      variant="outline"
+      className={cn('text-[10px] font-bold uppercase tracking-[0.08em]', estilo)}
+    >
+      {prioridad}
+    </Badge>
+  )
+}
+
+// Sección del análisis de acciones con IA: carga, error con reintento,
+// estado vacío (invita a generarlo) y plan generado (resumen + acciones).
+function SeccionAnalisisAcciones({
+  analisis,
+  cargando,
+  error,
+  onGenerar,
+}: {
+  analisis: AnalisisAccionesSaberPro | null
+  cargando: boolean
+  error: string | null
+  onGenerar: () => void
+}) {
+  if (cargando) {
+    return (
+      <div
+        className={cn(
+          'flex min-h-40 flex-col items-center justify-center gap-3 rounded-2xl border',
+          paletaSaberPro.superficie,
+          paletaSaberPro.borde
+        )}
+      >
+        <Loader2 className={cn('h-8 w-8 animate-spin', paletaSaberPro.accion)} />
+        <p className={cn('text-sm', paletaSaberPro.texto)}>
+          La IA está analizando la analítica del curso...
+        </p>
+        <p className={cn('text-[11px]', paletaSaberPro.apoyo)}>
+          Puede tardar unos segundos. No cierres esta página.
+        </p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className={cn('rounded-2xl border p-5', paletaSaberPro.superficie, paletaSaberPro.borde)}>
+        <p className={cn('flex items-center gap-2 text-sm font-medium', paletaSaberPro.accion)}>
+          <AlertCircle className="h-4 w-4 shrink-0" aria-hidden /> {error}
+        </p>
+        <Button
+          type="button"
+          className={cn('mt-4 gap-2', paletaSaberPro.botonNeutro)}
+          onClick={onGenerar}
+        >
+          Reintentar
+        </Button>
+      </div>
+    )
+  }
+
+  if (!analisis) {
+    return (
+      <div
+        className={cn(
+          'flex flex-col items-center rounded-2xl border border-dashed p-8 text-center',
+          paletaSaberPro.bandaAlterna,
+          paletaSaberPro.borde
+        )}
+      >
+        <span className={cn('flex h-12 w-12 items-center justify-center rounded-full', paletaSaberPro.chipGold)}>
+          <Sparkles className="h-6 w-6" />
+        </span>
+        <p className={cn('mt-3 text-sm font-bold', paletaSaberPro.titulo)}>
+          ¿Qué hacer con estos resultados?
+        </p>
+        <p className={cn('mt-1 max-w-md text-sm leading-relaxed', paletaSaberPro.texto)}>
+          Genera con IA un análisis de acciones a partir de los informes y los
+          filtros actuales: prioridades de refuerzo y pasos concretos para tu curso.
+        </p>
+        <Button
+          type="button"
+          className={cn('mt-4 gap-2', paletaSaberPro.botonAccion)}
+          onClick={onGenerar}
+        >
+          <Sparkles className="h-4 w-4" aria-hidden /> Generar análisis con IA
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <div className={cn('rounded-2xl border p-5', paletaSaberPro.superficie, paletaSaberPro.borde)}>
+      <p className={cn('text-sm leading-relaxed', paletaSaberPro.texto)}>{analisis.resumen}</p>
+      <ol className="mt-5 space-y-3">
+        {analisis.acciones.map((accion, indice) => (
+          <li key={`${indice}-${accion.titulo}`} className="flex items-start gap-3">
+            <span
+              className={cn(
+                'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold',
+                paletaSaberPro.numeracionPaso
+              )}
+            >
+              {indice + 1}
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className={cn('text-xs font-semibold', paletaSaberPro.titulo)}>{accion.titulo}</p>
+                <PrioridadAccion prioridad={accion.prioridad} />
+              </div>
+              <p className={cn('mt-1 text-xs leading-relaxed', paletaSaberPro.apoyo)}>
+                {accion.descripcion}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ol>
+      <p className={cn('mt-4 flex items-center gap-1.5 text-[11px]', paletaSaberPro.apoyo)}>
+        <Sparkles className="h-3 w-3 shrink-0" aria-hidden /> Generado con IA a partir de
+        los filtros aplicados; uso orientativo, la decisión académica es tuya.
+      </p>
+    </div>
+  )
+}
+
 export default function PaginaAnaliticaSaberPro() {
   const navigate = useNavigate()
   const {
@@ -210,6 +351,13 @@ export default function PaginaAnaliticaSaberPro() {
   const [afirmacionId, setAfirmacionId] = useState<number | null>(null)
   const [parte, setParte] = useState<number | null>(null)
   const [exportando, setExportando] = useState(false)
+  // El análisis corresponde a los filtros con que se generó. Para evitar
+  // que el docente lea un plan desactualizado tras cambiar curso, simulacro,
+  // periodo o criterio, se guarda junto a la firma de los filtros y se
+  // descarta en render cuando ya no coincide (sin useEffect de reset).
+  const [analisis, setAnalisis] = useState<{ firma: string; datos: AnalisisAccionesSaberPro } | null>(null)
+  const [analisisCargando, setAnalisisCargando] = useState(false)
+  const [analisisError, setAnalisisError] = useState<{ firma: string; mensaje: string } | null>(null)
 
   const cursoSeleccionado = cursos.find((curso) => curso.id === cursoId) ?? cursos[0] ?? null
   const { simulacros, cargando: cargandoSimulacros } = useSimulacrosSaberPro(
@@ -337,14 +485,62 @@ export default function PaginaAnaliticaSaberPro() {
       if (afirmacionId !== null) consulta.set('afirmacion_id', String(afirmacionId))
       if (parte !== null) consulta.set('parte', String(parte))
       const sufijo = consulta.toString() ? `?${consulta.toString()}` : ''
+      // El Excel incluye la hoja de acciones recomendadas generada con IA en
+      // el backend, por eso usa un timeout mayor que una descarga normal.
       await descargarArchivo(
         `/saber-pro/docente/cursos/${cursoSeleccionado.id}/analitica/exportar/${sufijo}`,
-        `analitica_curso_${cursoSeleccionado.id}.xlsx`
+        `analitica_curso_${cursoSeleccionado.id}.xlsx`,
+        120000
       )
     } catch (err) {
       toast.error(mensajeError(err, 'No se pudo exportar la analítica del curso'))
     } finally {
       setExportando(false)
+    }
+  }
+
+  // Firma de los filtros vigentes: identifica de forma única la consulta de
+  // analítica que ve el docente en pantalla.
+  const firmaFiltros = useMemo(
+    () =>
+      [
+        cursoSeleccionado?.id ?? '',
+        simulacroId ?? '',
+        periodo ?? '',
+        competenciaId ?? '',
+        afirmacionId ?? '',
+        parte ?? '',
+      ].join('|'),
+    [cursoSeleccionado?.id, simulacroId, periodo, competenciaId, afirmacionId, parte]
+  )
+  const analisisVigente = analisis?.firma === firmaFiltros ? analisis.datos : null
+  const analisisErrorVigente = analisisError?.firma === firmaFiltros ? analisisError.mensaje : null
+
+  const generarAnalisis = async () => {
+    if (!cursoSeleccionado || analisisCargando) return
+    setAnalisisCargando(true)
+    setAnalisisError(null)
+    try {
+      const { data } = await api.post<AnalisisAccionesSaberPro>(
+        `/saber-pro/docente/cursos/${cursoSeleccionado.id}/analitica/acciones/`,
+        {},
+        {
+          params: {
+            ...(simulacroId === null ? {} : { simulacro_id: simulacroId }),
+            ...(periodo ? { periodo } : {}),
+            ...(competenciaId === null ? {} : { competencia_id: competenciaId }),
+            ...(afirmacionId === null ? {} : { afirmacion_id: afirmacionId }),
+            ...(parte === null ? {} : { parte }),
+          },
+          // La IA tarda más que el timeout global de Axios (15 s).
+          timeout: 120000,
+        }
+      )
+      setAnalisis({ firma: firmaFiltros, datos: data })
+    } catch (err) {
+      setAnalisisError({ firma: firmaFiltros, mensaje: mensajeError(err, 'No se pudo generar el análisis con IA.') })
+    } finally {
+      setAnalisisCargando(false)
     }
   }
 
@@ -385,6 +581,25 @@ export default function PaginaAnaliticaSaberPro() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className={cn('gap-2', paletaSaberPro.botonNeutro)}
+              onClick={() => void generarAnalisis()}
+              disabled={
+                !datos ||
+                cargando ||
+                analisisCargando ||
+                datos.resumen.total_intentos === 0
+              }
+            >
+              {analisisCargando ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              ) : (
+                <Sparkles className="h-4 w-4" aria-hidden />
+              )}
+              {analisisCargando ? 'Analizando con IA...' : 'Análisis con IA'}
+            </Button>
             <Button
               type="button"
               variant="outline"
@@ -745,6 +960,22 @@ export default function PaginaAnaliticaSaberPro() {
                       />
                     </>
                   )}
+                </section>
+
+                <section aria-labelledby="analisis-acciones" className="mt-8">
+                  <EncabezadoSeccion
+                    id="analisis-acciones"
+                    eyebrow="Plan sugerido"
+                    titulo="Análisis de acciones con IA"
+                  />
+                  <div className="mt-5">
+                    <SeccionAnalisisAcciones
+                      analisis={analisisVigente}
+                      cargando={analisisCargando}
+                      error={analisisErrorVigente}
+                      onGenerar={() => void generarAnalisis()}
+                    />
+                  </div>
                 </section>
 
                 <section aria-labelledby="resultados-individuales" className="mt-8">

@@ -578,8 +578,9 @@ export interface DatosRevisionPresentacionSaberPro {
 
 // ---------------------------------------------------------------------------
 // Contratos de la HU-23 (comparación de desempeño).
-// El docente recibe un ranking nominal de su curso; el estudiante recibe solo
-// sus agregados y su percentil, nunca nombres ni posiciones de otros.
+// El estudiante recibe solo sus agregados y su percentil, nunca nombres ni
+// posiciones de otros. El ranking nominal del docente se retiró del panel (la
+// analítica del curso ya le muestra el detalle individual de su grupo).
 // ---------------------------------------------------------------------------
 
 // Referencia mínima del curso comparado.
@@ -598,6 +599,20 @@ export interface FiltroComparacionSaberPro {
   } | null
 }
 
+// Un simulacro ofrecido como filtro de comparación (ya presentado).
+export interface SimulacroFiltroSaberPro {
+  id: number
+  titulo: string
+}
+
+// Respuesta de GET /saber-pro/estudiante/desempeno/opciones/ (HU-23.4): un
+// curso inscrito donde el estudiante tiene resultados calificados, con los
+// simulacros que presentó. Base de los filtros de "Mi desempeño".
+export interface OpcionCursoDesempenoSaberPro {
+  curso: CursoComparacionSaberPro
+  simulacros: SimulacroFiltroSaberPro[]
+}
+
 // Respuesta de GET /saber-pro/estudiante/desempeno/ (HU-23.4).
 // `percentil` es el porcentaje de estudiantes del curso superados y solo se
 // calcula cuando `hay_comparacion` es true.
@@ -613,29 +628,6 @@ export interface DesempenoEstudianteSaberPro {
   mi_calificacion: number | null
   mis_intentos_considerados: number
   mis_simulacros_considerados: number
-}
-
-// Una fila del ranking nominal visible solo para el docente (HU-23.1/23.2).
-export interface FilaRankingSaberPro {
-  posicion: number
-  estudiante: {
-    id: number
-    nombre_completo: string
-    email: string
-  }
-  puntaje: number
-  calificacion: number
-  intentos_considerados: number
-  simulacros_considerados: number
-}
-
-// Respuesta de GET /saber-pro/docente/cursos/{id}/ranking/ (HU-23.1/23.2).
-export interface RankingCursoSaberPro {
-  curso: CursoComparacionSaberPro
-  filtro: FiltroComparacionSaberPro
-  total_estudiantes: number
-  total_inscritos: number
-  ranking: FilaRankingSaberPro[]
 }
 
 // ---------------------------------------------------------------------------
@@ -780,6 +772,24 @@ export interface AnaliticaCursoSaberPro {
   por_afirmacion: DesgloseAfirmacionAnaliticaSaberPro[]
   por_parte: DesgloseParteAnaliticaSaberPro[]
   focos_bajos: FocoBajoAnaliticaSaberPro[]
+}
+
+// Acción recomendada por el análisis con IA de la analítica del curso.
+export interface AccionAnalisisSaberPro {
+  titulo: string
+  descripcion: string
+  prioridad: 'alta' | 'media' | 'baja'
+}
+
+// Respuesta de POST /saber-pro/docente/cursos/{id}/analitica/acciones/.
+// La IA solo recibe agregados, nunca los resultados individuales; el análisis
+// corresponde exactamente a los filtros con que se generó.
+export interface AnalisisAccionesSaberPro {
+  curso: CursoComparacionSaberPro
+  filtro: FiltroAnaliticaSaberPro
+  generado_en: string
+  resumen: string
+  acciones: AccionAnalisisSaberPro[]
 }
 
 // Métricas compartidas por las comparativas institucionales.

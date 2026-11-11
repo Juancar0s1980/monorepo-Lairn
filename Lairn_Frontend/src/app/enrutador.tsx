@@ -72,9 +72,6 @@ const PaginaSimulacrosEstudianteSaberPro = lazy(
 const PaginaPresentarSimulacroSaberPro = lazy(
   () => import('@/pages/saber-pro/pagina-presentar-simulacro-saber-pro')
 )
-const PaginaRankingSaberPro = lazy(
-  () => import('@/pages/saber-pro/pagina-ranking-saber-pro')
-)
 const PaginaDesempenoEstudianteSaberPro = lazy(
   () => import('@/pages/saber-pro/pagina-desempeno-estudiante-saber-pro')
 )
@@ -369,15 +366,6 @@ function RutasPrivadas() {
             element={
               <RutaProtegida rolesPermitidos={[ROLES.ESTUDIANTE]}>
                 <PaginaPresentarSimulacroSaberPro />
-              </RutaProtegida>
-            }
-          />
-          {/* HU-23: ranking nominal del curso, exclusivo del docente propietario. */}
-          <Route
-            path="/saber-pro/ranking"
-            element={
-              <RutaProtegida rolesPermitidos={[ROLES.DOCENTE]}>
-                <PaginaRankingSaberPro />
               </RutaProtegida>
             }
           />

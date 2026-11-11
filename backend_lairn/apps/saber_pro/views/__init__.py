@@ -32,7 +32,11 @@ from .vista_resultados_simulacro_saber_pro import VistaResultadosSimulacroSaberP
 from .vista_revision_presentacion_saber_pro import VistaRevisionPresentacionSaberPro
 from .vista_ranking_curso_saber_pro import VistaRankingCursoSaberPro
 from .vista_desempeno_estudiante_saber_pro import VistaDesempenoEstudianteSaberPro
+from .vista_opciones_desempeno_estudiante_saber_pro import (
+    VistaOpcionesDesempenoEstudianteSaberPro,
+)
 from .vista_analitica_curso_saber_pro import VistaAnaliticaCursoSaberPro
+from .vista_analisis_acciones_saber_pro import VistaAnalisisAccionesSaberPro
 from .vista_analitica_institucional_saber_pro import VistaAnaliticaInstitucionalSaberPro
 from .vista_catalogo_institucional_saber_pro import VistaCatalogoInstitucionalSaberPro
 from .vista_exportar_analitica_curso_saber_pro import (
@@ -75,7 +79,9 @@ __all__ = [
     'VistaRevisionPresentacionSaberPro',
     'VistaRankingCursoSaberPro',
     'VistaDesempenoEstudianteSaberPro',
+    'VistaOpcionesDesempenoEstudianteSaberPro',
     'VistaAnaliticaCursoSaberPro',
+    'VistaAnalisisAccionesSaberPro',
     'VistaAnaliticaInstitucionalSaberPro',
     'VistaCatalogoInstitucionalSaberPro',
     'VistaExportarAnaliticaCursoSaberPro',

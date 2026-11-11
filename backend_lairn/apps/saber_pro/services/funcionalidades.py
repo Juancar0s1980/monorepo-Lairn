@@ -17,35 +17,32 @@ Numeración de épicas que implementan cada funcionalidad:
 """
 
 # Funcionalidades visibles para el rol Docente preparador.
+# El ranking nominal se retiró del panel: la analítica del curso ya le da al
+# docente el detalle individual y agregado, así que la tarjeta se eliminó en
+# vez de marcarse como "Próximamente" (que sugeriría que volverá).
 _FUNCIONALIDADES_DOCENTE = [
     {
         'clave': 'cursos',
         'titulo': 'Cursos Saber Pro',
-        'descripcion': 'Crea y administra tus cursos de preparación: área, nombre, descripción, código de acceso y estudiantes inscritos (HU-17).',
+        'descripcion': 'Crea y administra tus cursos de preparación: área, nombre, descripción, código de acceso y estudiantes inscritos.',
         'disponible': True,
     },
     {
         'clave': 'simulacros',
         'titulo': 'Simulacros',
-        'descripcion': 'Crea simulacros dentro de tus cursos Saber Pro eligiendo competencias, afirmaciones y distribución de preguntas (HU-19).',
+        'descripcion': 'Crea simulacros dentro de tus cursos Saber Pro eligiendo competencias, afirmaciones y distribución de preguntas.',
         'disponible': True,
     },
     {
         'clave': 'banco_contenido',
         'titulo': 'Banco de contenido con IA',
-        'descripcion': 'Genera, revisa y aprueba preguntas y consignas con apoyo de IA para el área de tus cursos (HU-20).',
+        'descripcion': 'Genera, revisa y aprueba preguntas y consignas con apoyo de IA para el área de tus cursos.',
         'disponible': True,
     },
     {
         'clave': 'analitica',
         'titulo': 'Analítica',
-        'descripcion': 'Consulta el desempeño de tus estudiantes por área, competencia y afirmación en cada curso (HU-24).',
-        'disponible': True,
-    },
-    {
-        'clave': 'ranking',
-        'titulo': 'Ranking',
-        'descripcion': 'Consulta el listado nominal de tus estudiantes por simulacro o área, con fines pedagógicos (HU-23).',
+        'descripcion': 'Consulta el desempeño de tus estudiantes por área, competencia y afirmación, con filtros, exportación a Excel y análisis de acciones con IA.',
         'disponible': True,
     },
 ]
@@ -55,13 +52,13 @@ _FUNCIONALIDADES_ESTUDIANTE = [
     {
         'clave': 'simulacros',
         'titulo': 'Simulacros',
-        'descripcion': 'Consulta los simulacros activos de tus cursos de preparación; la presentación con temporizador y condiciones controladas llega en la HU-21.',
+        'descripcion': 'Consulta los simulacros activos de tus cursos de preparación y preséntalos con temporizador y condiciones controladas.',
         'disponible': True,
     },
     {
         'clave': 'desempeno',
         'titulo': 'Mi desempeño',
-        'descripcion': 'Consulta tu percentil por área o simulacro frente a tu curso, sin ver datos de otros estudiantes (HU-23).',
+        'descripcion': 'Consulta tu percentil por área o simulacro frente a tu curso, sin ver datos de otros estudiantes.',
         'disponible': True,
     },
 ]

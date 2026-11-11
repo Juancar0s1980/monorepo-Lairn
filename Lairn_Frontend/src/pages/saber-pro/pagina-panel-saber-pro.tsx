@@ -390,17 +390,15 @@ export default function PaginaPanelSaberPro() {
   }
 
   // Navegación de las herramientas del panel que ya están disponibles:
-  // simulacros (HU-19), banco de contenido (HU-20) y comparación de desempeño
-  // (HU-23: ranking para el docente, percentil para el estudiante).
+  // simulacros, banco de contenido, analítica (docente) y desempeño
+  // (estudiante). El ranking docente se retiró: la analítica del curso ya
+  // muestra el detalle individual y agregado del grupo.
   const manejarAccionFuncionalidad = (clave: string) => {
     if (clave === 'banco_contenido') {
       navigate('/saber-pro/banco')
     }
     if (clave === 'simulacros') {
       navigate('/saber-pro/simulacros')
-    }
-    if (clave === 'ranking') {
-      navigate('/saber-pro/ranking')
     }
     if (clave === 'desempeno') {
       navigate('/saber-pro/desempeno')

@@ -381,6 +381,57 @@ def _hoja_focos(libro, payload):
     )
 
 
+def _hoja_acciones(libro, payload, analisis):
+    """Hoja de acciones recomendadas generadas con IA (o nota si no se pudo).
+
+    `analisis` es el resultado de `generar_analisis_acciones_curso` con los
+    mismos filtros del payload. Si llega `None` (la IA falló o el curso no
+    tenía intentos) la hoja se mantiene con una nota informativa, para que el
+    docente sepa que el análisis debía estar ahí.
+    """
+    from openpyxl.styles import Alignment, Font
+
+    hoja = libro.create_sheet('Acciones recomendadas')
+    nota = (
+        'Análisis generado con IA a partir de los datos y filtros de este '
+        'archivo; es orientativo y no reemplaza el criterio del docente.'
+        if analisis
+        else 'No fue posible generar el análisis con IA en esta exportación.'
+    )
+    fila = _cabecera(hoja, 'Acciones recomendadas', payload, nota)
+
+    if not analisis:
+        return fila
+
+    celda = hoja.cell(row=fila, column=1, value='Resumen del análisis')
+    celda.font = Font(bold=True, size=11, color=AZUL)
+    fila += 1
+    celda = hoja.cell(row=fila, column=1, value=analisis['resumen'])
+    celda.alignment = Alignment(wrap_text=True, vertical='top')
+    hoja.merge_cells(
+        start_row=fila, start_column=1, end_row=fila, end_column=3
+    )
+    # Altura aproximada para que el resumen se lea completo tras el merge.
+    hoja.row_dimensions[fila].height = max(30, 15 * (len(analisis['resumen']) // 90 + 1))
+    fila += 2
+
+    return _seccion(
+        hoja,
+        fila,
+        'Plan de acciones sugeridas',
+        ['Prioridad', 'Acción', 'Descripción'],
+        [
+            [
+                accion['prioridad'].capitalize(),
+                accion['titulo'],
+                accion['descripcion'],
+            ]
+            for accion in analisis['acciones']
+        ],
+        [14, 44, 72],
+    )
+
+
 def _hoja_individuales(libro, payload):
     hoja = libro.create_sheet('Resultados individuales')
     fila = _cabecera(
@@ -515,8 +566,13 @@ def _guardar(libro):
     return salida.getvalue()
 
 
-def a_excel_analitica_curso(payload):
-    """Libro Excel de la analítica de un curso, con resultados individuales."""
+def a_excel_analitica_curso(payload, analisis=None):
+    """Libro Excel de la analítica de un curso, con resultados individuales.
+
+    `analisis` es el resultado opcional de `generar_analisis_acciones_curso`
+    con los mismos filtros; cuando llega, se agrega la hoja "Acciones
+    recomendadas" con el resumen y el plan de acciones de la IA.
+    """
     from openpyxl import Workbook
 
     libro = Workbook()
@@ -534,6 +590,7 @@ def a_excel_analitica_curso(payload):
     _hoja_por_afirmacion(libro, payload)
     _hoja_por_parte(libro, payload)
     _hoja_focos(libro, payload)
+    _hoja_acciones(libro, payload, analisis)
     _hoja_individuales(libro, payload)
     _hoja_metodologia(libro, AVISO_DOCENTE)
     return _guardar(libro)
