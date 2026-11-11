@@ -1,7 +1,9 @@
 """
 Notas del momento (ADR-019).
 
-- `GET  notas-momento/momentos/?programa=`         momentos con evaluaciones publicadas (selector).
+- `GET  notas-momento/momentos/`                   momentos con evaluaciones publicadas (selector), con el rango
+  de fechas de esas evaluaciones. Filtros opcionales: `programa`, `periodo`, `desde`, `hasta`
+  (AAAA-MM-DD, se cruza con el rango de fechas) y `q` (nombre del momento, programa o periodo).
 - `GET  notas-momento/<momento_id>/`               notas por estudiante + resumen (JSON).
 - `GET  notas-momento/<momento_id>/exportar/`      Excel; cada exportación queda registrada.
 - `GET|PUT notas-momento/<momento_id>/esquema/`    ponderación examen/trabajo del momento (gestor).
@@ -11,7 +13,11 @@ Lectura y exportación: Administrador, Coordinador y Vicerrector (decisión del 
 ADR-012 para este dato). Docente y Estudiante: 403.
 """
 
+from datetime import date, datetime, time
+from zoneinfo import ZoneInfo
 from decimal import Decimal, InvalidOperation
+
+from django.db.models import Count, Max, Min, Q
 
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -26,6 +32,7 @@ from apps.evaluacion_resultados.services.servicio_trazabilidad import registrar_
 from core.permissions.permisos_rol import EsAdministrador, EsGestorAcademico, EsLectorAnalitica
 
 CAMPOS_MOMENTO = ('peso_examen', 'peso_trabajo')
+ZONA_INSTITUCION = ZoneInfo('America/Bogota')
 CAMPOS_INSTITUCIONALES = ('peso_momento_en_corte', 'peso_corte_en_definitiva', 'peso_examen', 'peso_trabajo')
 
 
@@ -55,18 +62,43 @@ def _guardar(esquema, datos, campos, usuario):
     esquema.save()
 
 
+def _fecha(valor):
+    try:
+        return date.fromisoformat(valor) if valor else None
+    except ValueError:
+        return None
+
+
 class VistaMomentosConNotas(APIView):
     permission_classes = [EsLectorAnalitica]
 
     def get(self, request):
-        qs = MomentoEvaluacion.objects.filter(evaluaciones__estado='publicada').select_related('programa').distinct()
-        programa = request.query_params.get('programa', '')
-        if programa.isdigit():
-            qs = qs.filter(programa_id=int(programa))
+        publicadas = Q(evaluaciones__estado='publicada')
+        qs = (MomentoEvaluacion.objects.filter(publicadas).select_related('programa').distinct()
+              .annotate(fecha_inicio=Min('evaluaciones__fecha_inicio', filter=publicadas),
+                        fecha_fin=Max('evaluaciones__fecha_fin', filter=publicadas),
+                        total_evaluaciones=Count('evaluaciones', filter=publicadas, distinct=True)))
+        p = request.query_params
+        if p.get('programa', '').isdigit():
+            qs = qs.filter(programa_id=int(p['programa']))
+        if p.get('periodo'):
+            qs = qs.filter(periodo=p['periodo'])
+        desde, hasta = _fecha(p.get('desde')), _fecha(p.get('hasta'))
+        # Un momento entra si el rango de fechas de sus evaluaciones se cruza con [desde, hasta].
+        # Los días son de Colombia (lo que ve el usuario), aunque el servidor trabaje en UTC.
+        if desde:
+            qs = qs.filter(fecha_fin__gte=datetime.combine(desde, time.min, ZONA_INSTITUCION))
+        if hasta:
+            qs = qs.filter(fecha_inicio__lte=datetime.combine(hasta, time.max, ZONA_INSTITUCION))
+        texto = p.get('q', '').strip()
+        if texto:
+            qs = qs.filter(Q(nombre__icontains=texto) | Q(periodo__icontains=texto)
+                           | Q(programa__codigo__icontains=texto) | Q(programa__nombre__icontains=texto))
         return Response([
             {'id': m.id, 'nombre': m.nombre, 'periodo': m.periodo, 'semestre_referencia': m.semestre_referencia,
-             'programa_id': m.programa_id, 'programa': f'{m.programa.codigo} · {m.programa.nombre}'}
-            for m in qs.order_by('programa__codigo', 'semestre_referencia', 'nombre')
+             'programa_id': m.programa_id, 'programa': f'{m.programa.codigo} · {m.programa.nombre}',
+             'fecha_inicio': m.fecha_inicio, 'fecha_fin': m.fecha_fin, 'total_evaluaciones': m.total_evaluaciones}
+            for m in qs.order_by('programa__codigo', '-fecha_inicio', 'nombre')
         ])
 
 
