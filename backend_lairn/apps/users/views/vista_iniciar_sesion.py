@@ -1,5 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
+
+from apps.users.views.vista_acceso_google import MENSAJE_SOLO_INSTITUCIONAL, solo_institucional
 from rest_framework.permissions import AllowAny
 from rest_framework import status
 from drf_spectacular.utils import extend_schema, OpenApiResponse, inline_serializer, OpenApiExample
@@ -45,6 +47,8 @@ class VistaIniciarSesion(APIView):
     permission_classes = [AllowAny]
 
     def post(self, peticion):
+        if solo_institucional():
+            return Response({'detalle': MENSAJE_SOLO_INSTITUCIONAL, 'codigo': 'solo_institucional'}, status=403)
         serializador = SerializadorIniciarSesion(data=peticion.data)
         serializador.is_valid(raise_exception=True)
         return Response(serializador.validated_data, status=status.HTTP_200_OK)

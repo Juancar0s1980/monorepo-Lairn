@@ -3,6 +3,8 @@ from rest_framework import serializers as drf_serializers
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+
+from apps.users.views.vista_acceso_google import MENSAJE_SOLO_INSTITUCIONAL, solo_institucional
 from rest_framework.views import APIView
 
 from apps.users.serializers.serializador_restablecer_contrasena import SerializadorRestablecerContrasena
@@ -33,6 +35,8 @@ class VistaRestablecerContrasena(APIView):
     permission_classes = [AllowAny]
 
     def post(self, peticion):
+        if solo_institucional():
+            return Response({'detalle': MENSAJE_SOLO_INSTITUCIONAL, 'codigo': 'solo_institucional'}, status=403)
         serializador = SerializadorRestablecerContrasena(data=peticion.data)
         serializador.is_valid(raise_exception=True)
         serializador.save()

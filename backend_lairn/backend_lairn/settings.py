@@ -79,6 +79,19 @@ IMPORTACION_JSON_HOSTS_PERMITIDOS = [
 ]
 
 
+# Inicio de sesión institucional con Google (HU-26).
+# GOOGLE_CLIENT_ID: ID de cliente OAuth (aplicación web) creado en Google Cloud Console.
+# DOMINIOS_INSTITUCIONALES: dominios de Google Workspace aceptados (separados por comas).
+# AUTENTICACION_SOLO_INSTITUCIONAL: True = solo Google institucional (sin contraseña, registro ni
+# recuperación). Por defecto activo fuera de desarrollo (DEBUG=False).
+GOOGLE_CLIENT_ID = config("GOOGLE_CLIENT_ID", default="")
+DOMINIOS_INSTITUCIONALES = [
+    d.strip().lower().lstrip("@")
+    for d in config("DOMINIOS_INSTITUCIONALES", default="uniautonoma.edu.co").split(",")
+    if d.strip()
+]
+AUTENTICACION_SOLO_INSTITUCIONAL = config("AUTENTICACION_SOLO_INSTITUCIONAL", default=not DEBUG, cast=bool)
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -167,6 +180,8 @@ REST_FRAMEWORK = {
     # únicas con costo real por request. Ver core/throttling/throttle_ia.py.
     'DEFAULT_THROTTLE_RATES': {
         'ia': '10/min',
+        # Intentos de inicio de sesión por IP (HU-26).
+        'acceso': '20/min',
     },
 }
 
