@@ -119,6 +119,28 @@ de la tabla anterior.
 ### Estudiante
 - **Mis Cursos** (`/mis-cursos`): se inscribe a cursos con el código del docente, rinde exámenes generados por IA, ve su progreso y puede reportar un examen problemático (ícono de bandera en la card del examen).
 
+## Módulo Saber Pro
+
+Módulo de preparación para el examen **Saber Pro** (ICFES, Colombia). Los
+docentes crean cursos y simulacros, generan contenido con IA y consultan la
+analítica de sus grupos; los estudiantes se inscriben, presentan simulacros y
+revisan su desempeño; coordinación y vicerrectoría consultan la analítica
+consolidada de la institución.
+
+- **Docente**: cursos con código de acceso, simulacros por competencia y
+  afirmación, banco de contenido con IA, analítica del curso con exportación a
+  Excel y análisis de acciones con IA, revisión de respuestas abiertas y gestión
+  de desbloqueos.
+- **Estudiante**: inscripción por código, presentación cronometrada de
+  simulacros y consulta de su propio desempeño (percentil) sin ver datos de
+  terceros.
+- **Coordinador y Vicerrector**: analítica institucional consolidada, exportación
+  a Excel y análisis de acciones con IA.
+
+La API se monta en `/api/saber-pro/`. El detalle de funcionalidades, endpoints,
+modelos y puesta en marcha está en
+[`backend_lairn/apps/saber_pro/README.md`](backend_lairn/apps/saber_pro/README.md).
+
 ## Comandos útiles de Docker Compose
 
 ```bash
@@ -183,6 +205,7 @@ Monorepo_Lairn/
 ## Documentación adicional
 
 - [`backend_lairn/docs/`](backend_lairn/docs/) — arquitectura, autenticación, base de datos, endpoints, motor de IA, variables de entorno, comandos de gestión, seguridad.
+- [`backend_lairn/apps/saber_pro/README.md`](backend_lairn/apps/saber_pro/README.md) — módulo Saber Pro: funcionalidades, endpoints, modelos e IA.
 - [`microservicio_ml/README.md`](microservicio_ml/README.md) — modelos servidos, API `/predict`, cómo re-entrenar.
 
 ## Solución de problemas
