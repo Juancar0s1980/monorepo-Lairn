@@ -80,6 +80,18 @@ class EsLectorAnalitica(BasePermission):
         return (EsVicerrector().has_permission(request, view) or EsGestorAcademico().has_permission(request, view))
 
 
+class EsLectorAnaliticaConIA(BasePermission):
+    """Informe de analítica con IA (HU-24.7): Coordinador, Vicerrector o Administrador.
+
+    A diferencia de `EsLectorAnalitica`, admite POST porque el análisis con IA
+    se solicita con una petición sin efectos secundarios sobre los datos. El
+    alcance sigue siendo el de la analítica institucional: solo datos agregados.
+    """
+
+    def has_permission(self, request, view):
+        return EsVicerrector().has_permission(request, view) or EsGestorAcademico().has_permission(request, view)
+
+
 class EsLectorInstitucional(BasePermission):
     """Reporte ejecutivo (HU-11): Vicerrector (solo lectura) o Administrador.
 

@@ -174,6 +174,15 @@ class SerializadorAnalisisAcciones(serializers.Serializer):
     acciones = SerializadorAccionAnalisis(many=True)
 
 
+class SerializadorAnalisisAccionesInstitucional(serializers.Serializer):
+    """Respuesta del análisis de acciones con IA de la analítica institucional."""
+
+    filtro = SerializadorFiltroAnalitica()
+    generado_en = serializers.DateTimeField()
+    resumen = serializers.CharField()
+    acciones = SerializadorAccionAnalisis(many=True)
+
+
 class SerializadorAnaliticaCurso(serializers.Serializer):
     """Respuesta de la analítica de un curso para el docente."""
 

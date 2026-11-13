@@ -4,7 +4,9 @@ Exportación `.xlsx` de la analítica institucional Saber Pro (HU-24.6).
 Expone `GET /api/saber-pro/institucional/analitica/exportar/` con los mismos
 filtros de la consulta: `?curso_id=`, `?programa_id=`, `?area_id=`,
 `?competencia_id=`, `?afirmacion_id=`, `?parte=` (Inglés) y `?periodo=AAAA-N`.
-El archivo es agregado y no incluye resultados individuales (HU-24.4.6).
+El archivo es agregado y no incluye resultados individuales (HU-24.4.6); el
+análisis de acciones con IA se incluye en la hoja "Resumen" (HU-24.7) y, si la
+IA falla, la descarga continúa con una nota informativa.
 """
 
 from django.http import HttpResponse
@@ -15,6 +17,9 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.saber_pro.services.agente_analitica import (
+    generar_analisis_acciones_institucional,
+)
 from apps.saber_pro.services.analitica import (
     AfirmacionNoEncontradaError,
     CompetenciaNoEncontradaError,
@@ -46,7 +51,10 @@ CONTENT_TYPE_XLSX = (
         'Genera un libro .xlsx con los indicadores consolidados, desgloses y '
         'comparativas por curso, carrera y periodo, con los filtros aplicados '
         '(incluida la parte del examen de Inglés). No incluye resultados '
-        'individuales de estudiantes.'
+        'individuales de estudiantes. El análisis de acciones generado con IA '
+        'se incluye al final de la hoja "Resumen" con el aviso de que es '
+        'automático y puede equivocarse; si la IA falla, la exportación '
+        'continúa con una nota informativa.'
     ),
     parameters=[
         OpenApiParameter('curso_id', OpenApiTypes.INT, OpenApiParameter.QUERY, required=False, description='Filtra por un curso Saber Pro'),
@@ -83,8 +91,19 @@ class VistaExportarAnaliticaInstitucionalSaberPro(APIView):
         except (CursoNoEncontradoError, ProgramaNoEncontradoError) as error:
             return Response({'detalle': error.mensaje}, status=status.HTTP_404_NOT_FOUND)
 
+        # El Excel incluye el análisis de acciones con IA con los mismos
+        # filtros, dentro de la hoja "Resumen". Si la IA falla (o no hay
+        # intentos elegibles) la exportación continúa y esa sección lleva una
+        # nota informativa en vez del análisis.
+        analisis = None
+        if payload['resumen']['total_intentos'] > 0:
+            try:
+                analisis = generar_analisis_acciones_institucional(payload)
+            except ValueError:
+                analisis = None
+
         respuesta = HttpResponse(
-            a_excel_analitica_institucional(payload),
+            a_excel_analitica_institucional(payload, analisis),
             content_type=CONTENT_TYPE_XLSX,
         )
         nombre = f'analitica_institucional_{timezone.localdate():%Y%m%d}.xlsx'

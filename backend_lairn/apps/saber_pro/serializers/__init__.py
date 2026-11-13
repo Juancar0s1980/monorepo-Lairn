@@ -45,6 +45,8 @@ from .serializador_comparacion_saber_pro import (
     SerializadorSimulacroFiltro,
 )
 from .serializador_analitica_saber_pro import (
+    SerializadorAnalisisAcciones,
+    SerializadorAnalisisAccionesInstitucional,
     SerializadorAnaliticaCurso,
     SerializadorAnaliticaInstitucional,
     SerializadorCatalogoInstitucional,

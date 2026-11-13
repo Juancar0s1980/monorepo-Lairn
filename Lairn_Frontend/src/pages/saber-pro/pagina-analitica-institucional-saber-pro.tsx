@@ -6,7 +6,8 @@
 //   - indicadores consolidados y distribución de calificaciones,
 //   - desempeño por área, competencia y afirmación,
 //   - comparativas entre cursos, carreras y periodos académicos,
-//   - focos de refuerzo institucionales.
+//   - focos de refuerzo institucionales,
+//   - análisis de acciones con IA (HU-24.7), también incluido en el Excel.
 // Por privacidad NO expone resultados individuales (HU-24.4.6). Los filtros
 // permiten acotar por carrera, curso, área y periodo (AAAA-1/AAAA-2). Cuando el
 // área es Inglés se habilita además el filtro por parte del examen (1 a 7).
@@ -21,6 +22,7 @@ import {
   FileSpreadsheet,
   GraduationCap,
   Loader2,
+  Sparkles,
   Target,
   Users,
 } from 'lucide-react'
@@ -35,6 +37,8 @@ import {
 } from '@/components/ui/select'
 import { useAnaliticaInstitucionalSaberPro } from '@/hooks/use-analitica-institucional-saber-pro'
 import { useCatalogoInstitucionalSaberPro } from '@/hooks/use-catalogo-institucional-saber-pro'
+import api from '@/services/api'
+import type { AnalisisAccionesInstitucionalSaberPro } from '@/types/saber-pro'
 import { cn } from '@/lib/utils'
 import { mensajeError } from '@/pages/academico/academico-utils'
 import { descargarArchivo } from '@/pages/tareas/utilidades-tareas'
@@ -50,6 +54,7 @@ import {
   ErrorEstadoAnalitica,
   ListaFocosBajos,
   ResumenMetricas,
+  SeccionAnalisisAcciones,
   TablaComparativa,
   TablaDesglose,
   type FilaComparativaAnalitica,
@@ -88,6 +93,16 @@ export default function PaginaAnaliticaInstitucionalSaberPro() {
   const [periodo, setPeriodo] = useState<string | null>(null)
   const [parte, setParte] = useState<number | null>(null)
   const [exportando, setExportando] = useState(false)
+  // El análisis corresponde a los filtros con que se generó: se guarda junto a
+  // la firma de los filtros para no mostrar un plan desactualizado.
+  const [analisis, setAnalisis] = useState<{
+    firma: string
+    datos: AnalisisAccionesInstitucionalSaberPro
+  } | null>(null)
+  const [analisisCargando, setAnalisisCargando] = useState(false)
+  const [analisisError, setAnalisisError] = useState<{ firma: string; mensaje: string } | null>(
+    null
+  )
 
   const { datos, cargando, error, recargar } = useAnaliticaInstitucionalSaberPro({
     curso_id: cursoId,
@@ -232,6 +247,47 @@ export default function PaginaAnaliticaInstitucionalSaberPro() {
     }
   }
 
+  // Firma de los filtros vigentes: identifica la consulta que se muestra.
+  const firmaFiltros = useMemo(
+    () =>
+      [cursoId ?? '', programaId ?? '', areaId ?? '', parte ?? '', periodo ?? ''].join('|'),
+    [cursoId, programaId, areaId, parte, periodo]
+  )
+  const analisisVigente = analisis?.firma === firmaFiltros ? analisis.datos : null
+  const analisisErrorVigente =
+    analisisError?.firma === firmaFiltros ? analisisError.mensaje : null
+
+  const generarAnalisis = async () => {
+    if (analisisCargando) return
+    setAnalisisCargando(true)
+    setAnalisisError(null)
+    try {
+      const { data } = await api.post<AnalisisAccionesInstitucionalSaberPro>(
+        '/saber-pro/institucional/analitica/acciones/',
+        {},
+        {
+          params: {
+            ...(cursoId === null ? {} : { curso_id: cursoId }),
+            ...(programaId === null ? {} : { programa_id: programaId }),
+            ...(areaId === null ? {} : { area_id: areaId }),
+            ...(parte === null ? {} : { parte }),
+            ...(periodo ? { periodo } : {}),
+          },
+          // La IA tarda más que el timeout global de Axios (15 s).
+          timeout: 120000,
+        }
+      )
+      setAnalisis({ firma: firmaFiltros, datos: data })
+    } catch (err) {
+      setAnalisisError({
+        firma: firmaFiltros,
+        mensaje: mensajeError(err, 'No se pudo generar el análisis con IA.'),
+      })
+    } finally {
+      setAnalisisCargando(false)
+    }
+  }
+
   const exportar = async () => {
     setExportando(true)
     try {
@@ -242,9 +298,12 @@ export default function PaginaAnaliticaInstitucionalSaberPro() {
       if (parte !== null) consulta.set('parte', String(parte))
       if (periodo) consulta.set('periodo', periodo)
       const sufijo = consulta.toString() ? `?${consulta.toString()}` : ''
+      // El Excel incluye la hoja de acciones recomendadas generada con IA en
+      // el backend, por eso usa un timeout mayor que una descarga normal.
       await descargarArchivo(
         `/saber-pro/institucional/analitica/exportar/${sufijo}`,
-        'analitica_institucional.xlsx'
+        'analitica_institucional.xlsx',
+        120000
       )
     } catch (err) {
       toast.error(mensajeError(err, 'No se pudo exportar la analítica institucional'))
@@ -291,6 +350,25 @@ export default function PaginaAnaliticaInstitucionalSaberPro() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className={cn('gap-2', paletaSaberPro.botonNeutro)}
+              onClick={() => void generarAnalisis()}
+              disabled={
+                !datos ||
+                cargando ||
+                analisisCargando ||
+                datos.resumen.total_intentos === 0
+              }
+            >
+              {analisisCargando ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              ) : (
+                <Sparkles className="h-4 w-4" aria-hidden />
+              )}
+              {analisisCargando ? 'Analizando con IA...' : 'Análisis con IA'}
+            </Button>
             <Button
               type="button"
               variant="outline"
@@ -617,6 +695,23 @@ export default function PaginaAnaliticaInstitucionalSaberPro() {
                     filas={filasPeriodo}
                     vacio="No hay intentos elegibles para agrupar por periodo."
                   />
+                </section>
+
+                <section aria-labelledby="analisis-acciones-institucional" className="mt-8">
+                  <EncabezadoSeccion
+                    id="analisis-acciones-institucional"
+                    eyebrow="Plan sugerido"
+                    titulo="Análisis de acciones con IA"
+                  />
+                  <div className="mt-5">
+                    <SeccionAnalisisAcciones
+                      analisis={analisisVigente}
+                      cargando={analisisCargando}
+                      error={analisisErrorVigente}
+                      onGenerar={() => void generarAnalisis()}
+                      alcance="institucional"
+                    />
+                  </div>
                 </section>
 
                 <section
