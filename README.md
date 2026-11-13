@@ -197,3 +197,4 @@ Monorepo_Lairn/
   docker compose exec web python manage.py seed_roles
   docker compose exec web python manage.py seed_usuarios
   ```
+- [Módulo Saber Pro](backend_lairn/apps/saber_pro/README.md)
