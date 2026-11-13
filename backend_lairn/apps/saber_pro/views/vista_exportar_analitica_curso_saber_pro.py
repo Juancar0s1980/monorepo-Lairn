@@ -44,9 +44,10 @@ CONTENT_TYPE_XLSX = (
     description=(
         'Genera un libro .xlsx con los mismos datos y filtros de la consulta '
         'de analítica del curso, incluidos los resultados individuales de los '
-        'estudiantes, el filtro por parte en Inglés y una hoja de acciones '
-        'recomendadas generada con IA. Solo el docente propietario del curso '
-        'puede descargarlo.'
+        'estudiantes y el filtro por parte en Inglés. El análisis de acciones '
+        'generado con IA se incluye al final de la primera hoja ("Resumen"), '
+        'con el aviso de que es automático y puede equivocarse. Solo el '
+        'docente propietario del curso puede descargarlo.'
     ),
     parameters=[
         OpenApiParameter('curso_id', OpenApiTypes.INT, OpenApiParameter.PATH, description='ID del curso Saber Pro'),
@@ -87,9 +88,9 @@ class VistaExportarAnaliticaCursoSaberPro(APIView):
             return Response({'detalle': error.mensaje}, status=status.HTTP_404_NOT_FOUND)
 
         # El Excel incluye el análisis de acciones con IA con los mismos
-        # filtros. Si la IA falla (o el curso no tiene intentos elegibles) la
-        # exportación continúa y la hoja "Acciones recomendadas" lleva una
-        # nota informativa en vez del análisis.
+        # filtros, dentro de la hoja "Resumen". Si la IA falla (o el curso no
+        # tiene intentos elegibles) la exportación continúa y esa sección
+        # lleva una nota informativa en vez del análisis.
         analisis = None
         if payload['resumen']['total_intentos'] > 0:
             try:

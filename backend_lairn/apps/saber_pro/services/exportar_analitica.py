@@ -5,8 +5,11 @@ Convierte en un libro `.xlsx` exactamente los datos que ya calculó
 `construir_analitica_curso` o `construir_analitica_institucional`: no
 recalcula nada, solo los presenta con la identidad visual institucional.
 
-- La exportación del docente incluye los resultados individuales de su curso.
-- La exportación institucional es agregada y no expone datos personales.
+- La exportación del docente incluye los resultados individuales de su curso y
+  el análisis de acciones con IA dentro de la hoja "Resumen", con el aviso de
+  que es un texto automático que puede equivocarse.
+- La exportación institucional es agregada y no expone datos personales; también
+  incluye el análisis de acciones con IA dentro de la hoja "Resumen".
 - Ambas conservan los filtros aplicados y una hoja de metodología para que el
   archivo se interprete sin depender de la pantalla.
 """
@@ -32,6 +35,10 @@ AVISO_AGREGADO = (
 AVISO_DOCENTE = (
     'Incluye resultados individuales de los estudiantes del curso. Uso '
     'académico interno del docente propietario.'
+)
+IA_DISCLAIMER = (
+    'Este análisis fue generado con inteligencia artificial y tiende a '
+    'equivocarse. Es orientativo y no reemplaza el criterio académico.'
 )
 
 
@@ -146,7 +153,78 @@ def _seccion(hoja, fila, titulo, encabezados, filas, anchos, formatos=None):
     return _tabla(hoja, fila + 1, encabezados, filas, anchos, formatos)
 
 
-def _hoja_resumen(hoja, payload, subtitulo, nota):
+def _seccion_ia(hoja, fila, analisis):
+    """Escribe el análisis de la IA debajo del resumen, en la misma hoja.
+
+    `analisis` es el resultado de `generar_analisis_acciones_curso` con los
+    mismos filtros del payload o `None` si la IA no respondió. Siempre se
+    advierte que el texto lo generó una IA y que puede equivocarse.
+    """
+    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+
+    celda = hoja.cell(row=fila, column=1, value='Análisis con IA')
+    celda.font = Font(bold=True, size=11, color=AZUL)
+    fila += 1
+
+    celda = hoja.cell(row=fila, column=1, value=IA_DISCLAIMER)
+    celda.font = Font(italic=True, size=9, color=GOLD)
+    celda.alignment = Alignment(wrap_text=True, vertical='top')
+    hoja.merge_cells(start_row=fila, start_column=1, end_row=fila, end_column=3)
+    hoja.row_dimensions[fila].height = 30
+    fila += 1
+
+    if not analisis:
+        celda = hoja.cell(
+            row=fila,
+            column=1,
+            value='No fue posible generar el análisis con IA en esta exportación.',
+        )
+        celda.font = Font(italic=True, color=MUTED)
+        return fila + 1
+
+    celda = hoja.cell(row=fila, column=1, value='Resumen del análisis')
+    celda.font = Font(bold=True, size=10, color=TEXTO)
+    fila += 1
+    celda = hoja.cell(row=fila, column=1, value=analisis['resumen'])
+    celda.alignment = Alignment(wrap_text=True, vertical='top')
+    hoja.merge_cells(start_row=fila, start_column=1, end_row=fila, end_column=3)
+    hoja.row_dimensions[fila].height = max(
+        30, 15 * (len(analisis['resumen']) // 90 + 1)
+    )
+    fila += 2
+
+    celda = hoja.cell(row=fila, column=1, value='Plan de acciones sugeridas')
+    celda.font = Font(bold=True, size=10, color=TEXTO)
+    fila += 1
+
+    for columna, texto in enumerate(
+        ['Prioridad', 'Acción', 'Descripción'], start=1
+    ):
+        celda = hoja.cell(row=fila, column=columna, value=texto)
+        celda.fill = PatternFill('solid', fgColor=AZUL)
+        celda.font = Font(bold=True, color='FFFFFF', size=10)
+        celda.alignment = Alignment(wrap_text=True, vertical='center')
+
+    for indice, accion in enumerate(analisis['acciones'], start=fila + 1):
+        for columna, contenido in enumerate(
+            (
+                accion['prioridad'].capitalize(),
+                accion['titulo'],
+                accion['descripcion'],
+            ),
+            start=1,
+        ):
+            celda = hoja.cell(row=indice, column=columna, value=contenido)
+            celda.alignment = Alignment(wrap_text=True, vertical='top')
+            celda.border = Border(bottom=Side(style='thin', color=BORDE))
+            if indice % 2 == 0:
+                celda.fill = PatternFill('solid', fgColor=BEIGE_ALT)
+
+    return fila + len(analisis['acciones']) + 2
+
+
+def _hoja_resumen(hoja, payload, subtitulo, nota, analisis=None,
+                  incluir_ia=False):
     from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 
     fila = _cabecera(hoja, subtitulo, payload, nota)
@@ -203,10 +281,13 @@ def _hoja_resumen(hoja, payload, subtitulo, nota):
         hoja.cell(row=indice, column=2).number_format = formato
         hoja.cell(row=indice, column=2).font = Font(bold=True, color=TEXTO)
 
-    for columna, ancho in enumerate([38, 16, 58], start=1):
+    for columna, ancho in enumerate([38, 30, 58], start=1):
         hoja.column_dimensions[
             {1: 'A', 2: 'B', 3: 'C'}[columna]
         ].width = ancho
+
+    if incluir_ia:
+        _seccion_ia(hoja, fila + len(filas) + 2, analisis)
 
 
 def _hoja_distribucion(libro, payload):
@@ -381,57 +462,6 @@ def _hoja_focos(libro, payload):
     )
 
 
-def _hoja_acciones(libro, payload, analisis):
-    """Hoja de acciones recomendadas generadas con IA (o nota si no se pudo).
-
-    `analisis` es el resultado de `generar_analisis_acciones_curso` con los
-    mismos filtros del payload. Si llega `None` (la IA falló o el curso no
-    tenía intentos) la hoja se mantiene con una nota informativa, para que el
-    docente sepa que el análisis debía estar ahí.
-    """
-    from openpyxl.styles import Alignment, Font
-
-    hoja = libro.create_sheet('Acciones recomendadas')
-    nota = (
-        'Análisis generado con IA a partir de los datos y filtros de este '
-        'archivo; es orientativo y no reemplaza el criterio del docente.'
-        if analisis
-        else 'No fue posible generar el análisis con IA en esta exportación.'
-    )
-    fila = _cabecera(hoja, 'Acciones recomendadas', payload, nota)
-
-    if not analisis:
-        return fila
-
-    celda = hoja.cell(row=fila, column=1, value='Resumen del análisis')
-    celda.font = Font(bold=True, size=11, color=AZUL)
-    fila += 1
-    celda = hoja.cell(row=fila, column=1, value=analisis['resumen'])
-    celda.alignment = Alignment(wrap_text=True, vertical='top')
-    hoja.merge_cells(
-        start_row=fila, start_column=1, end_row=fila, end_column=3
-    )
-    # Altura aproximada para que el resumen se lea completo tras el merge.
-    hoja.row_dimensions[fila].height = max(30, 15 * (len(analisis['resumen']) // 90 + 1))
-    fila += 2
-
-    return _seccion(
-        hoja,
-        fila,
-        'Plan de acciones sugeridas',
-        ['Prioridad', 'Acción', 'Descripción'],
-        [
-            [
-                accion['prioridad'].capitalize(),
-                accion['titulo'],
-                accion['descripcion'],
-            ]
-            for accion in analisis['acciones']
-        ],
-        [14, 44, 72],
-    )
-
-
 def _hoja_individuales(libro, payload):
     hoja = libro.create_sheet('Resultados individuales')
     fila = _cabecera(
@@ -570,8 +600,9 @@ def a_excel_analitica_curso(payload, analisis=None):
     """Libro Excel de la analítica de un curso, con resultados individuales.
 
     `analisis` es el resultado opcional de `generar_analisis_acciones_curso`
-    con los mismos filtros; cuando llega, se agrega la hoja "Acciones
-    recomendadas" con el resumen y el plan de acciones de la IA.
+    con los mismos filtros; cuando llega, se agrega al final de la hoja
+    "Resumen" el diagnóstico y el plan de acciones de la IA, con el aviso de
+    que es un análisis automático que puede equivocarse.
     """
     from openpyxl import Workbook
 
@@ -583,6 +614,8 @@ def a_excel_analitica_curso(payload, analisis=None):
         payload,
         f"Analítica del curso {payload['curso']['nombre']}",
         AVISO_DOCENTE,
+        analisis,
+        incluir_ia=True,
     )
     _hoja_distribucion(libro, payload)
     _hoja_por_area(libro, payload)
@@ -590,14 +623,19 @@ def a_excel_analitica_curso(payload, analisis=None):
     _hoja_por_afirmacion(libro, payload)
     _hoja_por_parte(libro, payload)
     _hoja_focos(libro, payload)
-    _hoja_acciones(libro, payload, analisis)
     _hoja_individuales(libro, payload)
     _hoja_metodologia(libro, AVISO_DOCENTE)
     return _guardar(libro)
 
 
-def a_excel_analitica_institucional(payload):
-    """Libro Excel de la analítica institucional, solo con datos agregados."""
+def a_excel_analitica_institucional(payload, analisis=None):
+    """Libro Excel de la analítica institucional, solo con datos agregados.
+
+    `analisis` es el resultado opcional de
+    `generar_analisis_acciones_institucional` con los mismos filtros; cuando
+    llega, se agrega al final de la hoja "Resumen" el diagnóstico y el plan de
+    acciones de la IA, con el aviso de que es automático y puede equivocarse.
+    """
     from openpyxl import Workbook
 
     libro = Workbook()
@@ -606,8 +644,10 @@ def a_excel_analitica_institucional(payload):
     _hoja_resumen(
         hoja,
         payload,
-        'Analítica académica institucional',
+        'Anal��tica acadǸmica institucional',
         AVISO_AGREGADO,
+        analisis,
+        incluir_ia=True,
     )
     _hoja_distribucion(libro, payload)
     _hoja_por_area(libro, payload)

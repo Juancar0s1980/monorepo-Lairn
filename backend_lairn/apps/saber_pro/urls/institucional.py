@@ -9,6 +9,7 @@ solo lectura), de modo que este archivo solo mapea URL -> vista.
 from django.urls import path
 
 from apps.saber_pro.views import (
+    VistaAnalisisAccionesInstitucionalSaberPro,
     VistaAnaliticaInstitucionalSaberPro,
     VistaCatalogoInstitucionalSaberPro,
     VistaExportarAnaliticaInstitucionalSaberPro,
@@ -27,6 +28,14 @@ urlpatterns = [
         'institucional/analitica/exportar/',
         VistaExportarAnaliticaInstitucionalSaberPro.as_view(),
         name='exportar_analitica_institucional_saber_pro',
+    ),
+
+    # Análisis de acciones recomendadas con IA sobre la analítica institucional
+    # (HU-24.7): Coordinador y Vicerrector.
+    path(
+        'institucional/analitica/acciones/',
+        VistaAnalisisAccionesInstitucionalSaberPro.as_view(),
+        name='analisis_acciones_institucional_saber_pro',
     ),
 
     # Catálogo de áreas, carreras y cursos para poblar los filtros.

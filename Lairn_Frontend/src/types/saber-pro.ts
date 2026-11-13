@@ -792,6 +792,16 @@ export interface AnalisisAccionesSaberPro {
   acciones: AccionAnalisisSaberPro[]
 }
 
+// Respuesta de POST /saber-pro/institucional/analitica/acciones/ (HU-24.7).
+// Coordinación y vicerrectoría generan el plan con los mismos filtros de la
+// consulta institucional; la IA solo recibe agregados, nunca datos personales.
+export interface AnalisisAccionesInstitucionalSaberPro {
+  filtro: FiltroAnaliticaSaberPro
+  generado_en: string
+  resumen: string
+  acciones: AccionAnalisisSaberPro[]
+}
+
 // Métricas compartidas por las comparativas institucionales.
 export interface MetricasGrupoAnaliticaSaberPro {
   total_estudiantes: number

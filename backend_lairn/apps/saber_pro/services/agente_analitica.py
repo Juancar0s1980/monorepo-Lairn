@@ -1,10 +1,12 @@
 """
-Análisis de acciones recomendadas con IA sobre la analítica de un curso (HU-24).
+Análisis de acciones recomendadas con IA sobre la analítica Saber Pro (HU-24).
 
 `generar_analisis_acciones_curso` recibe el payload que ya calculó
 `construir_analitica_curso` (con los filtros aplicados por el docente) y le
 pide a la IA un diagnóstico breve del grupo y una lista de acciones concretas
 (título, descripción y prioridad) para reforzar los criterios más débiles.
+`generar_analisis_acciones_institucional` hace lo propio con el payload de
+`construir_analitica_institucional` para coordinación y vicerrectoría.
 
 - No se envían datos personales a la IA: del payload solo viajan el resumen,
   la distribución, los desgloses y los focos de refuerzo (agregados). Los
@@ -64,6 +66,7 @@ def _contexto_para_ia(payload):
     agregados, desgloses y focos para proponer acciones de refuerzo. Los filtros
     viajan completos para que el análisis refleje el alcance que ve el docente.
     """
+    
     return {
         'curso': payload['curso']['nombre'],
         'area': payload['curso']['area']['nombre'],
@@ -85,6 +88,73 @@ def _contexto_para_ia(payload):
         'por_parte': _compactar(
             payload['por_parte'],
             ('parte', 'total_estudiantes', 'aciertos', 'total_preguntas', 'porcentaje_acierto'),
+        ),
+        'focos_bajos': payload['focos_bajos'],
+    }
+
+
+def _contexto_para_ia_institucional(payload):
+    """Resume la analítica institucional en un contexto agregado y sin datos personales.
+
+    La analítica institucional no expone resultados individuales; además de los
+    desgloses y focos se envían las comparativas por curso, carrera y periodo
+    para que el plan de acción tenga alcance institucional.
+    """
+    return {
+        'alcance': payload['filtro'],
+        'resumen': payload['resumen'],
+        'distribucion_calificaciones': payload['distribucion_calificaciones'],
+        'por_area': _compactar(
+            payload['por_area'],
+            ('area', 'total_estudiantes', 'aciertos', 'total_preguntas', 'porcentaje_acierto'),
+        ),
+        'por_competencia': _compactar(
+            payload['por_competencia'],
+            ('competencia', 'total_estudiantes', 'aciertos', 'total_preguntas', 'porcentaje_acierto'),
+        ),
+        'por_afirmacion': _compactar(
+            payload['por_afirmacion'],
+            ('afirmacion', 'competencia', 'total_estudiantes', 'aciertos', 'total_preguntas', 'porcentaje_acierto'),
+        ),
+        'por_parte': _compactar(
+            payload['por_parte'],
+            ('parte', 'total_estudiantes', 'aciertos', 'total_preguntas', 'porcentaje_acierto'),
+        ),
+        'por_curso': _compactar(
+            payload['por_curso'],
+            (
+                'curso',
+                'total_estudiantes',
+                'total_intentos',
+                'promedio_puntaje',
+                'promedio_calificacion',
+                'porcentaje_acierto',
+                'tasa_aprobacion',
+            ),
+        ),
+        'por_programa': _compactar(
+            payload['por_programa'],
+            (
+                'programa',
+                'total_estudiantes',
+                'total_intentos',
+                'promedio_puntaje',
+                'promedio_calificacion',
+                'porcentaje_acierto',
+                'tasa_aprobacion',
+            ),
+        ),
+        'por_periodo': _compactar(
+            payload['por_periodo'],
+            (
+                'periodo',
+                'total_estudiantes',
+                'total_intentos',
+                'promedio_puntaje',
+                'promedio_calificacion',
+                'porcentaje_acierto',
+                'tasa_aprobacion',
+            ),
         ),
         'focos_bajos': payload['focos_bajos'],
     }
@@ -140,6 +210,29 @@ def _validar_analisis(datos):
     }
 
 
+def _generar_analisis(mensaje):
+    """Invoca a la IA, valida el JSON y reintenta una vez si llega mal formado."""
+    client, modelo, kwarg_max_tokens = obtener_cliente_ia()
+
+    ultimo_error = None
+    for _ in range(MAX_INTENTOS):
+        respuesta = client.chat.completions.create(
+            model=modelo,
+            response_format={'type': 'json_object'},
+            messages=[{'role': 'user', 'content': mensaje}],
+            **{kwarg_max_tokens: 2500},
+        )
+        try:
+            datos = json.loads(respuesta.choices[0].message.content)
+            return _validar_analisis(datos)
+        except (json.JSONDecodeError, ValueError, TypeError) as e:
+            ultimo_error = e
+
+    raise ValueError(
+        f'La IA no produjo un análisis válido tras {MAX_INTENTOS} intentos: {ultimo_error}'
+    )
+
+
 def generar_analisis_acciones_curso(payload: dict) -> dict:
     """
     Genera con IA el análisis de acciones a partir de la analítica de un curso.
@@ -150,7 +243,6 @@ def generar_analisis_acciones_curso(payload: dict) -> dict:
     `construir_analitica_curso`; si el curso no tiene intentos elegibles la
     vista debe responder 400 antes de llamar aquí.
     """
-    client, modelo, kwarg_max_tokens = obtener_cliente_ia()
     contexto = json.dumps(_contexto_para_ia(payload), ensure_ascii=False, indent=2)
 
     mensaje = f"""Eres asistente pedagógico de un docente que prepara estudiantes para el examen Saber Pro de Colombia.
@@ -171,20 +263,38 @@ Reglas:
 Tu única salida debe ser un objeto JSON válido, sin texto adicional, usando EXACTAMENTE estos nombres de clave en español:
 {{"resumen": "...", "acciones": [{{"titulo": "...", "descripcion": "...", "prioridad": "alta"}}, ...]}}"""
 
-    ultimo_error = None
-    for _ in range(MAX_INTENTOS):
-        respuesta = client.chat.completions.create(
-            model=modelo,
-            response_format={'type': 'json_object'},
-            messages=[{'role': 'user', 'content': mensaje}],
-            **{kwarg_max_tokens: 2500},
-        )
-        try:
-            datos = json.loads(respuesta.choices[0].message.content)
-            return _validar_analisis(datos)
-        except (json.JSONDecodeError, ValueError, TypeError) as e:
-            ultimo_error = e
+    return _generar_analisis(mensaje)
 
-    raise ValueError(
-        f'La IA no produjo un análisis válido tras {MAX_INTENTOS} intentos: {ultimo_error}'
+
+def generar_analisis_acciones_institucional(payload: dict) -> dict:
+    """
+    Genera con IA el análisis de acciones a partir de la analítica institucional.
+
+    Se usa para coordinadores y vicerrectores (HU-24.7): recibe el payload de
+    `construir_analitica_institucional` (solo agregados, sin datos personales) y
+    devuelve un plan de acción de alcance institucional. Si no hay intentos
+    elegibles la vista debe responder 400 antes de llamar aquí.
+    """
+    contexto = json.dumps(
+        _contexto_para_ia_institucional(payload), ensure_ascii=False, indent=2
     )
+
+    mensaje = f"""Eres asistente de coordinación académica de una institución que prepara estudiantes para el examen Saber Pro de Colombia.
+Recibes los indicadores agregados de la institución (sin datos personales) y debes proponer un plan de acción institucional.
+
+DATOS INSTITUCIONALES (JSON):
+{contexto}
+
+Reglas:
+1. "resumen": diagnóstico breve del desempeño institucional (3 a 5 oraciones), en español, basado ÚNICAMENTE en los datos entregados; no inventes resultados.
+2. "acciones": entre 3 y 6 acciones concretas y accionables para coordinación y vicerrectoría, ordenadas de mayor a menor prioridad. Cada acción:
+   - "titulo": máximo 12 palabras, sin puntuación final.
+   - "descripcion": qué hacer, sobre qué área, criterio, curso o carrera y con qué propósito, en 1 a 3 oraciones.
+   - "prioridad": exactamente "alta", "media" o "baja".
+3. Apóyate en los focos de refuerzo, desgloses y comparativas por curso, carrera y periodo; no menciones estudiantes por nombre ni datos que no estén en el JSON.
+4. Sugiere usos concretos del módulo cuando aplique: refuerzo focalizado por competencia, afirmación o parte de Inglés, acompañamiento a los cursos con menor desempeño y seguimiento por periodo.
+
+Tu única salida debe ser un objeto JSON válido, sin texto adicional, usando EXACTAMENTE estos nombres de clave en español:
+{{"resumen": "...", "acciones": [{{"titulo": "...", "descripcion": "...", "prioridad": "alta"}}, ...]}}"""
+
+    return _generar_analisis(mensaje)

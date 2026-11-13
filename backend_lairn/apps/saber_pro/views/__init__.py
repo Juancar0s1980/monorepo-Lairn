@@ -38,6 +38,9 @@ from .vista_opciones_desempeno_estudiante_saber_pro import (
 from .vista_analitica_curso_saber_pro import VistaAnaliticaCursoSaberPro
 from .vista_analisis_acciones_saber_pro import VistaAnalisisAccionesSaberPro
 from .vista_analitica_institucional_saber_pro import VistaAnaliticaInstitucionalSaberPro
+from .vista_analisis_acciones_institucional_saber_pro import (
+    VistaAnalisisAccionesInstitucionalSaberPro,
+)
 from .vista_catalogo_institucional_saber_pro import VistaCatalogoInstitucionalSaberPro
 from .vista_exportar_analitica_curso_saber_pro import (
     VistaExportarAnaliticaCursoSaberPro,
@@ -83,6 +86,7 @@ __all__ = [
     'VistaAnaliticaCursoSaberPro',
     'VistaAnalisisAccionesSaberPro',
     'VistaAnaliticaInstitucionalSaberPro',
+    'VistaAnalisisAccionesInstitucionalSaberPro',
     'VistaCatalogoInstitucionalSaberPro',
     'VistaExportarAnaliticaCursoSaberPro',
     'VistaExportarAnaliticaInstitucionalSaberPro',

@@ -7,7 +7,8 @@
 // oscuras simétricas definidas en `../utilidades.ts`.
 
 import type { ReactNode } from 'react'
-import { AlertCircle, BarChart3, Target } from 'lucide-react'
+import { AlertCircle, BarChart3, Loader2, Sparkles, Target } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -18,6 +19,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import type {
+  AccionAnalisisSaberPro,
+  AnalisisAccionesSaberPro,
   DistribucionCalificacionAnaliticaSaberPro,
   FocoBajoAnaliticaSaberPro,
   ResumenAnaliticaSaberPro,
@@ -47,6 +50,151 @@ export interface FilaComparativaAnalitica {
   total_intentos: number
   promedio_calificacion: number
   porcentaje_acierto: number
+}
+
+// Color del badge de prioridad según la paleta institucional: naranja para
+// alta (acción urgente), dorado para media y muted para baja.
+export function PrioridadAccion({
+  prioridad,
+}: {
+  prioridad: AccionAnalisisSaberPro['prioridad']
+}) {
+  const estilo =
+    prioridad === 'alta'
+      ? paletaSaberPro.accion
+      : prioridad === 'media'
+        ? paletaSaberPro.apoyoTitulo
+        : paletaSaberPro.apoyo
+  return (
+    <Badge
+      variant="outline"
+      className={cn('text-[10px] font-bold uppercase tracking-[0.08em]', estilo)}
+    >
+      {prioridad}
+    </Badge>
+  )
+}
+
+// Sección del análisis de acciones con IA: carga, error con reintento, estado
+// vacío (invita a generarlo) y plan generado (resumen + acciones). Se reutiliza
+// en la analítica del curso (docente) y en la institucional (coordinación y
+// vicerrectoría); `alcance` solo ajusta los textos.
+export function SeccionAnalisisAcciones({
+  analisis,
+  cargando,
+  error,
+  onGenerar,
+  alcance = 'curso',
+}: {
+  analisis: Pick<AnalisisAccionesSaberPro, 'resumen' | 'acciones'> | null
+  cargando: boolean
+  error: string | null
+  onGenerar: () => void
+  alcance?: 'curso' | 'institucional'
+}) {
+  const institucional = alcance === 'institucional'
+  if (cargando) {
+    return (
+      <div
+        className={cn(
+          'flex min-h-40 flex-col items-center justify-center gap-3 rounded-2xl border',
+          paletaSaberPro.superficie,
+          paletaSaberPro.borde
+        )}
+      >
+        <Loader2 className={cn('h-8 w-8 animate-spin', paletaSaberPro.accion)} />
+        <p className={cn('text-sm', paletaSaberPro.texto)}>
+          La IA está analizando la analítica {institucional ? 'institucional' : 'del curso'}...
+        </p>
+        <p className={cn('text-[11px]', paletaSaberPro.apoyo)}>
+          Puede tardar unos segundos. No cierres esta página.
+        </p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className={cn('rounded-2xl border p-5', paletaSaberPro.superficie, paletaSaberPro.borde)}>
+        <p className={cn('flex items-center gap-2 text-sm font-medium', paletaSaberPro.accion)}>
+          <AlertCircle className="h-4 w-4 shrink-0" aria-hidden /> {error}
+        </p>
+        <Button
+          type="button"
+          className={cn('mt-4 gap-2', paletaSaberPro.botonNeutro)}
+          onClick={onGenerar}
+        >
+          Reintentar
+        </Button>
+      </div>
+    )
+  }
+
+  if (!analisis) {
+    return (
+      <div
+        className={cn(
+          'flex flex-col items-center rounded-2xl border border-dashed p-8 text-center',
+          paletaSaberPro.bandaAlterna,
+          paletaSaberPro.borde
+        )}
+      >
+        <span className={cn('flex h-12 w-12 items-center justify-center rounded-full', paletaSaberPro.chipGold)}>
+          <Sparkles className="h-6 w-6" />
+        </span>
+        <p className={cn('mt-3 text-sm font-bold', paletaSaberPro.titulo)}>
+          ¿Qué hacer con estos resultados?
+        </p>
+        <p className={cn('mt-1 max-w-md text-sm leading-relaxed', paletaSaberPro.texto)}>
+          Genera con IA un análisis de acciones a partir de los informes y los
+          filtros actuales:{' '}
+          {institucional
+            ? 'prioridades de refuerzo y pasos concretos para la institución.'
+            : 'prioridades de refuerzo y pasos concretos para tu curso.'}
+        </p>
+        <Button
+          type="button"
+          className={cn('mt-4 gap-2', paletaSaberPro.botonAccion)}
+          onClick={onGenerar}
+        >
+          <Sparkles className="h-4 w-4" aria-hidden /> Generar análisis con IA
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <div className={cn('rounded-2xl border p-5', paletaSaberPro.superficie, paletaSaberPro.borde)}>
+      <p className={cn('text-sm leading-relaxed', paletaSaberPro.texto)}>{analisis.resumen}</p>
+      <ol className="mt-5 space-y-3">
+        {analisis.acciones.map((accion, indice) => (
+          <li key={`${indice}-${accion.titulo}`} className="flex items-start gap-3">
+            <span
+              className={cn(
+                'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold',
+                paletaSaberPro.numeracionPaso
+              )}
+            >
+              {indice + 1}
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className={cn('text-xs font-semibold', paletaSaberPro.titulo)}>{accion.titulo}</p>
+                <PrioridadAccion prioridad={accion.prioridad} />
+              </div>
+              <p className={cn('mt-1 text-xs leading-relaxed', paletaSaberPro.apoyo)}>
+                {accion.descripcion}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ol>
+      <p className={cn('mt-4 flex items-center gap-1.5 text-[11px]', paletaSaberPro.apoyo)}>
+        <Sparkles className="h-3 w-3 shrink-0" aria-hidden /> Generado con IA a partir de
+        los filtros aplicados; uso orientativo, la decisión académica es tuya.
+      </p>
+    </div>
+  )
 }
 
 export function ErrorEstadoAnalitica({
